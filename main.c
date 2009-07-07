@@ -81,8 +81,7 @@ unsigned char *load_rom(char *romName)
     inRom = fopen(romName,"rb");
     if (!inRom)
     {
-		printf("FAIL\n");
-		return 0;
+	return 0;
     }
     fseek(inRom,0,SEEK_END);
     romSize = ftell(inRom);
@@ -178,20 +177,29 @@ unsigned char *load_rom(char *romName)
 
 int main(int argc,char **argv)
 {
-	//    decrpyt_rom();
-	
-    unsigned char *romPtr=load_rom("../../out.rom");
-
-	CPU_BuildTable();
-	
-	MEM_Initialise(romPtr);
-	
-	CPU_Reset();
-	
-	while (1)
+    unsigned char *romPtr;
+    
+    romPtr=load_rom("../../out.rom");
+    if (!romPtr)
+    {
+	romPtr=load_rom("out.rom");
+	if (!romPtr)
 	{
-		CPU_Step();
+	    printf("[ERR] Failed to load rom image\n");
+	    return -1;
 	}
+    }
+
+    CPU_BuildTable();
+	
+    MEM_Initialise(romPtr);
+	
+    CPU_Reset();
+	
+    while (1)
+    {
+	CPU_Step();
+    }
 	
     return 0;
 }
