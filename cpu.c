@@ -314,6 +314,7 @@ void CPU_MOVE(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
     }
     else
     {
+	SOFT_BREAK;
 	ead = getEffectiveAddress(op2,len);
 	eas = getEffectiveAddress(op3,len);
 	switch (len)
@@ -370,13 +371,105 @@ void CPU_SUBs(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 
 void CPU_SUBQ(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    SOFT_BREAK;
-/*
-    u_int32_t ea;
+    int len;
+    u_int32_t ead,eas,ear;
 
     cpu_regs.PC+=2;
-    ea = getEffectiveAddress(op2,4);
-    cpu_regs.A[op1] = ea;*/
+
+	if (op1==0)
+		op1=8;
+	
+    switch(op2)
+    {
+	case 0x00:
+	    len=1;
+	    break;
+	case 0x01:
+	    len=2;
+	    break;
+	case 0x02:
+	    len=4;
+	    break;
+    }
+
+    if ((op3 & 0x38)==0)	// destination is D register
+    {
+		eas=op1;
+		ead=cpu_regs.D[op3];
+		switch(len)
+		{
+			case 1:
+				ead=CPU_SUBTRACT_BYTE(op1&0xFF,cpu_regs.D[op3]&0xFF);
+				cpu_regs.D[op3]&=0xFFFFFF00;
+				cpu_regs.D[op3]|=ead&0xFF;
+				break;
+			case 2:
+				ead=CPU_SUBTRACT_WORD(op1&0xFFFF,cpu_regs.D[op3]&0xFFFF);
+				cpu_regs.D[op3]&=0xFFFF0000;
+				cpu_regs.D[op3]|=ead&0xFFFF;
+				break;
+			case 4:
+				ead=CPU_SUBTRACT_LONG(op1&0xFFFFFFFF,cpu_regs.D[op3]&0xFFFFFFFF);
+				cpu_regs.D[op3]=ead&0xFFFFFFFF;
+				break;
+		}
+    }
+    else
+    {
+		SOFT_BREAK;
+/*	ead = getEffectiveAddress(op2,len);
+	eas = getEffectiveAddress(op3,len);
+	switch (len)
+	{
+	    case 1:
+		MEM_setByte(ead,eas&0xFF);
+		break;
+	    case 2:
+		MEM_setWord(ead,eas&0xFFFF);
+		break;
+	    case 3:
+		MEM_setLong(ead,eas);
+		break;
+	}*/
+    }
+
+    u_int32_t nMask,zMask;
+    switch (len)
+    {
+	case 1:
+	    nMask=0x80;
+	    zMask=0xFF;
+	    break;
+	case 2:
+	    nMask=0x8000;
+	    zMask=0xFFFF;
+	    break;
+	case 4:
+	    nMask=0x80000000;
+	    zMask=0xFFFFFFFF;
+	    break;
+    }
+	
+	if (cpu_regs.SR & CPU_STATUS_C)
+		cpu_regs.SR|=CPU_STATUS_X;
+	else
+		cpu_regs.SR&=~CPU_STATUS_X;
+	if (ead & (~zMask))
+		cpu_regs.SR|=CPU_STATUS_C;
+	else
+		cpu_regs.SR&=~CPU_STATUS_C;
+	if ((eas & nMask) != (ead & nMask))
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
+    if (ead & nMask)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+    if (ead & zMask)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
 }
 
 
