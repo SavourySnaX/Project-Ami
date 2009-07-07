@@ -30,7 +30,36 @@ void CPU_Reset()
 	cpu_regs.PC = MEM_getLong(0xFC0004);
 }
 
-//const char baseTable[][16];
+const char *decodeWord(u_int32_t address)
+{
+	static char buffer[256];
+	
+	sprintf(buffer,"%04X",MEM_getWord(address));
+	
+	return buffer;
+}
+
+void CPU_LEA()
+{
+	printf("LEA\n");
+}
+
+typedef void (*CPU_Function)();
+
+typedef struct
+{
+	char baseTable[17];
+	char opcodeName[32];
+	CPU_Function opcode;
+} CPU_Ins;
+
+CPU_Ins cpu_instructions[] = 
+	{
+		{"0100rrr111aaaaaa","LEA",CPU_LEA},
+		{0,0,0}
+	};
+
+CPU_Function CPU_JumpTable[65536];
 
 /// 1100xxx10000ryyy  C100 -> FF0F	ABCD
 /// 1101rrrmmmaaaaaa  D000 -> DFFF	ADD
@@ -71,7 +100,6 @@ void CPU_Reset()
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
 /// 0100111011aaaaaa  4EC0 -> 4EFF	JMP
 /// 0100111010aaaaaa  4E80 -> 4EBF	JSR
-/// 0100rrr111aaaaaa  41C0 -> 4FFF	LEA
 /// 0100111001010rrr  4E50 -> 4E57	LINK + 2 bytes disp
 /// 1110cccdssi01rrr  E008 -> EFEF	LSL,LSR
 /// 00zzddddddssssss  0000 -> 3FFF	MOVE
@@ -111,34 +139,32 @@ void CPU_Reset()
 /// 01001010ssaaaaaa  4A00 -> 4AFF	TST
 /// 0100111001011rrr  4E58 -> 4E5F	UNLK
 
+void CPU_UNKNOWN()
+{
+	printf("ILLEGAL INSTRUCTION\n");
+	char* bob=0;
+	*bob=0;
+}
+
 void CPU_BuildTable()
 {
+	int a,b;
 	
+	for (a=0;a<65536;a++)
+	{
+		CPU_JumpTable[a]=CPU_UNKNOWN;
+	}
 	
-	
-}
-
-/// 0100rrr111aaaaaa  41C0 -> 4FFF	LEA
-
-const char *decodeData(u_int32_t address)
-{
-	static char buffer[256];
-	
-	sprintf(buffer,"%04X",MEM_getWord(address));
-	
-	return buffer;
-}
-
-const char *decodeInstruction(u_int32_t address)
-{
-	static char buffer[256];
-
-	sprintf(buffer,"BLAH");
-	
-	return buffer;
+	a=0;
+	while (cpu_instructions[a].opcode)
+	{
+		
+		a++;
+	}
 }
 
 void CPU_Step()
 {
-	printf("%08x\t%s\t%s\n",cpu_regs.PC,decodeData(cpu_regs.PC),decodeInstruction(cpu_regs.PC));
+	printf("%08x\t%s\t",cpu_regs.PC,decodeWord(cpu_regs.PC));
+	CPU_JumpTable[MEM_getWord(cpu_regs.PC)]();
 }

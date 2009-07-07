@@ -181,6 +181,8 @@ int main(int argc,char **argv)
 	//    decrpyt_rom();
 	
     unsigned char *romPtr=load_rom("../../out.rom");
+
+	CPU_BuildTable();
 	
 	MEM_Initialise(romPtr);
 	

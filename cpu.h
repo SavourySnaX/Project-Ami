@@ -31,6 +31,8 @@ typedef struct
 
 extern CPU_Regs cpu_regs;
 
+void CPU_BuildTable();
+
 void CPU_Reset();
 
 void CPU_Step();
