@@ -51,7 +51,7 @@ u_int8_t MEM_getByte(u_int32_t address)
 	}
 	
 	printf("[WRN] : Unmapped Read From Address %08X\n",address);
-	return 0x00;
+	return 0xFF;
 }
 
 u_int16_t MEM_getWord(u_int32_t address)
@@ -95,7 +95,7 @@ void MEM_setByte(u_int32_t address,u_int8_t byte)
 			return;
 	}
 
-	printf("[WRN] : Unmapped Write To Address %08X\n",address);
+	printf("[WRN] : Unmapped Write To Address %02X -> %08X\n",byte,address);
 }
 
 void MEM_setWord(u_int32_t address, u_int16_t word)
