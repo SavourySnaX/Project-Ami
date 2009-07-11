@@ -57,11 +57,12 @@ static char tempData[256];
 
 int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bData,int length)
 {
+	u_int16_t tmp;
     int adj=0;
 	
     switch (operand)
     {
-		case 0x00:
+		case 0x00:	/// 000rrr
 		case 0x01:
 		case 0x02:
 		case 0x03:
@@ -72,7 +73,7 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 			sprintf(tempData,"D%d",operand);
 			strcat(mData,tempData);
 			return 0;
-		case 0x08:
+		case 0x08:	/// 001rrr
 		case 0x09:
 		case 0x0A:
 		case 0x0B:
@@ -83,7 +84,7 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 			sprintf(tempData,"A%d",operand-0x08);
 			strcat(mData,tempData);
 			return 0;
-		case 0x10:
+		case 0x10:	/// 010rrr
 		case 0x11:
 		case 0x12:
 		case 0x13:
@@ -94,7 +95,7 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 			sprintf(tempData,"(A%d)",operand-0x10);
 			strcat(mData,tempData);
 			return 0;
-		case 0x18:
+		case 0x18:	/// 011rrr
 		case 0x19:
 		case 0x1A:
 		case 0x1B:
@@ -105,7 +106,18 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 			sprintf(tempData,"(A%d)+",operand-0x18);
 			strcat(mData,tempData);
 			return 0;
-		case 0x28:
+		case 0x20:	// 100rrr
+		case 0x21:
+		case 0x22:
+		case 0x23:
+		case 0x24:
+		case 0x25:
+		case 0x26:
+		case 0x27:
+			sprintf(tempData,"-(A%d)",operand-0x20);
+			strcat(mData,tempData);
+			return 0;
+		case 0x28:	// 101rrr
 		case 0x29:
 		case 0x2A:
 		case 0x2B:
@@ -114,6 +126,26 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 		case 0x2E:
 		case 0x2F:
 			sprintf(tempData,"(#%04x,A%d)",MEM_getWord(adr),operand-0x28);
+			strcat(mData,tempData);
+			strcat(bData,decodeWord(adr));
+			return 2;
+		case 0x30:	// 110rrr
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			tmp = MEM_getWord(adr);
+			if (tmp&0x8000)
+			{
+				sprintf(tempData,"(#%02x,A%d%s,A%d)",tmp&0xFF,(tmp>>12),(tmp&0x0800) ? ".L" : ".W", operand-0x30);
+			}
+			else
+			{
+				sprintf(tempData,"(#%02x,D%d%s,A%d)",tmp&0xFF,(tmp>>12),(tmp&0x0800) ? ".L" : ".W", operand-0x30);
+			}
 			strcat(mData,tempData);
 			strcat(bData,decodeWord(adr));
 			return 2;
@@ -161,6 +193,7 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 
 u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 {
+	u_int16_t tmp;
     u_int32_t ea;
     switch (operand)
     {
@@ -205,6 +238,17 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 			ea = cpu_regs.A[operand-0x18];
 			cpu_regs.A[operand-0x18]+=length;
 			break;
+		case 0x20:
+		case 0x21:
+		case 0x22:
+		case 0x23:
+		case 0x24:
+		case 0x25:
+		case 0x26:
+		case 0x27:
+			cpu_regs.A[operand-0x20]-=length;
+			ea = cpu_regs.A[operand-0x20];
+			break;
 		case 0x28:
 		case 0x29:
 		case 0x2A:
@@ -214,6 +258,33 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 		case 0x2E:
 		case 0x2F:
 			ea = cpu_regs.A[operand-0x28] + (int16_t)MEM_getWord(cpu_regs.PC);
+			cpu_regs.PC+=2;
+			break;
+		case 0x30:	// 110rrr
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			tmp = MEM_getWord(cpu_regs.PC);
+			if (tmp&0x8000)
+			{
+				ea = cpu_regs.A[(tmp>>12)];
+				if (!(tmp&0x0800))
+					ea&=0xFFFF;
+				ea += (int8_t)(tmp&0xFF);
+				ea += cpu_regs.A[operand-0x30];
+			}
+			else
+			{
+				ea = cpu_regs.D[(tmp>>12)];
+				if (!(tmp&0x0800))
+					ea&=0xFFFF;
+				ea += (int8_t)(tmp&0xFF);
+				ea += cpu_regs.A[operand-0x30];
+			}
 			cpu_regs.PC+=2;
 			break;
 		case 0x38:		/// 111000
@@ -1065,6 +1136,120 @@ void CPU_DIS_SUBI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
+void CPU_DIS_BSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"BSR ");
+    strcpy(byteData,"");
+	
+    if (op1==0)
+	{
+		op1=MEM_getWord(adr);
+		strcat(byteData,decodeWord(adr));
+	}
+	else
+	{
+		if (op1&0x80)
+		{
+			op1|=0xFF00;
+		}
+	}
+	
+	sprintf(tempData,"%08X",adr+(int16_t)op1);
+	strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_RTS(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"RTS");
+    strcpy(byteData,"");
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_ILLEGAL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"ILLEGAL");
+    strcpy(byteData,"");
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_ORd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"OR");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+	sprintf(tempData,"D%d,",op1);
+    strcat(mnemonicData,tempData);
+
+    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_ADDQ(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"ADDQ");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+    if (op1==0)
+		op1=8;
+    sprintf(tempData,"#%02X,",op1);
+    strcat(mnemonicData,tempData);
+    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
 void CPU_LEA(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
     u_int32_t ea;
@@ -1796,18 +1981,22 @@ void CPU_NOT(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
     }
     else
     {
-		eas=getSourceEffectiveAddress(op2,len);
 		ead=getEffectiveAddress(op2,len);
-		ear=(~eas)&zMask;
 		switch (len)
 		{
 			case 1:
+				eas=MEM_getByte(ead);
+				ear=(~eas)&zMask;
 				MEM_setByte(ead,ear);
 				break;
 			case 2:
+				eas=MEM_getWord(ead);
+				ear=(~eas)&zMask;
 				MEM_setWord(ead,ear);
 				break;
 			case 4:
+				eas=MEM_getLong(ead);
+				ear=(~eas)&zMask;
 				MEM_setLong(ead,ear);
 				break;
 		}
@@ -2144,6 +2333,7 @@ void CPU_MOVEMd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_
 	if ((op2 & 0x38) == 0x20)			// handle pre decrement case
 	{
 		ear = 15;
+		ead+=len;
 		while (eas)
 		{
 			if (eas & 0x01)
@@ -2153,12 +2343,12 @@ void CPU_MOVEMd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_
 					switch (len)
 					{
 						case 2:
-							MEM_setWord(ead,cpu_regs.D[ear]);
 							ead-=2;
+							MEM_setWord(ead,cpu_regs.D[ear]);
 							break;
 						case 4:
-							MEM_setLong(ead,cpu_regs.D[ear]);
 							ead-=4;
+							MEM_setLong(ead,cpu_regs.D[ear]);
 							break;
 					}
 				}
@@ -2167,12 +2357,12 @@ void CPU_MOVEMd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_
 					switch (len)
 					{
 						case 2:
-							MEM_setWord(ead,cpu_regs.A[ear-8]);
 							ead-=2;
+							MEM_setWord(ead,cpu_regs.A[ear-8]);
 							break;
 						case 4:
-							MEM_setLong(ead,cpu_regs.A[ear-8]);
 							ead-=4;
+							MEM_setLong(ead,cpu_regs.A[ear-8]);
 							break;
 					}
 				}
@@ -2309,6 +2499,202 @@ void CPU_SUBI(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 		cpu_regs.SR&=~CPU_STATUS_V;
 }
 
+void CPU_BSR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int32_t nextInstruction;
+	
+	cpu_regs.PC+=2;
+	
+	nextInstruction=cpu_regs.PC;
+	
+    if (op1==0)
+	{
+		op1=MEM_getWord(cpu_regs.PC);
+		nextInstruction+=2;
+	}
+	else
+	{
+		if (op1&0x80)
+		{
+			op1|=0xFF00;
+		}
+	}
+	cpu_regs.A[7]-=4;
+	MEM_setLong(cpu_regs.A[7],nextInstruction);
+	
+	cpu_regs.PC+=(int16_t)op1;
+}
+
+void CPU_RTS(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	cpu_regs.PC = MEM_getLong(cpu_regs.A[7]);
+	cpu_regs.A[7]+=4;
+}
+
+void CPU_ILLEGAL(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	cpu_regs.PC+=2;
+	
+	cpu_regs.A[7]-=4;
+	MEM_setLong(cpu_regs.A[7],cpu_regs.PC);
+	cpu_regs.A[7]-=2;
+	MEM_setWord(cpu_regs.A[7],cpu_regs.SR);
+	
+	cpu_regs.PC=MEM_getLong(0x10);
+}
+
+void CPU_ORd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+	ead=getEffectiveAddress(op3,len);
+	switch (len)
+	{
+		case 1:
+			eas=MEM_getByte(ead);
+			ear=(cpu_regs.D[op1] | eas)&zMask;
+			MEM_setByte(ead,ear);
+			break;
+		case 2:
+			eas=MEM_getWord(ead);
+			ear=(cpu_regs.D[op1] | eas)&zMask;
+			MEM_setWord(ead,ear);
+			break;
+		case 4:
+			eas=MEM_getLong(ead);
+			ear=(cpu_regs.D[op1] | eas)&zMask;
+			MEM_setLong(ead,ear);
+			break;
+    }
+
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	
+	ear&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	cpu_regs.SR&=~CPU_STATUS_C;
+	cpu_regs.SR&=~CPU_STATUS_V;
+}
+
+void CPU_ADDQ(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear,eat;
+	
+    cpu_regs.PC+=2;
+	
+	if (op1==0)
+		op1=8;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+	eas=op1&zMask;
+    if ((op3 & 0x38)==0)	// destination is D register
+    {
+		ead=cpu_regs.D[op3]&zMask;
+		ear=(ead + eas)&zMask;
+		cpu_regs.D[op3]&=~zMask;
+		cpu_regs.D[op3]|=ear;
+    }
+    else
+    {
+		ead=getEffectiveAddress(op3,len);
+		switch (len)
+		{
+			case 1:
+				eat=MEM_getByte(ead);
+				ear=(ead + eas)&zMask;
+				MEM_setByte(ead,ear);
+				break;
+			case 2:
+				eat=MEM_getWord(ead);
+				ear=(ead + eas)&zMask;
+				MEM_setWord(ead,ear);
+				break;
+			case 4:
+				eat=MEM_getLong(ead);
+				ear=(ead + eas)&zMask;
+				MEM_setLong(ead,ear);
+				break;
+		}
+    }
+	
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	if (cpu_regs.SR & CPU_STATUS_C)
+		cpu_regs.SR|=CPU_STATUS_X;
+	else
+		cpu_regs.SR&=~CPU_STATUS_X;
+	
+	ear&=nMask;
+	eas&=nMask;
+	ead&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	if ((eas & ead) | ((~ear) & ead) | (eas & (~ear)))
+		cpu_regs.SR|=CPU_STATUS_C;
+	else
+		cpu_regs.SR&=~CPU_STATUS_C;
+	if ((eas & ead & (~ear)) | ((~eas) & (~ead) & ear))
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
+}
+
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 typedef void (*CPU_Function)(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 
@@ -2328,6 +2714,12 @@ typedef struct
 CPU_Ins cpu_instructions[] = 
 {
 //		{"1001rrr1mmaaaaaa","SUB",CPU_SUBd,CPU_DIS_SUBd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,7},{{"rrr"},{"00","01","10"},{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"0101ddd0zzaaaaaa","ADDQ",CPU_ADDQ,CPU_DIS_ADDQ,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,9},{{"rrr"},{"00","01","10"},{"000rrr","001!!!","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"1000rrr1mmaaaaaa","OR",CPU_ORd,CPU_DIS_ORd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,12},{{"rrr"},{"00","01","10"},{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","1110001"}}},
+/// This is not needed really, but its easier to work the kickstart rom this way
+{"0100111001111011","ILLEGAL",CPU_ILLEGAL,CPU_DIS_ILLEGAL,0},
+{"0100111001110101","RTS",CPU_RTS,CPU_DIS_RTS,0},
+{"01100001dddddddd","BSR",CPU_BSR,CPU_DIS_BSR,1,{0x00FF},{0},{1},{{"rrrrrrrr"}}},
 {"00000100zzaaaaaa","SUBI",CPU_SUBI,CPU_DIS_SUBI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"010010001zaaaaaa","MOVEM",CPU_MOVEMd,CPU_DIS_MOVEMd,2,{0x0040,0x003F},{6,0},{1,6},{{"r"},{"010rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"010011001zaaaaaa","MOVEM",CPU_MOVEMs,CPU_DIS_MOVEMs,2,{0x0040,0x003F},{6,0},{1,8},{{"r"},{"010rrr","011rrr","101rrr","110rrr","111000","111001","111010","111011"}}},
@@ -2361,7 +2753,6 @@ CPU_Ins		*CPU_Information[65536];
 
 /// 1100xxx10000ryyy  C100 -> FF0F	ABCD
 /// 00000110ssaaaaaa  0600 -> 06FF      ADDI   + 1,2,4 bytes extra dep wrd size
-/// 0101ddd0ssaaaaaa  5000 -> 5E00      ADDQ
 /// 1101xxx1ss00ryyy  D100 -> DFC0      ADDX
 /// 1100rrrmmmaaaaaa  C000 -> CFFF      AND
 /// 00000010ssaaaaaa  0200 -> 02FF      ANDI   + 1,2,4 bytes extra dep wrd size
@@ -2374,7 +2765,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100100001001vvv  4848 -> 484F	BKPT
 /// 0000rrr111aaaaaa  01C0 -> 0FFF	BSET
 /// 0000100011aaaaaa  08C0 -> 08FF	BSET + 00000000bbbbbbbb
-/// 01100001dddddddd  6100 -> 61FF	BSR + 2 bytes dep wrd size
 /// 0000rrr100aaaaaa  0100 -> 0F3F	BTST
 /// 0100rrrss0aaaaaa  4000 -> 4FBF	CHK
 /// 01000010ssaaaaaa  4200 -> 42FF	CLR
@@ -2400,14 +2790,12 @@ CPU_Ins		*CPU_Information[65536];
 /// 01000100ssaaaaaa  4400 -> 44FF	NEG
 /// 01000000ssaaaaaa  4000 -> 40FF	NEGX
 /// 0100111001110001  4E71 -> 4E71	NOP
-/// 1000rrrmmmaaaaaa  8000 -> 8FFF	OR
 /// 00000000ssaaaaaa  0000 -> 00FF	ORI + 1,2,4 bytes extra dep wrd size
 /// 0000000000111100  003C -> 003C	ORI,CCR + 00000000bbbbbbbb
 /// 0100100001aaaaaa  4840 -> 487F	PEA
 /// 1110cccdssi11rrr  E018 -> EFFF	ROL,ROR
 /// 1110cccdssi10rrr  E010 -> EFF7	ROXL,ROXR
 /// 0100111001110111  4E77 -> 4E77	RTR
-/// 0100111001110101  4E75 -> 4E75	RTS
 /// 1000yyy10000rxxx  8100 -> 8F0F	SBCD
 /// 0101cccc11aaaaaa  50C0 -> 5FFF	Scc
 /// 1001yyy1ss00rxxx  9100 -> 9FCF	SUBX
@@ -2636,7 +3024,7 @@ void CPU_Step()
 	
     // DEBUGGER
 	
-	if (cpu_regs.PC == 0xfc0292)
+	if (cpu_regs.PC == 0xfc02c2)
 	{
 		startDebug=1;
 	}
