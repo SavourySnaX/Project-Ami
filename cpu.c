@@ -818,6 +818,253 @@ void CPU_DIS_SUBA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
+void CPU_DIS_ADDA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"ADDA");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		case 0x00:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	strcat(byteData," ");
+	sprintf(tempData,",A%d",op1);
+    strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_TST(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"TST");
+    strcpy(byteData,"");
+    switch (op1)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_JMP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"JMP ");
+    strcpy(byteData,"");
+	
+    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,4);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_MOVEQ(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	adr+=2;
+    strcpy(mnemonicData,"MOVEQ ");
+    strcpy(byteData,"");
+
+	sprintf(tempData,"#%02X,",op2);
+    strcat(mnemonicData,tempData);
+	sprintf(tempData,"D%d",op1);
+    strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_LSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	int len;
+
+	adr+=2;
+    strcpy(mnemonicData,"LSR");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+		sprintf(tempData,"#%02X,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	else
+	{
+		sprintf(tempData,"D%d,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	
+	sprintf(tempData,"D%d",op4);
+	strcat(mnemonicData,tempData);
+
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_SWAP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	adr+=2;
+    strcpy(mnemonicData,"SWAP ");
+    strcpy(byteData,"");
+
+	sprintf(tempData,"D%d",op1);
+    strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_MOVEMs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"MOVEM");
+    strcpy(byteData,"");
+    switch (op1)
+    {
+		case 0x00:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+	strcat(mnemonicData,"#");
+	strcat(mnemonicData,decodeWord(adr));
+	strcat(byteData,decodeWord(adr));
+	adr+=2;
+	
+	strcat(mnemonicData,",");
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_MOVEMd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"MOVEM");
+    strcpy(byteData,"");
+    switch (op1)
+    {
+		case 0x00:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+	strcat(mnemonicData,"#");
+	strcat(mnemonicData,decodeWord(adr));
+	strcat(byteData,decodeWord(adr));
+	adr+=2;
+	
+	strcat(mnemonicData,",");
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_SUBI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"SUBI");
+    strcpy(byteData,"");
+    switch (op1)
+    {
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+	strcat(mnemonicData,"#");
+	switch (len)
+	{
+		case 1:
+		case 2:
+			strcat(mnemonicData,decodeWord(adr));
+			strcat(byteData,decodeWord(adr));
+			adr+=2;
+			break;
+		case 4:
+			strcat(mnemonicData,decodeLong(adr));
+			strcat(byteData,decodeLong(adr));
+			adr+=4;
+			break;
+	}
+	
+	strcat(mnemonicData,",");
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
 void CPU_LEA(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
     u_int32_t ea;
@@ -917,13 +1164,64 @@ void CPU_MOVE(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 
 void CPU_SUBs(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    SOFT_BREAK;
-	/*
-	 u_int32_t ea;
-	 
-	 cpu_regs.PC+=2;
-	 ea = getEffectiveAddress(op2,4);
-	 cpu_regs.A[op1] = ea;*/
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+	ead=cpu_regs.D[op1]&zMask;
+	eas=getSourceEffectiveAddress(op3,len);
+	ear=(ead-eas)&zMask;
+	
+	cpu_regs.D[op1]&=~zMask;
+	cpu_regs.D[op1]|=ear;
+	
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	if (cpu_regs.SR & CPU_STATUS_C)
+		cpu_regs.SR|=CPU_STATUS_X;
+	else
+		cpu_regs.SR&=~CPU_STATUS_X;
+	
+	ear&=nMask;
+	eas&=nMask;
+	ead&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	if ((eas & (~ead)) | (ear & (~ead)) | (eas & ear))
+		cpu_regs.SR|=CPU_STATUS_C;
+	else
+		cpu_regs.SR&=~CPU_STATUS_C;
+	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
 }
 
 void CPU_SUBQ(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
@@ -1024,19 +1322,19 @@ void CPU_BCC(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 			cc = !(cpu_regs.SR & CPU_STATUS_Z);
 			break;
 		case 0x07:
-			cc = (cpu_regs.SR & CPU_STATUS_C);
+			cc = (cpu_regs.SR & CPU_STATUS_Z);
 			break;
 		case 0x08:
 			cc = !(cpu_regs.SR & CPU_STATUS_V);
 			break;
 		case 0x09:
-			cc = (cpu_regs.SR & CPU_STATUS_C);
+			cc = (cpu_regs.SR & CPU_STATUS_V);
 			break;
 		case 0x0A:
 			cc = !(cpu_regs.SR & CPU_STATUS_N);
 			break;
 		case 0x0B:
-			cc = (cpu_regs.SR & CPU_STATUS_C);
+			cc = (cpu_regs.SR & CPU_STATUS_N);
 			break;
 		case 0x0C:
 			cc = ((cpu_regs.SR & CPU_STATUS_N) && (cpu_regs.SR & CPU_STATUS_V)) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (!(cpu_regs.SR & CPU_STATUS_V)));
@@ -1148,25 +1446,9 @@ void CPU_CMP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 			break;
     }
 	
-    if ((op3 & 0x38)==0)	// source is D register
-    {
-		ead=cpu_regs.D[op1]&zMask;
-		eas=cpu_regs.D[op3]&zMask;
-		ear=(ead - eas)&zMask;
-    }
-    else
-    {
-		if ((op3 & 0x38)==0x08)	// source is A register
-		{
-			ead=cpu_regs.D[op1]&zMask;
-			eas=cpu_regs.A[op3&0x7]&zMask;
-			ear=(ead - eas)&zMask;
-		}
-		else
-		{
-			SOFT_BREAK;
-		}
-    }
+	ead=cpu_regs.D[op1]&zMask;
+	eas=getSourceEffectiveAddress(op3,len)&zMask;
+	ear=(ead - eas)&zMask;
 	
     if (ear)
 		cpu_regs.SR&=~CPU_STATUS_Z;
@@ -1574,6 +1856,459 @@ void CPU_SUBA(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	cpu_regs.A[op1]=ear;
 }
 
+void CPU_ADDA(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=2;
+			break;
+		case 0x01:
+			len=4;
+			break;
+    }
+	
+	eas = getSourceEffectiveAddress(op3,len);
+	if (len == 2)
+	{
+		eas = (int16_t)eas;
+	}
+	ead=cpu_regs.A[op1];
+	ear=(ead + eas);
+	cpu_regs.A[op1]=ear;
+}
+
+void CPU_TST(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op1)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+	ear=getSourceEffectiveAddress(op2,len)&zMask;
+
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	
+	ear&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	cpu_regs.SR&=~CPU_STATUS_C;
+	cpu_regs.SR&=~CPU_STATUS_V;
+}
+
+void CPU_JMP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    u_int32_t ear;
+	
+    cpu_regs.PC+=2;
+	
+	ear=getEffectiveAddress(op1,4);
+
+	cpu_regs.PC=ear;
+}
+
+void CPU_MOVEQ(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    cpu_regs.PC+=2;
+
+	cpu_regs.D[op1]=(int8_t)op2;
+	
+    cpu_regs.SR&=~(CPU_STATUS_V|CPU_STATUS_C);
+    if (cpu_regs.D[op1] & 0x80000000)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+    if (cpu_regs.D[op1])
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
+
+void CPU_LSR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t eas,ead;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op1)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+	}
+	else
+	{
+		op1 = cpu_regs.D[op1]&0x3F;
+	}
+
+	eas = cpu_regs.D[op4]&zMask;
+	ead = (eas >> op1)&zMask;
+	cpu_regs.D[op4]&=~zMask;
+	cpu_regs.D[op4]|=ead;
+	
+	if (op1==0)
+	{
+		cpu_regs.SR &= ~CPU_STATUS_C;
+	}
+	else
+	{
+		if (eas&(1 << (op1-1)))
+		{
+			cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+		}
+		else
+		{
+			cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+		}
+	}
+	cpu_regs.SR &= ~CPU_STATUS_V;
+	if (cpu_regs.D[op4] & nMask)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+    if (cpu_regs.D[op4] & zMask)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
+
+void CPU_SWAP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int32_t temp;
+	
+    cpu_regs.PC+=2;
+
+	temp = (cpu_regs.D[op1]&0xFFFF0000)>>16;
+	cpu_regs.D[op1]=(cpu_regs.D[op1]&0x0000FFFF)<<16;
+	cpu_regs.D[op1]|=temp;
+	
+    cpu_regs.SR&=~(CPU_STATUS_V|CPU_STATUS_C);
+    if (cpu_regs.D[op1] & 0x80000000)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+    if (cpu_regs.D[op1])
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
+
+void CPU_MOVEMs(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op1)
+    {
+		case 0x00:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x01:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+
+	eas=MEM_getWord(cpu_regs.PC);
+	cpu_regs.PC+=2;
+	ead=getEffectiveAddress(op2,len);
+	
+	ear = 0;
+	while (eas)
+	{
+		if (eas & 0x01)
+		{
+			if (ear < 8)
+			{
+				switch (len)
+				{
+					case 2:
+						cpu_regs.D[ear] = (int16_t)MEM_getWord(ead);
+						ead+=2;
+						break;
+					case 4:
+						cpu_regs.D[ear] = MEM_getLong(ead);
+						ead+=4;
+						break;
+				}
+			}
+			else
+			{
+				switch (len)
+				{
+					case 2:
+						cpu_regs.A[ear-8] = (int16_t)MEM_getWord(ead);
+						ead+=2;
+						break;
+					case 4:
+						cpu_regs.A[ear-8] = MEM_getLong(ead);
+						ead+=4;
+						break;
+				}
+			}
+		}
+		ear++;
+		eas>>=1;
+	}
+	
+	if ((op2 & 0x38) == 0x18)			// handle post increment case
+	{
+		cpu_regs.A[op2-0x18] = ead;
+	}
+}
+
+void CPU_MOVEMd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op1)
+    {
+		case 0x00:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x01:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+
+	eas=MEM_getWord(cpu_regs.PC);
+	cpu_regs.PC+=2;
+	ead=getEffectiveAddress(op2,len);
+	
+	if ((op2 & 0x38) == 0x20)			// handle pre decrement case
+	{
+		ear = 15;
+		while (eas)
+		{
+			if (eas & 0x01)
+			{
+				if (ear < 8)
+				{
+					switch (len)
+					{
+						case 2:
+							MEM_setWord(ead,cpu_regs.D[ear]);
+							ead-=2;
+							break;
+						case 4:
+							MEM_setLong(ead,cpu_regs.D[ear]);
+							ead-=4;
+							break;
+					}
+				}
+				else
+				{
+					switch (len)
+					{
+						case 2:
+							MEM_setWord(ead,cpu_regs.A[ear-8]);
+							ead-=2;
+							break;
+						case 4:
+							MEM_setLong(ead,cpu_regs.A[ear-8]);
+							ead-=4;
+							break;
+					}
+				}
+			}
+			ear--;
+			eas>>=1;
+		}
+
+		cpu_regs.A[op2-0x20] = ead;
+	}
+	else
+	{
+		ear = 0;
+		while (eas)
+		{
+			if (eas & 0x01)
+			{
+				if (ear < 8)
+				{
+					switch (len)
+					{
+						case 2:
+							MEM_setWord(ead,cpu_regs.D[ear]);
+							ead+=2;
+							break;
+						case 4:
+							MEM_setLong(ead,cpu_regs.D[ear]);
+							ead+=4;
+							break;
+					}
+				}
+				else
+				{
+					switch (len)
+					{
+						case 2:
+							MEM_setWord(ead,cpu_regs.A[ear-8]);
+							ead+=2;
+							break;
+						case 4:
+							MEM_setLong(ead,cpu_regs.A[ear-8]);
+							ead+=4;
+							break;
+					}
+				}
+			}
+			ear++;
+			eas>>=1;
+		}
+	}	
+}
+
+void CPU_SUBI(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op1)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			eas=MEM_getByte(cpu_regs.PC+1);
+			cpu_regs.PC+=2;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			eas=MEM_getWord(cpu_regs.PC);
+			cpu_regs.PC+=2;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			eas=MEM_getLong(cpu_regs.PC);
+			cpu_regs.PC+=4;
+			break;
+    }
+	
+    if ((op2 & 0x38)==0)	// destination is D register
+    {
+		ead=cpu_regs.D[op2]&zMask;
+		ear=(ead - eas)&zMask;
+		cpu_regs.D[op2]&=~zMask;
+		cpu_regs.D[op2]|=ear;
+    }
+    else
+    {
+		ead=getEffectiveAddress(op2, len);
+		switch (len)
+		{
+			case 1:
+				ear=(MEM_getByte(ead) - eas)&zMask;
+				MEM_setByte(ead,ear&zMask);
+				break;
+			case 2:
+				ear=(MEM_getWord(ead) - eas)&zMask;
+				MEM_setWord(ead,ear&zMask);
+				break;
+			case 4:
+				ear=(MEM_getLong(ead) - eas)&zMask;
+				MEM_setLong(ead,ear&zMask);
+				break;
+		}
+    }
+	
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	
+	ear&=nMask;
+	eas&=nMask;
+	ead&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	if ((eas & (~ead)) | (ear & (~ead)) | (eas & ear))
+		cpu_regs.SR|=CPU_STATUS_C;
+	else
+		cpu_regs.SR&=~CPU_STATUS_C;
+	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
+}
+
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 typedef void (*CPU_Function)(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 
@@ -1592,8 +2327,17 @@ typedef struct
 
 CPU_Ins cpu_instructions[] = 
 {
-//		{"1001rrr0mmaaaaaa","SUB",CPU_SUBs,CPU_DIS_SUBs,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,12},{{"rrr"},{"00","01","10"},{"000rrr","001!!!","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 //		{"1001rrr1mmaaaaaa","SUB",CPU_SUBd,CPU_DIS_SUBd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,7},{{"rrr"},{"00","01","10"},{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"00000100zzaaaaaa","SUBI",CPU_SUBI,CPU_DIS_SUBI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"010010001zaaaaaa","MOVEM",CPU_MOVEMd,CPU_DIS_MOVEMd,2,{0x0040,0x003F},{6,0},{1,6},{{"r"},{"010rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"010011001zaaaaaa","MOVEM",CPU_MOVEMs,CPU_DIS_MOVEMs,2,{0x0040,0x003F},{6,0},{1,8},{{"r"},{"010rrr","011rrr","101rrr","110rrr","111000","111001","111010","111011"}}},
+{"0100100001000rrr","SWAP",CPU_SWAP,CPU_DIS_SWAP,1,{0x0007},{0},{1},{{"rrr"}}},
+{"1110ccc0zzm01rrr","LSR",CPU_LSR,CPU_DIS_LSR,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
+{"1001rrr0mmaaaaaa","SUB",CPU_SUBs,CPU_DIS_SUBs,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,12},{{"rrr"},{"00","01","10"},{"000rrr","001!!!","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
+{"0111rrr0dddddddd","MOVEQ",CPU_MOVEQ,CPU_DIS_MOVEQ,2,{0x0E00,0x00FF},{9,0},{1,1},{{"rrr"},{"rrrrrrrr"}}},
+{"0100111011aaaaaa","JMP",CPU_JMP,CPU_DIS_JMP,1,{0x003F},{0},{7},{{"010rrr","101rrr","110rrr","111000","111001","111010","111011"}}},
+{"01001010zzaaaaaa","TST",CPU_TST,CPU_DIS_TST,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"1101rrrm11aaaaaa","ADDA",CPU_ADDA,CPU_DIS_ADDA,3,{0x0E00,0x0100,0x003F},{9,8,0},{1,1,12},{{"rrr"},{"r"},{"000rrr","001rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"1001rrrm11aaaaaa","SUBA",CPU_SUBA,CPU_DIS_SUBA,3,{0x0E00,0x0100,0x003F},{9,8,0},{1,1,12},{{"rrr"},{"r"},{"000rrr","001rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"01000110zzaaaaaa","NOT",CPU_NOT,CPU_DIS_NOT,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1101rrr0mmaaaaaa","ADD",CPU_ADDs,CPU_DIS_ADDs,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,12},{{"rrr"},{"00","01","10"},{"000rrr","001!!!","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
@@ -1616,7 +2360,6 @@ CPU_Decode	CPU_DisTable[65536];
 CPU_Ins		*CPU_Information[65536];
 
 /// 1100xxx10000ryyy  C100 -> FF0F	ABCD
-/// 1101rrrmmmaaaaaa  D000 -> DFFF	ADDA
 /// 00000110ssaaaaaa  0600 -> 06FF      ADDI   + 1,2,4 bytes extra dep wrd size
 /// 0101ddd0ssaaaaaa  5000 -> 5E00      ADDQ
 /// 1101xxx1ss00ryyy  D100 -> DFC0      ADDX
@@ -1644,16 +2387,13 @@ CPU_Ins		*CPU_Information[65536];
 /// 1100xxx1mmmmmyyy  C100 -> CFFF	EXG
 /// 0100100mmm000rrr  4800 -> 49C7	EXT
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
-/// 0100111011aaaaaa  4EC0 -> 4EFF	JMP
 /// 0100111010aaaaaa  4E80 -> 4EBF	JSR
 /// 0100111001010rrr  4E50 -> 4E57	LINK + 2 bytes disp
 /// 1110cccdssi01rrr  E008 -> EFEF	LSL,LSR
 /// 0100001011aaaaaa  42C0 -> 42FF	MOVE from CCR
 /// 0100010011aaaaaa  44C0 -> 44FF	MOVE to CCR
 /// 0100000011aaaaaa  40C0 -> 40FF	MOVE from SR
-/// 01001d001saaaaaa  4880 -> 4CFF	MOVEM + 2 byte mask
 /// 0000dddmmm001aaa  0008 -> 0FCF	MOVEP + 2 byte disp
-/// 0111rrr0dddddddd  7000 -> 7E00	MOVEQ
 /// 1100rrr111aaaaaa  C1C0 -> CFFF	MULS
 /// 1100rrr011aaaaaa  C0C0 -> CEFF	MULU
 /// 0100100000aaaaaa  4800 -> 483F	NBCD
@@ -1670,13 +2410,10 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100111001110101  4E75 -> 4E75	RTS
 /// 1000yyy10000rxxx  8100 -> 8F0F	SBCD
 /// 0101cccc11aaaaaa  50C0 -> 5FFF	Scc
-/// 00000100ssaaaaaa  0400 -> 04FF	SUBI + 1,2,4 bytes extra dep wrd size
 /// 1001yyy1ss00rxxx  9100 -> 9FCF	SUBX
-/// 0100100001000rrr  4840 -> 4847	SWAP
 /// 0100101011aaaaaa  4AC0 -> 4AFF	TAS
 /// 010011100100vvvv  4E40 -> 4E4F	TRAP
 /// 0100111001110110  4E76 -> 4E76	TRAPV
-/// 01001010ssaaaaaa  4A00 -> 4AFF	TST
 /// 0100111001011rrr  4E58 -> 4E5F	UNLK
 
 void CPU_DIS_UNKNOWN(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
@@ -1880,6 +2617,8 @@ void DumpEmulatorState()
     printf("\n");
 }
 
+static int startDebug=0;
+
 void CPU_Step()
 {
     u_int16_t operands[8];
@@ -1897,7 +2636,12 @@ void CPU_Step()
 	
     // DEBUGGER
 	
-	if (cpu_regs.PC >= 0xfc01d2)
+	if (cpu_regs.PC == 0xfc0292)
+	{
+		startDebug=1;
+	}
+
+	if (startDebug)
 	{	
 		DumpEmulatorState();
 		

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		38AD873910028C2800D54D29 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 38AD873810028C2800D54D29 /* cpu.c */; };
 		38AD873C1002A0A700D54D29 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 38AD873B1002A0A700D54D29 /* memory.c */; };
+		38F92F1E10089E0400AF2FB6 /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38F92F1D10089E0400AF2FB6 /* customchip.c */; };
 		8DD76FAC0486AB0100D96B5E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* main.c */; settings = {ATTRIBUTES = (); }; };
 		8DD76FB00486AB0100D96B5E /* ami.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* ami.1 */; };
 /* End PBXBuildFile section */
@@ -33,6 +34,8 @@
 		38AD873810028C2800D54D29 /* cpu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu.c; sourceTree = "<group>"; };
 		38AD873A1002A0A700D54D29 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
 		38AD873B1002A0A700D54D29 /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
+		38F92F1C10089E0400AF2FB6 /* customchip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = customchip.h; sourceTree = "<group>"; };
+		38F92F1D10089E0400AF2FB6 /* customchip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = customchip.c; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* ami */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ami; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6A0FF2C0290799A04C91782 /* ami.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = ami.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -67,6 +70,8 @@
 				38AD873810028C2800D54D29 /* cpu.c */,
 				38AD873A1002A0A700D54D29 /* memory.h */,
 				38AD873B1002A0A700D54D29 /* memory.c */,
+				38F92F1C10089E0400AF2FB6 /* customchip.h */,
+				38F92F1D10089E0400AF2FB6 /* customchip.c */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -133,6 +138,7 @@
 				8DD76FAC0486AB0100D96B5E /* main.c in Sources */,
 				38AD873910028C2800D54D29 /* cpu.c in Sources */,
 				38AD873C1002A0A700D54D29 /* memory.c in Sources */,
+				38F92F1E10089E0400AF2FB6 /* customchip.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
