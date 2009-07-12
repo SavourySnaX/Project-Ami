@@ -36,6 +36,10 @@ u_int8_t MEM_getByteKick(u_int32_t upper24,u_int32_t lower16)
 
 u_int8_t MEM_getByteUnmapped(u_int32_t upper24,u_int32_t lower16)
 {
+	if (upper24 >= 0xF0)
+	{
+		return 0;			// avoid a mass of warnings as the rom boots up
+	}
 	printf("[WRN] : Unmapped Read From Address %08X\n",(upper24<<16)|lower16);
 	return 0x00;
 }
