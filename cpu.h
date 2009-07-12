@@ -14,6 +14,7 @@ typedef struct
 	u_int32_t	PC;
 	u_int16_t	SR;		// T1 T0 S M 0 I2 I1 I0 0 0 0 X N Z V C		(bit 15-0) NB low 8 = CCR
 	
+	u_int32_t	USP,ISP;
 }CPU_Regs;
 
 #define	CPU_STATUS_T1		(1<<15)
