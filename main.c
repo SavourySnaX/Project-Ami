@@ -9,6 +9,8 @@
 
 #include "cpu.h"
 #include "memory.h"
+#include "customchip.h"
+#include "ciachip.h"
 
 int decrpyt_rom()
 {
@@ -194,11 +196,16 @@ int main(int argc,char **argv)
 	
     MEM_Initialise(romPtr);
 	
+	CST_InitialiseCustom();
+	CIA_InitialiseCustom();
+
     CPU_Reset();
 	
     while (1)
     {
-	CPU_Step();
+		CST_Update();
+		CIA_Update();
+		CPU_Step();
     }
 	
     return 0;

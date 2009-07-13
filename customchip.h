@@ -9,7 +9,8 @@
 
 #include "mytypes.h"
 
-void MEM_initialiseCustom();
+void CST_initialiseCustom();
+void CST_Update();
 
 u_int8_t MEM_getByteCustom(u_int32_t upper24,u_int32_t lower16);
 void MEM_setByteCustom(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "customchip.h"
+#include "ciachip.h"
 
 typedef u_int8_t (*CST_ReadMap)(u_int16_t reg);
 typedef void (*CST_WriteMap)(u_int16_t reg,u_int8_t byte);
@@ -40,6 +41,27 @@ u_int8_t	*cstMemory = 0;
 CST_ReadMap		cst_read[CUSTOMCHIPMEMORY];
 CST_WriteMap	cst_write[CUSTOMCHIPMEMORY];
 
+u_int8_t	horizontalClock=0;
+u_int16_t	verticalClock=0;
+
+void CST_Update()
+{
+	horizontalClock++;
+	if (horizontalClock>160)
+	{
+		horizontalClock=0;
+		if (todBStart)
+			todBCnt++;
+		verticalClock++;
+		if (verticalClock>262)
+		{
+			verticalClock=0;
+			if (todAStart)
+				todACnt++;
+		}
+	}
+}
+
 void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)
 {
 	cstMemory[reg]=byte;
@@ -60,12 +82,40 @@ void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)
 	}
 }
 
+#define AGNUS_ID		0					// NTSC agnus or fat agnus
+
+u_int8_t CST_getByteVPOSR(u_int16_t reg)
+{
+	if (reg&1)
+	{
+		cstMemory[0x05]=(verticalClock>>8)&1;				// bit 1 is high part of vertical line (ie > 255)
+	}
+	else
+	{
+		cstMemory[0x04]=AGNUS_ID | 0;	// 0 is LOF long frame but i think thats an interlaced thing
+	}
+	return cstMemory[reg];
+}
+
+u_int8_t CST_getByteVHPOSR(u_int16_t reg)
+{
+	if (reg&1)
+	{
+		cstMemory[0x07]=horizontalClock;				// bit 1 is high part of vertical line (ie > 255)
+	}
+	else
+	{
+		cstMemory[0x06]=verticalClock&0xFF;	// 0 is LOF long frame but i think thats an interlaced thing
+	}
+	return cstMemory[reg];
+}
+
 CST_Regs customChipRegisters[] =
 {
 {"BLTDDAT",CST_READABLE},
 {"DMACONR",CST_READABLE},
-{"VPOSR",CST_READABLE},
-{"VHPOSR",CST_READABLE},
+{"VPOSR",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteVPOSR,0},
+{"VHPOSR",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteVHPOSR,0},
 {"DSKDATR",CST_READABLE},
 {"JOY0DAT",CST_READABLE},
 {"JOY1DAT",CST_READABLE},
@@ -359,7 +409,7 @@ void CST_setByteStrobeSupported(u_int16_t reg,u_int8_t byte)
 {
 }
 
-void MEM_InitialiseCustom()
+void CST_InitialiseCustom()
 {
 	int a;
 	
@@ -369,6 +419,7 @@ void MEM_InitialiseCustom()
 	{
 		cst_read[a] = CST_getByteUnmapped;
 		cst_write[a] = CST_setByteUnmapped;
+		cstMemory[a]=0;
 	}
 	
 	a=0;

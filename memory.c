@@ -12,6 +12,7 @@
 
 #include "memory.h"
 #include "customchip.h"
+#include "ciachip.h"
 
 unsigned char *romPtr;
 unsigned char *chpPtr;
@@ -128,6 +129,8 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_read[0x02] = MEM_getByteChip;
 	mem_read[0x03] = MEM_getByteChip;
 
+	mem_read[0xBF] = MEM_getByteCia;
+
 	mem_read[0xC0] = MEM_getByteCustom;
 	mem_read[0xC1] = MEM_getByteCustom;
 	mem_read[0xC2] = MEM_getByteCustom;
@@ -166,6 +169,8 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_write[0x02] = MEM_setByteChip;
 	mem_write[0x03] = MEM_setByteChip;
 
+	mem_write[0xBF] = MEM_setByteCia;
+
 	mem_write[0xC0] = MEM_setByteCustom;
 	mem_write[0xC1] = MEM_setByteCustom;
 	mem_write[0xC2] = MEM_setByteCustom;
@@ -196,6 +201,4 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_write[0xFD] = MEM_setByteKick;
 	mem_write[0xFE] = MEM_setByteKick;
 	mem_write[0xFF] = MEM_setByteKick;
-
-	MEM_InitialiseCustom();
 }

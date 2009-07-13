@@ -55,6 +55,9 @@ static char byteData[256];
 static char mnemonicData[256];
 static char tempData[256];
 
+int startDebug=0;
+int cpuStopped=0;
+
 int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bData,int length)
 {
 	u_int16_t tmp;
@@ -2219,6 +2222,109 @@ void CPU_DIS_ASR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16
 	sprintf(tempData,"D%d",op4);
 	strcat(mnemonicData,tempData);
 
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_DIVU(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"DIVU.W ");
+	strcpy(byteData,"");
+	len=1;
+	
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+	sprintf(tempData,",D%d",op1);
+	strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_BCLR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"BCLR.");
+	strcpy(byteData,"");
+	len=1;
+	if (op2<8)
+		strcat(mnemonicData,"L ");
+	else
+		strcat(mnemonicData,"B ");
+	
+	sprintf(tempData,"D%d",op1);
+	strcat(mnemonicData,tempData);
+	
+	strcat(mnemonicData,",");
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_EORd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"EOR");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+    sprintf(tempData,"D%d,",op1);
+    strcat(mnemonicData,tempData);
+    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_BTST(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"BTST.L ");
+	strcpy(byteData,"");
+	len=1;
+	
+    sprintf(tempData,"D%d,",op1);
+    strcat(mnemonicData,tempData);
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_STOP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"STOP ");
+    strcpy(byteData,"");
+	
+	strcat(mnemonicData,"#");
+	strcat(mnemonicData,decodeWord(adr));
+	strcat(byteData,decodeWord(adr));
+	adr+=2;
+	
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
@@ -5144,6 +5250,199 @@ void CPU_ASR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 		cpu_regs.SR|=CPU_STATUS_Z;
 }
 
+void CPU_DIVU(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t ead,eas,eaq,ear;
+	
+    cpu_regs.PC+=2;
+	
+	len=2;
+	
+	ead=cpu_regs.D[op1];
+	eas=getEffectiveAddress(op2,len)&0xFFFF;
+	
+	if (!eas)
+	{
+		SOFT_BREAK;		// NEED TO DO A TRAP HERE
+	}
+	
+	eaq=ead / eas;
+	ear=ead % eas;
+	
+	cpu_regs.SR&=~CPU_STATUS_C;
+	if (eaq>65535)
+	{
+		cpu_regs.SR|=CPU_STATUS_V;
+	}
+	else
+	{
+		cpu_regs.SR&=~CPU_STATUS_V;
+		
+		cpu_regs.D[op1]=(eaq&0xFFFF)|((ear<<16)&0xFFFF0000);
+
+		if (eaq&0x8000)
+			cpu_regs.SR|=CPU_STATUS_N;
+		else
+			cpu_regs.SR&=~CPU_STATUS_N;
+		
+		if (eaq&0xFFFF)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
+	}	
+}
+
+void CPU_BCLR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t ead,eas,eat;
+	
+    cpu_regs.PC+=2;
+	
+	len=1;
+	
+	eas=cpu_regs.D[op1];
+	ead=getEffectiveAddress(op2,len);
+	if (op2<8)
+	{
+		eas&=0x1F;
+		eas = 1<<eas;
+
+		if (ead & eas)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
+			
+		cpu_regs.D[op2]&=~eas;
+	}
+	else
+	{
+		eat=MEM_getByte(ead);
+		eas&=0x07;
+		eas = 1<<eas;
+
+		if (eat & eas)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
+			
+		eat&=~eas;
+		MEM_setByte(ead,eat);
+	}
+}
+
+void CPU_EORd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+	ead=getEffectiveAddress(op3,len);
+	switch (len)
+	{
+		case 1:
+			eas=MEM_getByte(ead);
+			ear=(cpu_regs.D[op1] ^ eas)&zMask;
+			MEM_setByte(ead,ear);
+			break;
+		case 2:
+			eas=MEM_getWord(ead);
+			ear=(cpu_regs.D[op1] ^ eas)&zMask;
+			MEM_setWord(ead,ear);
+			break;
+		case 4:
+			eas=MEM_getLong(ead);
+			ear=(cpu_regs.D[op1] ^ eas)&zMask;
+			MEM_setLong(ead,ear);
+			break;
+    }
+
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	
+	ear&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	cpu_regs.SR&=~CPU_STATUS_C;
+	cpu_regs.SR&=~CPU_STATUS_V;
+}
+
+void CPU_BTST(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t ead,eas;
+	
+    cpu_regs.PC+=2;
+	
+	len=1;
+	eas=cpu_regs.D[op1];
+	
+	ead=getSourceEffectiveAddress(op2,len);
+	if (op2<8)
+		eas&=0x1F;
+	else
+		eas&=0x07;
+
+	eas = 1<<eas;
+
+	if (ead & eas)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
+
+void CPU_STOP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int16_t oldSR;
+
+	if (cpu_regs.SR & CPU_STATUS_S)
+	{
+		oldSR=cpu_regs.SR;
+
+		cpu_regs.PC+=2;
+
+		cpu_regs.SR = MEM_getWord(cpu_regs.PC);
+		cpu_regs.PC+=2;
+
+		CPU_CHECK_SP(oldSR,cpu_regs.SR);
+
+		cpuStopped=1;
+	}
+	else
+	{
+		CPU_GENERATE_EXCEPTION(0x20);
+	}
+}
+
+
 
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 typedef void (*CPU_Function)(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
@@ -5164,6 +5463,7 @@ typedef struct
 CPU_Ins cpu_instructions[] = 
 {
 // Supervisor instructions
+{"0100111001110010","STOP",CPU_STOP,CPU_DIS_STOP,0},
 {"0100011011aaaaaa","MOVESR",CPU_MOVETOSR,CPU_DIS_MOVETOSR,1,{0x003F},{0},{11},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"0000001001111100","ANDSR",CPU_ANDSR,CPU_DIS_ANDSR,0},
 {"0100111001110011","RTE",CPU_RTE,CPU_DIS_RTE,0},
@@ -5171,7 +5471,10 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
-//		{"1001rrr1mmaaaaaa","SUB",CPU_SUBd,CPU_DIS_SUBd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,7},{{"rrr"},{"00","01","10"},{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"0000rrr100aaaaaa","BTST",CPU_BTST,CPU_DIS_BTST,2,{0x0E00,0x003F},{9,0},{1,11},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
+{"1011rrr1mmaaaaaa","EOR",CPU_EORd,CPU_DIS_EORd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,8},{{"rrr"},{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"0000rrr110aaaaaa","BCLR",CPU_BCLR,CPU_DIS_BCLR,2,{0x0E00,0x003F},{9,0},{1,8},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"1000rrr011aaaaaa","DIVU",CPU_DIVU,CPU_DIS_DIVU,2,{0x0E00,0x003F},{9,0},{1,11},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"1110ccc0zzm00rrr","ASR",CPU_ASR,CPU_DIS_ASR,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
 {"1110ccc1zzm00rrr","ASL",CPU_ASL,CPU_DIS_ASL,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
 {"00000000zzaaaaaa","ORI",CPU_ORI,CPU_DIS_ORI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -5239,13 +5542,9 @@ CPU_Ins		*CPU_Information[65536];
 /// 1101xxx1ss00ryyy  D100 -> DFC0      ADDX
 /// 0000001000111100  022C -> 022C	ANDI,CCR + 00000000bbbbbbbb
 /// 0000rrr101aaaaaa  0140 -> 0F7F      BCHG
-/// 0000rrr110aaaaaa  0180 -> 0FBF	BCLR
 /// 0100100001001vvv  4848 -> 484F	BKPT
-/// 0000rrr100aaaaaa  0100 -> 0F3F	BTST
 /// 0100rrrss0aaaaaa  4000 -> 4FBF	CHK
 /// 1000rrr111aaaaaa  81C0 -> 8FFF	DIVS
-/// 1000rrr011aaaaaa  80C0 -> 8EFF	DIVU
-/// 1011rrrmmmaaaaaa  B000 -> BFFF	EOR
 /// 00001010ssaaaaaa  0A00 -> 0AFF	EORI + 1,2,4 bytes extra dep wrd size
 /// 0000101000111100  0A2C -> 0A2C	EORI,CCR + 00000000bbbbbbbb
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
@@ -5468,8 +5767,6 @@ void DumpEmulatorState()
     printf("\n");
 }
 
-int startDebug=0;
-
 void CPU_Step()
 {
     u_int16_t operands[8];
@@ -5487,7 +5784,7 @@ void CPU_Step()
 	
     // DEBUGGER
 /*
-	if (cpu_regs.PC == 0xfcad0a)
+	if (cpu_regs.PC == 0xfc0f90)
 	{
 		startDebug=1;
 	}
@@ -5505,5 +5802,8 @@ void CPU_Step()
 	
     // END DEBUGGER
 	
-    CPU_JumpTable[opcode](operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
+	if (!cpuStopped)			// Don't process instruction cpu halted waiting for interrupt
+	{
+		CPU_JumpTable[opcode](operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
+	}
 }

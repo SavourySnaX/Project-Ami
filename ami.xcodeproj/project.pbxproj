@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		382A19A7100B77F200B81F8C /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 382A19A5100B77F200B81F8C /* ciachip.c */; };
 		38AD873910028C2800D54D29 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 38AD873810028C2800D54D29 /* cpu.c */; };
 		38AD873C1002A0A700D54D29 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 38AD873B1002A0A700D54D29 /* memory.c */; };
 		38F92F1E10089E0400AF2FB6 /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38F92F1D10089E0400AF2FB6 /* customchip.c */; };
@@ -29,6 +30,9 @@
 
 /* Begin PBXFileReference section */
 		08FB7796FE84155DC02AAC07 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		382A196E100B695E00B81F8C /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
+		382A19A5100B77F200B81F8C /* ciachip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ciachip.c; sourceTree = "<group>"; };
+		382A19A6100B77F200B81F8C /* ciachip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciachip.h; sourceTree = "<group>"; };
 		38AD872E1002842B00D54D29 /* out.rom */ = {isa = PBXFileReference; explicitFileType = file; path = out.rom; sourceTree = SOURCE_ROOT; };
 		38AD873710028C2800D54D29 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
 		38AD873810028C2800D54D29 /* cpu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu.c; sourceTree = "<group>"; };
@@ -65,6 +69,9 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				382A19A5100B77F200B81F8C /* ciachip.c */,
+				382A19A6100B77F200B81F8C /* ciachip.h */,
+				382A196E100B695E00B81F8C /* mytypes.h */,
 				08FB7796FE84155DC02AAC07 /* main.c */,
 				38AD873710028C2800D54D29 /* cpu.h */,
 				38AD873810028C2800D54D29 /* cpu.c */,
@@ -139,6 +146,7 @@
 				38AD873910028C2800D54D29 /* cpu.c in Sources */,
 				38AD873C1002A0A700D54D29 /* memory.c in Sources */,
 				38F92F1E10089E0400AF2FB6 /* customchip.c in Sources */,
+				382A19A7100B77F200B81F8C /* ciachip.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
