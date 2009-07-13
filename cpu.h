@@ -7,6 +7,8 @@
  *
  */
 
+#include "mytypes.h"
+
 typedef struct 
 {
 	u_int32_t	D[8];

@@ -7,6 +7,8 @@
  *
  */
 
+#include "mytypes.h"
+
 void MEM_Initialise(unsigned char *_romPtr);
 
 u_int8_t	MEM_getByte(u_int32_t address);

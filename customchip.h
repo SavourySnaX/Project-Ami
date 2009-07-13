@@ -7,6 +7,8 @@
  *
  */
 
+#include "mytypes.h"
+
 void MEM_initialiseCustom();
 
 u_int8_t MEM_getByteCustom(u_int32_t upper24,u_int32_t lower16);
