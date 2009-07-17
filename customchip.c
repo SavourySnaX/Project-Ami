@@ -71,8 +71,8 @@ void CST_Update()
 
 	if (bpldata & (1<<((horizontalClock*2)&7)))
 	{
-		ch=cstMemory[0x184];
-		cl=cstMemory[0x185];
+		ch=cstMemory[0x182];
+		cl=cstMemory[0x183];
 	}
 
 	// end hack!
@@ -95,8 +95,8 @@ void CST_Update()
 
 	if (bpldata & (1<<((horizontalClock*2+1)&7)))
 	{
-		ch=cstMemory[0x184];
-		cl=cstMemory[0x185];
+		ch=cstMemory[0x182];
+		cl=cstMemory[0x183];
 	}
 
 	// end hack!
