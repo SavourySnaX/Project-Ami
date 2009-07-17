@@ -9,7 +9,7 @@
  
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL.h>
+#include "SDL.h"
 
 #define __IGNORE_TYPES
 #include "ciachip.h"

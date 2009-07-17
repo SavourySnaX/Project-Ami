@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <SDL.h>
+#include "SDL.h"
 
 #define __IGNORE_TYPES
 #include "cpu.h"

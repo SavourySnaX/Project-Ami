@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL.h>
+#include "SDL.h"
 
 #define LINE_LENGTH ((228)*2)		// 228 / 227 alternating
 #define WIDTH LINE_LENGTH
@@ -184,7 +184,7 @@ int main(int argc,char **argv)
 
 	    if (SDL_Init(SDL_INIT_VIDEO) < 0 ) return 1;
 
-	    if (!(screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, 0/*SDL_FULLSCREEN|SDL_HWSURFACE*/)))
+	    if (!(screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, 0/*SDL_FULLSCREEN*/|SDL_HWSURFACE/**/)))
 	    {
 		    SDL_Quit();
 		    return 1;
