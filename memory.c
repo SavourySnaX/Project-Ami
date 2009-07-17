@@ -9,7 +9,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <SDL.h>
 
+#define __IGNORE_TYPES
 #include "memory.h"
 #include "customchip.h"
 #include "ciachip.h"

@@ -9,7 +9,9 @@
  
 #include <stdio.h>
 #include <stdlib.h>
+#include <SDL.h>
 
+#define __IGNORE_TYPES
 #include "customchip.h"
 #include "ciachip.h"
 
@@ -44,22 +46,104 @@ CST_WriteMap	cst_write[CUSTOMCHIPMEMORY];
 u_int8_t	horizontalClock=0;
 u_int16_t	verticalClock=0;
 
+void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo);
+extern int g_newScreenNotify;
+
+#define LINE_LENGTH	228
+
+int cLineLength=LINE_LENGTH - 1;	// first line is a short line
+
 void CST_Update()
 {
-	horizontalClock++;
-	if (horizontalClock>160)
+	u_int8_t ch=cstMemory[0x180],cl=cstMemory[0x181];
+
+	// hack!
+	u_int32_t bpl0 = cstMemory[0xE1]&0x07;
+	bpl0 <<=8;
+	bpl0|=cstMemory[0xE2];
+	bpl0 <<=8;
+	bpl0|=cstMemory[0xE3];
+
+	bpl0+=(horizontalClock*2)/8;	// This is all a big fat lie!
+	bpl0+=verticalClock*(320/8);
+
+	u_int8_t bpldata = MEM_getByte(bpl0);
+
+	if (bpldata & (1<<((horizontalClock*2)&7)))
 	{
+		ch=cstMemory[0x184];
+		cl=cstMemory[0x185];
+	}
+
+	// end hack!
+
+	doPixel(horizontalClock*2,verticalClock,ch,cl);
+
+	ch=cstMemory[0x180],cl=cstMemory[0x181];
+
+	// hack!
+	bpl0 = cstMemory[0xE1]&0x07;
+	bpl0 <<=8;
+	bpl0|=cstMemory[0xE2];
+	bpl0 <<=8;
+	bpl0|=cstMemory[0xE3];
+
+	bpl0+=(horizontalClock*2+1)/8;	// This is all a big fat lie!
+	bpl0+=verticalClock*(320/8);
+
+	bpldata = MEM_getByte(bpl0);
+
+	if (bpldata & (1<<((horizontalClock*2+1)&7)))
+	{
+		ch=cstMemory[0x184];
+		cl=cstMemory[0x185];
+	}
+
+	// end hack!
+	doPixel(horizontalClock*2+1,verticalClock,ch,cl);
+
+	horizontalClock++;
+	if (horizontalClock>cLineLength)
+	{
+		if (cLineLength!=LINE_LENGTH)
+			cLineLength=LINE_LENGTH;
+		else
+			cLineLength=LINE_LENGTH-1;
+
 		horizontalClock=0;
 		if (todBStart)
 			todBCnt++;
 		verticalClock++;
-		if (verticalClock>262)
+		if (verticalClock>=262)
 		{
 			verticalClock=0;
+			cLineLength=LINE_LENGTH-1;
+ 
+			// reload copper on vbl
+			CPR_SetPC((((u_int32_t)(cstMemory[0x81]&07))<<16)+
+				 (((u_int32_t)(cstMemory[0x82]))<<8)+
+				 (((u_int32_t)(cstMemory[0x83]))));
+
+			g_newScreenNotify=1;
+
 			if (todAStart)
 				todACnt++;
 		}
 	}
+}
+
+void CST_setByteCOPJMP1(u_int16_t reg,u_int8_t dontcarestrobe)
+{
+	CPR_SetPC((((u_int32_t)(cstMemory[0x81]&07))<<16)+
+		 (((u_int32_t)(cstMemory[0x82]))<<8)+
+		 (((u_int32_t)(cstMemory[0x83]))));
+}
+
+void CST_setByteCOPJMP2(u_int16_t reg,u_int8_t dontcarestrobe)
+{
+	CPR_SetPC((((u_int32_t)(cstMemory[0x85]&07))<<16)+
+		 (((u_int32_t)(cstMemory[0x86]))<<8)+
+		 (((u_int32_t)(cstMemory[0x87]))));
 }
 
 void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)
@@ -105,15 +189,82 @@ u_int8_t CST_getByteVHPOSR(u_int16_t reg)
 	}
 	else
 	{
-		cstMemory[0x06]=verticalClock&0xFF;	// 0 is LOF long frame but i think thats an interlaced thing
+		cstMemory[0x06]=verticalClock&0xFF;
 	}
 	return cstMemory[reg];
 }
 
+void CST_setByteDMACON(u_int16_t reg,u_int8_t byte)
+{
+	cstMemory[reg]=byte;
+	
+	if (reg&1)
+	{
+		// second byte set do the operation
+		if (cstMemory[0x96] & 0x80)		// need to or in the set bits
+		{
+			cstMemory[0x2] |= cstMemory[0x96]&0x07;
+			cstMemory[0x3] |= cstMemory[0x97];
+		}
+		else							// need to mask of the set bits
+		{
+			cstMemory[0x2] &= ~(cstMemory[0x96]);
+			cstMemory[0x3] &= ~(cstMemory[0x97]);
+		}
+	}
+}
+
+void CST_setByteBLTSIZE(u_int16_t reg,u_int8_t byte)
+{
+	cstMemory[reg]=byte;
+	
+	if (reg&1)
+	{
+		// second byte set we should start a blitter operation here...
+
+		printf("[WRN] Blitter Is Being Used\n");
+
+		printf("Blitter Registers : BLTAFWM : %02X%02X\n",cstMemory[0x44],cstMemory[0x45]);
+		printf("Blitter Registers : BLTALWM : %02X%02X\n",cstMemory[0x46],cstMemory[0x47]);
+		printf("Blitter Registers : BLTCON0 : %02X%02X\n",cstMemory[0x40],cstMemory[0x41]);
+		printf("Blitter Registers : BLTCON1 : %02X%02X\n",cstMemory[0x42],cstMemory[0x43]);
+		printf("Blitter Registers : BLTSIZE : %02X%02X\n",cstMemory[0x58],cstMemory[0x59]);
+		printf("Blitter Registers : BLTADAT : %02X%02X\n",cstMemory[0x74],cstMemory[0x75]);
+		printf("Blitter Registers : BLTBDAT : %02X%02X\n",cstMemory[0x72],cstMemory[0x73]);
+		printf("Blitter Registers : BLTCDAT : %02X%02X\n",cstMemory[0x70],cstMemory[0x71]);
+		printf("Blitter Registers : BLTDDAT : %02X%02X\n",cstMemory[0x00],cstMemory[0x01]);
+		printf("Blitter Registers : BLTAMOD : %02X%02X\n",cstMemory[0x64],cstMemory[0x65]);
+		printf("Blitter Registers : BLTBMOD : %02X%02X\n",cstMemory[0x62],cstMemory[0x63]);
+		printf("Blitter Registers : BLTCMOD : %02X%02X\n",cstMemory[0x60],cstMemory[0x61]);
+		printf("Blitter Registers : BLTDMOD : %02X%02X\n",cstMemory[0x66],cstMemory[0x67]);
+		printf("Blitter Registers : BLTAPTH : %02X%02X\n",cstMemory[0x50],cstMemory[0x51]);
+		printf("Blitter Registers : BLTAPTL : %02X%02X\n",cstMemory[0x52],cstMemory[0x53]);
+		printf("Blitter Registers : BLTBPTH : %02X%02X\n",cstMemory[0x4C],cstMemory[0x4D]);
+		printf("Blitter Registers : BLTBPTL : %02X%02X\n",cstMemory[0x4E],cstMemory[0x4F]);
+		printf("Blitter Registers : BLTCPTH : %02X%02X\n",cstMemory[0x48],cstMemory[0x49]);
+		printf("Blitter Registers : BLTCPTL : %02X%02X\n",cstMemory[0x4A],cstMemory[0x4B]);
+		printf("Blitter Registers : BLTDPTH : %02X%02X\n",cstMemory[0x54],cstMemory[0x55]);
+		printf("Blitter Registers : BLTDPTL : %02X%02X\n",cstMemory[0x56],cstMemory[0x57]);
+
+/*		if (cstMemory[0x96] & 0x80)		// need to or in the set bits
+		{
+			cstMemory[0x2] |= cstMemory[0x96]&0x07;
+			cstMemory[0x3] |= cstMemory[0x97];
+		}
+		else							// need to mask of the set bits
+		{
+			cstMemory[0x2] &= ~(cstMemory[0x96]);
+			cstMemory[0x3] &= ~(cstMemory[0x97]);
+		}
+*/
+	}
+}
+
+
 CST_Regs customChipRegisters[] =
 {
 {"BLTDDAT",CST_READABLE},
-{"DMACONR",CST_READABLE},
+{"DMACONR",CST_READABLE|CST_SUPPORTED},
 {"VPOSR",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteVPOSR,0},
 {"VHPOSR",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteVHPOSR,0},
 {"DSKDATR",CST_READABLE},
@@ -156,7 +307,7 @@ CST_Regs customChipRegisters[] =
 {"BLTAPTL",CST_WRITEABLE},
 {"BLTDPTH",CST_WRITEABLE},
 {"BLTDPTL",CST_WRITEABLE},
-{"BLTSIZE",CST_WRITEABLE},
+{"BLTSIZE",CST_WRITEABLE|CST_FUNCTION|CST_SUPPORTED,0,CST_setByteBLTSIZE},
 {"05A(ECS)",0},
 {"05C(ECS)",0},
 {"05E(ECS)",0},
@@ -180,14 +331,14 @@ CST_Regs customChipRegisters[] =
 {"COP1LCL",CST_WRITEABLE},
 {"COP2LCH",CST_WRITEABLE},
 {"COP2LCL",CST_WRITEABLE},
-{"COPJMP1",CST_STROBEABLE},
-{"COPJMP2",CST_STROBEABLE},
+{"COPJMP1",CST_STROBEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteCOPJMP1},
+{"COPJMP2",CST_STROBEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteCOPJMP2},
 {"COPINS",CST_WRITEABLE},
 {"DIWSTRT",CST_WRITEABLE},
 {"DIWSTOP",CST_WRITEABLE},
 {"DDFSTRT",CST_WRITEABLE},
 {"DDFSTOP",CST_WRITEABLE},
-{"DMACON",CST_WRITEABLE},
+{"DMACON",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteDMACON},
 {"CLXCON",CST_WRITEABLE},
 {"INTENA",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteINTENA},
 {"INTREQ",CST_WRITEABLE},
@@ -414,7 +565,8 @@ void CST_InitialiseCustom()
 	int a;
 	
 	cstMemory=(u_int8_t*)malloc(CUSTOMCHIPMEMORY);
-	
+	cLineLength=LINE_LENGTH-1;
+
 	for (a=0;a<CUSTOMCHIPMEMORY;a++)
 	{
 		cst_read[a] = CST_getByteUnmapped;

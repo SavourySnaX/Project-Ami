@@ -9,7 +9,9 @@
  
 #include <stdio.h>
 #include <stdlib.h>
+#include <SDL.h>
 
+#define __IGNORE_TYPES
 #include "ciachip.h"
 
 typedef u_int8_t (*CIA_ReadMap)(u_int16_t reg);

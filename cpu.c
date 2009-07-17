@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <SDL.h>
+
+#define __IGNORE_TYPES
 #include "cpu.h"
 #include "memory.h"
 
@@ -5778,17 +5781,17 @@ void CPU_Step()
 		for (a=0;a<CPU_Information[opcode]->numOperands;a++)
 		{
 			operands[a] = (opcode & CPU_Information[opcode]->operandMask[a]) >> CPU_Information[opcode]->operandShift[a];
-			//			printf("Operand %d = %08x\n", a,operands[a]);	
+//						printf("Operand %d = %08x\n", a,operands[a]);	
 		}
     }
 	
     // DEBUGGER
-/*
+
 	if (cpu_regs.PC == 0xfc0f90)
 	{
 		startDebug=1;
 	}
-*/
+
 	if (startDebug)
 	{	
 		DumpEmulatorState();
