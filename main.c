@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "SDL.h"
 
 #define LINE_LENGTH ((228)*2)		// 228 / 227 alternating
 #define WIDTH LINE_LENGTH
@@ -14,7 +13,14 @@
 #define BPP 4
 #define DEPTH 32
 
+#include "config.h"
+
+#if !DISABLE_DISPLAY
+#include "SDL.h"
+
 #define __IGNORE_TYPES
+#endif
+
 #include "cpu.h"
 #include "memory.h"
 #include "customchip.h"
@@ -104,6 +110,7 @@ unsigned char *load_rom(char *romName)
 	return romData;
 }
 
+#if !DISABLE_DISPLAY
 SDL_Surface *screen;
 
 
@@ -120,10 +127,12 @@ void setpixel(SDL_Surface *screen, int x, int y, Uint8 r, Uint8 g, Uint8 b)
 
 
 Uint32 videoMemory[LINE_LENGTH*262];
+#endif
 int g_newScreenNotify = 0;
 
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 {
+#if !DISABLE_DISPLAY
 	Uint32 *pixmem32;
 	Uint32 colour;
 	u_int8_t r = (colHi&0x0F)<<4;
@@ -136,8 +145,10 @@ void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 	colour = SDL_MapRGB(screen->format, r,g,b);
 	pixmem32 = &videoMemory[y*LINE_LENGTH + x];
 	*pixmem32 = colour;
+#endif
 }
 
+#if !DISABLE_DISPLAY
 void DrawScreen(SDL_Surface* screen, int h)
 { 
     int x, y, ytimesw;
@@ -149,6 +160,7 @@ void DrawScreen(SDL_Surface* screen, int h)
     }
 
 }
+#endif
 
 int main(int argc,char **argv)
 {
@@ -176,6 +188,7 @@ int main(int argc,char **argv)
     CPU_Reset();
     
     {	
+#if !DISABLE_DISPLAY
 	    SDL_Event event;
 
 	    int keypress = 0;
@@ -191,12 +204,16 @@ int main(int argc,char **argv)
 	    }
 
 	    while(!keypress) 
+#else
+	    while (1)
+#endif
 	    {
 		    CST_Update();
 		    CPR_Update();
 		    CIA_Update();
 		    CPU_Step();
-		
+
+#if !DISABLE_DISPLAY		    
 		    if (g_newScreenNotify)
 		    {
 			    if(SDL_MUSTLOCK(screen))
@@ -231,6 +248,7 @@ int main(int argc,char **argv)
 					    break;
 			    }
 		    }
+#endif
 	    }
     }
 	

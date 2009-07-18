@@ -11,13 +11,20 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
+
+#if !DISABLE_DISPLAY
 #include "SDL.h"
 
 #define __IGNORE_TYPES
+#endif
 #include "cpu.h"
 #include "memory.h"
+#include "customchip.h"
 
 #define SOFT_BREAK	{ char* bob=0; 	*bob=0; }
+
+extern u_int8_t	*cstMemory;
 
 CPU_Regs cpu_regs;
 
@@ -2331,6 +2338,97 @@ void CPU_DIS_STOP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
+void CPU_DIS_ROL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	int len;
+
+	adr+=2;
+    strcpy(mnemonicData,"ROL");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+		sprintf(tempData,"#%02X,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	else
+	{
+		sprintf(tempData,"D%d,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	
+	sprintf(tempData,"D%d",op4);
+	strcat(mnemonicData,tempData);
+
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_ROR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	int len;
+
+	adr+=2;
+    strcpy(mnemonicData,"ROR");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+		sprintf(tempData,"#%02X,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	else
+	{
+		sprintf(tempData,"D%d,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	
+	sprintf(tempData,"D%d",op4);
+	strcat(mnemonicData,tempData);
+
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5445,7 +5543,146 @@ void CPU_STOP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	}
 }
 
+void CPU_ROL(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t eas,ead;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
 
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+	}
+	else
+	{
+		op1 = cpu_regs.D[op1]&0x3F;
+	}
+
+	eas = cpu_regs.D[op4]&zMask;
+	ead = eas;
+	cpu_regs.SR &= ~(CPU_STATUS_V|CPU_STATUS_C);
+	while (op1)
+	{
+		if (ead & nMask)
+		{
+			ead<<=1;
+			ead|=1;
+			ead&=zMask;
+			cpu_regs.SR|=CPU_STATUS_C;
+		}
+		else
+		{
+			ead<<=1;
+			ead&=zMask;
+			cpu_regs.SR&=~CPU_STATUS_C;
+		}
+		op1--;
+	}
+	cpu_regs.D[op4]&=~zMask;
+	cpu_regs.D[op4]|=ead;
+	
+	if (cpu_regs.D[op4] & nMask)
+		cpu_regs.SR|=CPU_STATUS_N;
+    	else
+		cpu_regs.SR&=~CPU_STATUS_N;
+    	if (cpu_regs.D[op4] & zMask)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    	else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
+
+void CPU_ROR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t eas,ead;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+	}
+	else
+	{
+		op1 = cpu_regs.D[op1]&0x3F;
+	}
+
+	eas = cpu_regs.D[op4]&zMask;
+	ead = eas;
+	cpu_regs.SR &= ~(CPU_STATUS_V|CPU_STATUS_C);
+	while (op1)
+	{
+		if (ead & 0x01)
+		{
+			ead>>=1;
+			ead|=nMask;
+			ead&=zMask;
+			cpu_regs.SR|=CPU_STATUS_C;
+		}
+		else
+		{
+			ead>>=1;
+			ead&=~nMask;
+			ead&=zMask;
+			cpu_regs.SR&=~CPU_STATUS_C;
+		}
+		op1--;
+	}
+	cpu_regs.D[op4]&=~zMask;
+	cpu_regs.D[op4]|=ead;
+	
+	if (cpu_regs.D[op4] & nMask)
+		cpu_regs.SR|=CPU_STATUS_N;
+    	else
+		cpu_regs.SR&=~CPU_STATUS_N;
+    	if (cpu_regs.D[op4] & zMask)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    	else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
 
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 typedef void (*CPU_Function)(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
@@ -5474,6 +5711,8 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
+{"1110ccc0zzm11rrr","ROR",CPU_ROR,CPU_DIS_ROR,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
+{"1110ccc1zzm11rrr","ROL",CPU_ROL,CPU_DIS_ROL,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
 {"0000rrr100aaaaaa","BTST",CPU_BTST,CPU_DIS_BTST,2,{0x0E00,0x003F},{9,0},{1,11},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"1011rrr1mmaaaaaa","EOR",CPU_EORd,CPU_DIS_EORd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,8},{{"rrr"},{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"0000rrr110aaaaaa","BCLR",CPU_BCLR,CPU_DIS_BCLR,2,{0x0E00,0x003F},{9,0},{1,8},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -5559,7 +5798,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 01000000ssaaaaaa  4000 -> 40FF	NEGX
 /// 0100111001110001  4E71 -> 4E71	NOP
 /// 0000000000111100  003C -> 003C	ORI,CCR + 00000000bbbbbbbb
-/// 1110cccdssi11rrr  E018 -> EFFF	ROL,ROR
 /// 1110cccdssi10rrr  E010 -> EFF7	ROXL,ROXR
 /// 0100111001110111  4E77 -> 4E77	RTR
 /// 1000yyy10000rxxx  8100 -> 8F0F	SBCD
@@ -5770,12 +6008,112 @@ void DumpEmulatorState()
     printf("\n");
 }
 
+void CPU_CheckForInterrupt()
+{
+	if (cstMemory[0x1C]&0x40)
+	{
+		// Interrupts are enabled, check for any pending interrupts in priority order, paying attention to 
+		// interrupt level mask in SR
+		//
+	
+		// Level 7
+		// No interrupts - could be generated by external switch though
+		//
+		if ((cpu_regs.SR & 0x0700) >= 0x0600)
+			return;
+		// Level 6
+		// External line generated
+		//
+		if ((cpu_regs.SR & 0x0700) >= 0x0500)
+			return;
+		// Level 5
+		// Disk Sync
+		// RBF serial port recieve buffer full
+		//
+		if (cstMemory[0x1E]&0x18)
+		{
+			CPU_GENERATE_EXCEPTION(0x74);
+			cpu_regs.SR&=0xF8FF;
+			cpu_regs.SR|=0x0500;
+			cpuStopped=0;
+			return;
+		}
+
+		if ((cpu_regs.SR & 0x0700) >= 0x0400)
+			return;
+		// Level 4
+		// AUD3
+		// AUD2
+		// AUD1
+		// AUD0
+		//
+		if ((cstMemory[0x1E]&0x07) || (cstMemory[0x1F]&0x80))
+		{
+			CPU_GENERATE_EXCEPTION(0x70);
+			cpu_regs.SR&=0xF8FF;
+			cpu_regs.SR|=0x0400;
+			cpuStopped=0;
+			return;
+		}
+
+		if ((cpu_regs.SR & 0x0700) >= 0x0300)
+			return;
+		// Level 3
+		// BLIT
+		// Start of VBL
+		// Copper
+		//
+		if ((cstMemory[0x1F]&0x70))
+		{
+			CPU_GENERATE_EXCEPTION(0x6C);
+			cpu_regs.SR&=0xF8FF;
+			cpu_regs.SR|=0x0300;
+			cpuStopped=0;
+			return;
+		}
+
+		if ((cpu_regs.SR & 0x0700) >= 0x0200)
+			return;
+		// Level 2
+		// IO ports and timers
+		//
+		if ((cstMemory[0x1F]&0x08))
+		{
+			CPU_GENERATE_EXCEPTION(0x68);
+			cpu_regs.SR&=0xF8FF;
+			cpu_regs.SR|=0x0200;
+			cpuStopped=0;
+			return;
+		}
+
+		if ((cpu_regs.SR & 0x0700) >= 0x0100)
+			return;
+		// Level 1
+		// SOFT
+		// DSKBLK
+		// TBE
+		//
+		if ((cstMemory[0x1F]&0x07))
+		{
+			CPU_GENERATE_EXCEPTION(0x64);
+			cpu_regs.SR&=0xF8FF;
+			cpu_regs.SR|=0x0100;
+			cpuStopped=0;
+			return;
+		}
+	}
+}	
+
 void CPU_Step()
 {
     u_int16_t operands[8];
-    u_int16_t opcode = MEM_getWord(cpu_regs.PC);
+    u_int16_t opcode;
     int a;
-	
+
+    CPU_CheckForInterrupt();
+
+    opcode = MEM_getWord(cpu_regs.PC);
+    
     if (CPU_Information[opcode])
     {
 		for (a=0;a<CPU_Information[opcode]->numOperands;a++)
@@ -5787,9 +6125,9 @@ void CPU_Step()
 	
     // DEBUGGER
 
-	if (cpu_regs.PC == 0xfc0f90)
+	if (cpu_regs.PC == 0xfc6d6c)
 	{
-		startDebug=1;
+		startDebug=0;
 	}
 
 	if (startDebug)

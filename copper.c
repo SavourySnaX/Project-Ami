@@ -9,9 +9,16 @@
  
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL.h>
+
+#include "config.h"
+
+#if !DISABLE_DISPLAY
+
+#include "SDL.h"
 
 #define __IGNORE_TYPES
+#endif
+
 #include "memory.h"
 #include "copper.h"
 #include "customchip.h"
@@ -27,6 +34,8 @@ void CPR_SetPC(u_int32_t pc)
 {
 	copperCycle=0;
 	copperPC = pc;
+
+	printf("COPPER JUMPED %08X\n",pc);
 }
 
 void CPR_InitialiseCopper()
@@ -46,6 +55,7 @@ void CPR_Update()
 		
 		if (copperCycle==0)
 		{
+//		printf("COPPERLIST: %08X %04X\n",copperPC,MEM_getWord(copperPC));
 			wrd = MEM_getWord(copperPC);
 			copperPC+=2;
 			cstMemory[0x8C]=wrd>>8;
@@ -73,6 +83,8 @@ void CPR_Update()
 //					printf("Copper Wait %02x%02x:%04x\n",cstMemory[0x8C],cstMemory[0x8D],wrd);
 					if ((verticalClock&0xFF)>vpos || ((verticalClock&0xFF)==vpos && (horizontalClock&0xFF)>=hpos))
 					{
+//		printf("COPPERLIST: WAIT %08X %04X\n",copperPC,MEM_getWord(copperPC));
+						copperPC+=2;
 					}
 					else
 					{
@@ -81,8 +93,10 @@ void CPR_Update()
 				}
 				else
 				{
+//		printf("COPPERLIST: SKIP %08X %04X\n",copperPC,MEM_getWord(copperPC));
 					// doing a skip
 					printf("Copper Skip:\n");
+					copperPC+=2;
 				}
 			}
 			else
@@ -90,6 +104,7 @@ void CPR_Update()
 				// doing a move
 				u_int16_t destination;
 			       
+//		printf("COPPERLIST: MOVE %08X %04X\n",copperPC,MEM_getWord(copperPC));
 				wrd = MEM_getWord(copperPC);
 				copperPC+=2;
 

@@ -9,9 +9,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "config.h"
+
+#if !DISABLE_DISPLAY
 #include "SDL.h"
 
 #define __IGNORE_TYPES
+#endif
 #include "memory.h"
 #include "customchip.h"
 #include "ciachip.h"
@@ -19,7 +24,7 @@
 unsigned char *romPtr;
 unsigned char *chpPtr;
 
-#define CHIP_MEM_SIZE		(256*1024)
+#define CHIP_MEM_SIZE		(512*1024)
 
 typedef u_int8_t (*MEM_ReadMap)(u_int32_t upper24,u_int32_t lower16);
 typedef void (*MEM_WriteMap)(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);
@@ -115,9 +120,9 @@ void MEM_Initialise(unsigned char *_romPtr)
 	int a=0;
 	
 	romPtr = _romPtr;
-	chpPtr = malloc(1024*256);
+	chpPtr = malloc(CHIP_MEM_SIZE);
 
-	for (a=0;a<1024*256;a++)
+	for (a=0;a<CHIP_MEM_SIZE;a++)
 		chpPtr[a]=0;
 
 	for (a=0;a<256;a++)
@@ -130,6 +135,10 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_read[0x01] = MEM_getByteChip;
 	mem_read[0x02] = MEM_getByteChip;
 	mem_read[0x03] = MEM_getByteChip;
+	mem_read[0x04] = MEM_getByteChip;
+	mem_read[0x05] = MEM_getByteChip;
+	mem_read[0x06] = MEM_getByteChip;
+	mem_read[0x07] = MEM_getByteChip;
 
 	mem_read[0xBF] = MEM_getByteCia;
 
@@ -170,6 +179,10 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_write[0x01] = MEM_setByteChip;
 	mem_write[0x02] = MEM_setByteChip;
 	mem_write[0x03] = MEM_setByteChip;
+	mem_write[0x04] = MEM_setByteChip;
+	mem_write[0x05] = MEM_setByteChip;
+	mem_write[0x06] = MEM_setByteChip;
+	mem_write[0x07] = MEM_setByteChip;
 
 	mem_write[0xBF] = MEM_setByteCia;
 

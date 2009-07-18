@@ -9,9 +9,15 @@
  
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "config.h"
+
+#if !DISABLE_DISPLAY
 #include "SDL.h"
 
 #define __IGNORE_TYPES
+#endif
+
 #include "customchip.h"
 #include "ciachip.h"
 
@@ -117,6 +123,14 @@ void CST_Update()
 		if (verticalClock>=262)
 		{
 			verticalClock=0;
+
+			// I`m going to need to clean this all up really (need a proper bus arbitration too)
+
+			if ((cstMemory[0x1C]&0x40) && (cstMemory[0x1D]&0x20))
+			{
+				cstMemory[0x1F]|=0x20;				// Have processor poll INTREQR for jobs
+			}
+
 			cLineLength=LINE_LENGTH-1;
  
 			// reload copper on vbl
@@ -164,6 +178,29 @@ void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)
 			cstMemory[0x1D] &= ~(cstMemory[0x9B]);
 		}
 	}
+
+	printf("INTENAR : %02X%02X\n",cstMemory[0x1C],cstMemory[0x1D]);
+}
+
+void CST_setByteINTREQ(u_int16_t reg,u_int8_t byte)
+{
+	cstMemory[reg]=byte;
+	
+	if (reg&1)
+	{
+		// second byte set do the operation
+		if (cstMemory[0x9C] & 0x80)		// need to or in the set bits
+		{
+			cstMemory[0x1E] |= cstMemory[0x9C]&0x7F;
+			cstMemory[0x1F] |= cstMemory[0x9D];
+		}
+		else							// need to mask of the set bits
+		{
+			cstMemory[0x1E] &= ~(cstMemory[0x9C]);
+			cstMemory[0x1F] &= ~(cstMemory[0x9D]);
+		}
+	}
+	printf("INTREQR : %02X%02X\n",cstMemory[0x1E],cstMemory[0x1F]);
 }
 
 #define AGNUS_ID		0					// NTSC agnus or fat agnus
@@ -278,7 +315,7 @@ CST_Regs customChipRegisters[] =
 {"SERDATR",CST_READABLE},
 {"DSKBYTR",CST_READABLE},
 {"INTENAR",CST_READABLE|CST_SUPPORTED},
-{"INTREQR",CST_READABLE},
+{"INTREQR",CST_READABLE|CST_SUPPORTED},
 {"DSKPTH",CST_WRITEABLE},
 {"DSKPTL",CST_WRITEABLE},
 {"DSKLEN",CST_WRITEABLE},
@@ -341,7 +378,7 @@ CST_Regs customChipRegisters[] =
 {"DMACON",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteDMACON},
 {"CLXCON",CST_WRITEABLE},
 {"INTENA",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteINTENA},
-{"INTREQ",CST_WRITEABLE},
+{"INTREQ",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteINTREQ},
 {"ADKCON",CST_WRITEABLE},
 {"AUD0LCH",CST_WRITEABLE},
 {"AUD0LCL",CST_WRITEABLE},

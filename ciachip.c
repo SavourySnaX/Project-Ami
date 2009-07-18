@@ -9,9 +9,14 @@
  
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "config.h"
+
+#if !DISABLE_DISPLAY
 #include "SDL.h"
 
 #define __IGNORE_TYPES
+#endif
 #include "ciachip.h"
 
 typedef u_int8_t (*CIA_ReadMap)(u_int16_t reg);
@@ -142,6 +147,10 @@ void CIA_setByteICR(u_int16_t reg,u_int8_t byte)
 		value&=~byte;
 	}
 
+	printf("CIAA TIMER interrupts : CIAA %02X    CIAB %02X\n",ciaa_icr,ciab_icr);
+
+	printf("TOD ALARM : A %08X    B %08X\n",todAAlarm,todBAlarm);
+
 	if (reg&0x10)
 		ciab_icr=value;
 	else
@@ -163,7 +172,7 @@ void CIA_setByteCRA(u_int16_t reg,u_int8_t byte)
 	// UNUSED | SPMODE | INMODE | LOAD | RUNMODE | OUTMODE | PBON | START
 	
 	if (byte&0x01)
-		printf("Suspected Timer Start\n");
+		printf("Suspected Timer A Start %02X\n",byte);
 	ciaMemory[reg]=byte&0x7F;
 }
 
@@ -176,7 +185,7 @@ void CIA_setByteCRB(u_int16_t reg,u_int8_t byte)
 {
 	// ALARM | INMODE1 | INMODE0 | LOAD | RUNMODE | OUTMODE | PBON | START
 	if (byte&0x01)
-		printf("Suspected Timer Start\n");
+		printf("Suspected Timer B Start %02X\n",byte);
 	
 	ciaMemory[reg]=byte;
 }
