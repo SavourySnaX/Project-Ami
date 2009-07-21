@@ -258,6 +258,8 @@ void CST_setByteBLTSIZE(u_int16_t reg,u_int8_t byte)
 	if (reg&1)
 	{
 		// second byte set we should start a blitter operation here...
+		// Mark blitter as finished
+		//cstMemory[0x1F]|=0x40;
 
 		printf("[WRN] Blitter Is Being Used\n");
 

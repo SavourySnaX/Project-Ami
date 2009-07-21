@@ -18,6 +18,7 @@
 #define __IGNORE_TYPES
 #endif
 #include "ciachip.h"
+#include "customchip.h"
 
 typedef u_int8_t (*CIA_ReadMap)(u_int16_t reg);
 typedef void (*CIA_WriteMap)(u_int16_t reg,u_int8_t byte);
@@ -56,13 +57,76 @@ u_int32_t		todACntLatchR=0;
 u_int32_t		todBCntLatchR=0;
 u_int32_t		todAReadLatched=0;
 u_int32_t		todBReadLatched=0;
-u_int32_t		todAStart=1;
-u_int32_t		todBStart=1;
+u_int32_t		todAStart=0;
+u_int32_t		todBStart=0;
 u_int32_t		todACnt=0;
 u_int32_t		todBCnt=0;
 
+u_int16_t		aTBLatch=0xFFFF;
+u_int16_t		aTBCnt=0;
+u_int16_t		bTBLatch=0xFFFF;
+u_int16_t		bTBCnt=0;
+
+u_int16_t		timerSlow=0;
+
+extern u_int8_t		*cstMemory;
+
 void CIA_Update()
 {
+	timerSlow++;
+	
+	if (timerSlow>9)
+	{
+		timerSlow=0;
+		if (ciaMemory[0x1F]&0x01)
+		{
+			bTBCnt--;
+			if (bTBCnt==0xFFFF)
+			{
+				//Underflow occurred
+				if (ciaMemory[0x1F]&0x08)
+				{
+					ciaMemory[0x1F]&=~0x01;		// stop timer
+				}
+				else
+				{
+					// continous mode
+					bTBCnt=bTBLatch;
+				}
+				ciaMemory[0x1D]|=0x02;			// signal interrupt request (won't actually interrupt unless mask set however)
+/*				if (ciab_icr&0x02)
+				{
+					ciaMemory[0x1D]|=0x80;		// set IR bit
+					cstMemory[0x1F]|=0x08;		// set port interrupt
+				}*/
+			}
+		}
+		
+		if (ciaMemory[0x0F]&0x01)
+		{
+			printf("TBCnt %04X   TODCNT %08X\n",aTBCnt,todACnt);
+			aTBCnt--;
+			if (aTBCnt==0xFFFF)
+			{
+				//Underflow occurred
+				if (ciaMemory[0x0F]&0x08)
+				{
+					ciaMemory[0x0F]&=~0x01;		// stop timer
+				}
+				else
+				{
+					// continous mode
+					aTBCnt=aTBLatch;
+				}
+				ciaMemory[0x0D]|=0x02;			// signal interrupt request (won't actually interrupt unless mask set however)
+				if (ciaa_icr&0x02)
+				{
+					ciaMemory[0x0D]|=0x80;		// set IR bit
+					cstMemory[0x1F]|=0x08;		// set port interrupt
+				}
+			}
+		}
+	}
 }
 
 void CIA_setBytePRA(u_int16_t reg,u_int8_t byte)
@@ -173,7 +237,7 @@ void CIA_setByteCRA(u_int16_t reg,u_int8_t byte)
 	
 	if (byte&0x01)
 		printf("Suspected Timer A Start %02X\n",byte);
-	ciaMemory[reg]=byte&0x7F;
+	ciaMemory[reg]=byte&0x6F;
 }
 
 u_int8_t CIA_getByteCRA(u_int16_t reg)
@@ -187,7 +251,19 @@ void CIA_setByteCRB(u_int16_t reg,u_int8_t byte)
 	if (byte&0x01)
 		printf("Suspected Timer B Start %02X\n",byte);
 	
-	ciaMemory[reg]=byte;
+	if (byte&0x10)
+	{
+		if (reg&0x10)
+		{
+			bTBCnt=bTBLatch;
+		}
+		else
+		{
+			aTBCnt=aTBLatch;
+		}
+	}
+	
+	ciaMemory[reg]=byte&0xEF;
 }
 
 u_int8_t CIA_getByteCRB(u_int16_t reg)
@@ -234,6 +310,7 @@ u_int8_t CIA_getByteTODLO(u_int16_t reg)
 {
 	if (reg&0x10)
 	{
+		printf("Reading TODB\n");
 		if (todBReadLatched)
 		{
 			todBReadLatched=0;
@@ -296,6 +373,7 @@ u_int8_t CIA_getByteTODMED(u_int16_t reg)
 {
 	if (reg&0x10)
 	{
+		printf("Reading TODB\n");
 		if (todBReadLatched)
 		{
 			return (todBCntLatchR&0xFF00)>>8;
@@ -356,6 +434,7 @@ u_int8_t CIA_getByteTODHI(u_int16_t reg)
 {
 	if (reg&0x10)
 	{
+		printf("Reading TODB\n");
 		todBReadLatched=1;
 		todBCntLatchR=todBCnt;
 		if (todBReadLatched)
@@ -382,6 +461,82 @@ u_int8_t CIA_getByteTODHI(u_int16_t reg)
 	}
 }
 
+void CIA_setByteTBLO(u_int16_t reg,u_int8_t byte)
+{
+	u_int32_t rbyte = byte;
+
+	if (reg&0x10)
+	{
+		bTBLatch&=0xFF00;
+		bTBLatch|=rbyte;
+	}
+	else
+	{
+		aTBLatch&=0xFF00;
+		aTBLatch|=rbyte;
+	}
+}
+
+u_int8_t CIA_getByteTBLO(u_int16_t reg)
+{
+	if (reg&0x10)
+	{
+		return (bTBCnt&0x00FF);
+	}
+	else
+	{
+		return (aTBCnt&0x00FF);
+	}
+}
+
+void CIA_setByteTBHI(u_int16_t reg,u_int8_t byte)
+{
+	u_int32_t rbyte = byte;
+
+	if (reg&0x10)
+	{
+		bTBLatch&=0x00FF;
+		bTBLatch|=rbyte<<8;
+		if (!(ciaMemory[0x1F]&0x01))
+		{
+			bTBCnt=bTBLatch;
+			if (ciaMemory[0x1F]&0x08)
+			{
+				ciaMemory[0x1F]|=0x01;
+			}
+		}
+	}
+	else
+	{
+		aTBLatch&=0x00FF;
+		aTBLatch|=rbyte<<8;
+		if (!(ciaMemory[0x0F]&0x01))
+		{
+			aTBCnt=aTBLatch;
+			if (ciaMemory[0x0F]&0x08)
+			{
+				ciaMemory[0x0F]|=0x01;
+			}
+		}
+	}
+}
+
+extern int startDebug;
+
+u_int8_t CIA_getByteTBHI(u_int16_t reg)
+{
+	if (reg&0x10)
+	{
+		return (bTBCnt&0xFF00)>>8;
+	}
+	else
+	{
+//		startDebug=1;
+		return (aTBCnt&0xFF00)>>8;
+	}
+}
+
+
 
 CIA_Regs ciaChipRegisters[] =
 {
@@ -391,8 +546,8 @@ CIA_Regs ciaChipRegisters[] =
 {"A_DDRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteDDRB,CIA_setByteDDRB},
 {"A_TALO",CIA_READABLE|CIA_WRITEABLE},
 {"A_TAHI",CIA_READABLE|CIA_WRITEABLE},
-{"A_TBLO",CIA_READABLE|CIA_WRITEABLE},
-{"A_TBHI",CIA_READABLE|CIA_WRITEABLE},
+{"A_TBLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBLO,CIA_setByteTBLO},
+{"A_TBHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBHI,CIA_setByteTBHI},
 {"A_TODLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODLO,CIA_setByteTODLO},
 {"A_TODMID",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODMED,CIA_setByteTODMED},
 {"A_TODHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODHI,CIA_setByteTODHI},
@@ -408,8 +563,8 @@ CIA_Regs ciaChipRegisters[] =
 {"B_DDRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteDDRB,CIA_setByteDDRB},
 {"B_TALO",CIA_READABLE|CIA_WRITEABLE},
 {"B_TAHI",CIA_READABLE|CIA_WRITEABLE},
-{"B_TBLO",CIA_READABLE|CIA_WRITEABLE},
-{"B_TBHI",CIA_READABLE|CIA_WRITEABLE},
+{"B_TBLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBLO,CIA_setByteTBLO},
+{"B_TBHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBHI,CIA_setByteTBHI},
 {"B_TODLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODLO,CIA_setByteTODLO},
 {"B_TODMID",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODMED,CIA_setByteTODMED},
 {"B_TODHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODHI,CIA_setByteTODHI},

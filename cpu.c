@@ -6125,7 +6125,7 @@ void CPU_Step()
 	
     // DEBUGGER
 
-	if (cpu_regs.PC == 0xfc6d6c)
+	if (cpu_regs.PC == 0xfe8f8e)
 	{
 		startDebug=0;
 	}
