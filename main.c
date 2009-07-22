@@ -26,6 +26,7 @@
 #include "customchip.h"
 #include "ciachip.h"
 #include "copper.h"
+#include "blitter.h"
 
 int decrpyt_rom()
 {
@@ -184,6 +185,7 @@ int main(int argc,char **argv)
 	CST_InitialiseCustom();
 	CPR_InitialiseCopper();
 	CIA_InitialiseCustom();
+	BLT_InitialiseBlitter();
 
     CPU_Reset();
     
@@ -211,6 +213,7 @@ int main(int argc,char **argv)
 		    CST_Update();
 		    CPR_Update();
 		    CIA_Update();
+			BLT_Update();
 		    CPU_Step();
 
 #if !DISABLE_DISPLAY		    

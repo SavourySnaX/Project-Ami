@@ -57,8 +57,8 @@ u_int32_t		todACntLatchR=0;
 u_int32_t		todBCntLatchR=0;
 u_int32_t		todAReadLatched=0;
 u_int32_t		todBReadLatched=0;
-u_int32_t		todAStart=0;
-u_int32_t		todBStart=0;
+u_int32_t		todAStart=1;
+u_int32_t		todBStart=1;
 u_int32_t		todACnt=0;
 u_int32_t		todBCnt=0;
 
@@ -104,7 +104,7 @@ void CIA_Update()
 		
 		if (ciaMemory[0x0F]&0x01)
 		{
-			printf("TBCnt %04X   TODCNT %08X\n",aTBCnt,todACnt);
+//			printf("TBCnt %04X   TODCNT %08X\n",aTBCnt,todACnt);
 			aTBCnt--;
 			if (aTBCnt==0xFFFF)
 			{
@@ -211,10 +211,10 @@ void CIA_setByteICR(u_int16_t reg,u_int8_t byte)
 		value&=~byte;
 	}
 
-	printf("CIAA TIMER interrupts : CIAA %02X    CIAB %02X\n",ciaa_icr,ciab_icr);
+/*	printf("CIAA TIMER interrupts : CIAA %02X    CIAB %02X\n",ciaa_icr,ciab_icr);
 
 	printf("TOD ALARM : A %08X    B %08X\n",todAAlarm,todBAlarm);
-
+*/
 	if (reg&0x10)
 		ciab_icr=value;
 	else

@@ -68,20 +68,27 @@ void CPR_Update()
 			if (cstMemory[0x8D]&0x01)
 			{
 				// doing a skip or wait
-				
 				wrd = MEM_getWord(copperPC);
 
 				if (!(wrd&0x01))
 				{
+					int bltFinished = 1;
 					// doing a wait
 					u_int8_t vpos=cstMemory[0x8C]&0xFF;
 					u_int8_t hpos=cstMemory[0x8D]&0xFE;
+					u_int8_t maskv;
+					u_int8_t maskh;
 					
-					vpos&=wrd>>8;
-					hpos&=wrd&0xFF;
-
+					if (!(wrd&0x8000))
+					{
+						bltFinished = !(cstMemory[0x02]&0x40);
+					}
+					
+					maskv=0x80|((wrd>>8)&0x7F);
+					maskh=(wrd&0xFE);
+					
 //					printf("Copper Wait %02x%02x:%04x\n",cstMemory[0x8C],cstMemory[0x8D],wrd);
-					if ((verticalClock&0xFF)>vpos || ((verticalClock&0xFF)==vpos && (horizontalClock&0xFF)>=hpos))
+					if (bltFinished && ((verticalClock&maskv)>vpos || ((verticalClock&maskv)==vpos && (horizontalClock&maskh)>=hpos)))
 					{
 //		printf("COPPERLIST: WAIT %08X %04X\n",copperPC,MEM_getWord(copperPC));
 						copperPC+=2;
@@ -95,8 +102,30 @@ void CPR_Update()
 				{
 //		printf("COPPERLIST: SKIP %08X %04X\n",copperPC,MEM_getWord(copperPC));
 					// doing a skip
-					printf("Copper Skip:\n");
-					copperPC+=2;
+					int bltFinished = 1;
+
+					u_int8_t vpos=cstMemory[0x8C]&0xFF;
+					u_int8_t hpos=cstMemory[0x8D]&0xFE;
+					u_int8_t maskv;
+					u_int8_t maskh;
+					
+					if (!(wrd&0x8000))
+					{
+						bltFinished = !(cstMemory[0x02]&0x40);
+					}
+					
+					maskv=0x80|((wrd>>8)&0x7F);
+					maskh=(wrd&0xFE);
+					
+//					printf("Copper Wait %02x%02x:%04x\n",cstMemory[0x8C],cstMemory[0x8D],wrd);
+					if (bltFinished && ((verticalClock&maskv)>vpos || ((verticalClock&maskv)==vpos && (horizontalClock&maskh)>=hpos)))
+					{
+						copperPC+=6;		// skip next instruction
+					}
+					else
+					{
+						copperPC+=2;
+					}
 				}
 			}
 			else

@@ -2,6 +2,8 @@
 #ifndef __mytypes_h
 #define __mytypes_h
 
+#define SOFT_BREAK	{ char* bob=0; 	*bob=0; }
+
 #ifndef __IGNORE_TYPES
 #ifndef _INT8_T
 #define _INT8_T 

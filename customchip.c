@@ -20,6 +20,7 @@
 
 #include "customchip.h"
 #include "ciachip.h"
+#include "blitter.h"
 
 typedef u_int8_t (*CST_ReadMap)(u_int16_t reg);
 typedef void (*CST_WriteMap)(u_int16_t reg,u_int8_t byte);
@@ -179,7 +180,7 @@ void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)
 		}
 	}
 
-	printf("INTENAR : %02X%02X\n",cstMemory[0x1C],cstMemory[0x1D]);
+//	printf("INTENAR : %02X%02X\n",cstMemory[0x1C],cstMemory[0x1D]);
 }
 
 void CST_setByteINTREQ(u_int16_t reg,u_int8_t byte)
@@ -200,7 +201,7 @@ void CST_setByteINTREQ(u_int16_t reg,u_int8_t byte)
 			cstMemory[0x1F] &= ~(cstMemory[0x9D]);
 		}
 	}
-	printf("INTREQR : %02X%02X\n",cstMemory[0x1E],cstMemory[0x1F]);
+//	printf("INTREQR : %02X%02X\n",cstMemory[0x1E],cstMemory[0x1F]);
 }
 
 #define AGNUS_ID		0					// NTSC agnus or fat agnus
@@ -243,7 +244,7 @@ void CST_setByteDMACON(u_int16_t reg,u_int8_t byte)
 			cstMemory[0x2] |= cstMemory[0x96]&0x07;
 			cstMemory[0x3] |= cstMemory[0x97];
 		}
-		else							// need to mask of the set bits
+		else							// need to mask off the set bits
 		{
 			cstMemory[0x2] &= ~(cstMemory[0x96]);
 			cstMemory[0x3] &= ~(cstMemory[0x97]);
@@ -257,45 +258,40 @@ void CST_setByteBLTSIZE(u_int16_t reg,u_int8_t byte)
 	
 	if (reg&1)
 	{
-		// second byte set we should start a blitter operation here...
-		// Mark blitter as finished
-		//cstMemory[0x1F]|=0x40;
+		BLT_StartBlit();
+	}
+}
 
-		printf("[WRN] Blitter Is Being Used\n");
+extern int startDebug;
 
-		printf("Blitter Registers : BLTAFWM : %02X%02X\n",cstMemory[0x44],cstMemory[0x45]);
-		printf("Blitter Registers : BLTALWM : %02X%02X\n",cstMemory[0x46],cstMemory[0x47]);
-		printf("Blitter Registers : BLTCON0 : %02X%02X\n",cstMemory[0x40],cstMemory[0x41]);
-		printf("Blitter Registers : BLTCON1 : %02X%02X\n",cstMemory[0x42],cstMemory[0x43]);
-		printf("Blitter Registers : BLTSIZE : %02X%02X\n",cstMemory[0x58],cstMemory[0x59]);
-		printf("Blitter Registers : BLTADAT : %02X%02X\n",cstMemory[0x74],cstMemory[0x75]);
-		printf("Blitter Registers : BLTBDAT : %02X%02X\n",cstMemory[0x72],cstMemory[0x73]);
-		printf("Blitter Registers : BLTCDAT : %02X%02X\n",cstMemory[0x70],cstMemory[0x71]);
-		printf("Blitter Registers : BLTDDAT : %02X%02X\n",cstMemory[0x00],cstMemory[0x01]);
-		printf("Blitter Registers : BLTAMOD : %02X%02X\n",cstMemory[0x64],cstMemory[0x65]);
-		printf("Blitter Registers : BLTBMOD : %02X%02X\n",cstMemory[0x62],cstMemory[0x63]);
-		printf("Blitter Registers : BLTCMOD : %02X%02X\n",cstMemory[0x60],cstMemory[0x61]);
-		printf("Blitter Registers : BLTDMOD : %02X%02X\n",cstMemory[0x66],cstMemory[0x67]);
-		printf("Blitter Registers : BLTAPTH : %02X%02X\n",cstMemory[0x50],cstMemory[0x51]);
-		printf("Blitter Registers : BLTAPTL : %02X%02X\n",cstMemory[0x52],cstMemory[0x53]);
-		printf("Blitter Registers : BLTBPTH : %02X%02X\n",cstMemory[0x4C],cstMemory[0x4D]);
-		printf("Blitter Registers : BLTBPTL : %02X%02X\n",cstMemory[0x4E],cstMemory[0x4F]);
-		printf("Blitter Registers : BLTCPTH : %02X%02X\n",cstMemory[0x48],cstMemory[0x49]);
-		printf("Blitter Registers : BLTCPTL : %02X%02X\n",cstMemory[0x4A],cstMemory[0x4B]);
-		printf("Blitter Registers : BLTDPTH : %02X%02X\n",cstMemory[0x54],cstMemory[0x55]);
-		printf("Blitter Registers : BLTDPTL : %02X%02X\n",cstMemory[0x56],cstMemory[0x57]);
+u_int8_t CST_getByteJOY0DAT(u_int16_t reg)
+{
+//	startDebug = 1;
+	return 0x7F;				// reckon this is mickeys 7F being centered
+//	return cstMemory[reg];
+}
 
-/*		if (cstMemory[0x96] & 0x80)		// need to or in the set bits
+void CST_setBytePOTGO(u_int16_t reg,u_int8_t byte)
+{
+	cstMemory[reg]=byte;
+	
+	if (reg&1)
+	{
+		// | 0 | 0 | 0 | 0 | 0 | 0 | 0 | START
+		cstMemory[0x17]=0x00;					// PAULA ID = 0
+	}
+	else
+	{
+		// | OUTRY | DATRY | OUTRX | DATRX | OUTLY | DATLY | OUTLX | DATLX
+		cstMemory[0x16]=0x00;
+		if ((byte&0x0C)==0x0C)	// check mouse right button
 		{
-			cstMemory[0x2] |= cstMemory[0x96]&0x07;
-			cstMemory[0x3] |= cstMemory[0x97];
+			cstMemory[0x16]|=0x04;			// Note bit set means not pressed!
 		}
-		else							// need to mask of the set bits
+		if ((byte&0x03)==0x03)	// check mouse left button
 		{
-			cstMemory[0x2] &= ~(cstMemory[0x96]);
-			cstMemory[0x3] &= ~(cstMemory[0x97]);
+			cstMemory[0x16]|=0x01;			// Note bit set means not pressed!
 		}
-*/
 	}
 }
 
@@ -307,13 +303,13 @@ CST_Regs customChipRegisters[] =
 {"VPOSR",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteVPOSR,0},
 {"VHPOSR",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteVHPOSR,0},
 {"DSKDATR",CST_READABLE},
-{"JOY0DAT",CST_READABLE},
+{"JOY0DAT",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteJOY0DAT,0},
 {"JOY1DAT",CST_READABLE},
 {"CLXDAT",CST_READABLE},
 {"ADKCONR",CST_READABLE},
 {"POT0DAT",CST_READABLE},
 {"POT1DAT",CST_READABLE},
-{"POTGOR",CST_READABLE},
+{"POTGOR",CST_READABLE|CST_SUPPORTED},
 {"SERDATR",CST_READABLE},
 {"DSKBYTR",CST_READABLE},
 {"INTENAR",CST_READABLE|CST_SUPPORTED},
@@ -328,51 +324,51 @@ CST_Regs customChipRegisters[] =
 {"COPCON",CST_WRITEABLE},
 {"SERDAT",CST_WRITEABLE},
 {"SERPER",CST_WRITEABLE},
-{"POTGO",CST_WRITEABLE},
+{"POTGO",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setBytePOTGO},
 {"JOYTEST",CST_WRITEABLE},
 {"STREQU",CST_STROBEABLE},
 {"STRVBL",CST_STROBEABLE},
 {"STRHOR",CST_STROBEABLE},
 {"STRLONG",CST_STROBEABLE},
-{"BLTCON0",CST_WRITEABLE},
-{"BLTCON1",CST_WRITEABLE},
-{"BLTAFWM",CST_WRITEABLE},
-{"BLTALWM",CST_WRITEABLE},
-{"BLTCPTH",CST_WRITEABLE},
-{"BLTCPTL",CST_WRITEABLE},
-{"BLTBPTH",CST_WRITEABLE},
-{"BLTBPTL",CST_WRITEABLE},
-{"BLTAPTH",CST_WRITEABLE},
-{"BLTAPTL",CST_WRITEABLE},
-{"BLTDPTH",CST_WRITEABLE},
-{"BLTDPTL",CST_WRITEABLE},
+{"BLTCON0",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTCON1",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTAFWM",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTALWM",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTCPTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTCPTL",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTBPTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTBPTL",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTAPTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTAPTL",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTDPTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTDPTL",CST_WRITEABLE|CST_SUPPORTED},
 {"BLTSIZE",CST_WRITEABLE|CST_FUNCTION|CST_SUPPORTED,0,CST_setByteBLTSIZE},
 {"05A(ECS)",0},
 {"05C(ECS)",0},
 {"05E(ECS)",0},
-{"BLTCMOD",CST_WRITEABLE},
-{"BLTBMOD",CST_WRITEABLE},
-{"BLTAMOD",CST_WRITEABLE},
-{"BLTDMOD",CST_WRITEABLE},
+{"BLTCMOD",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTBMOD",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTAMOD",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTDMOD",CST_WRITEABLE|CST_SUPPORTED},
 {"068",0},
 {"06A",0},
 {"06C",0},
 {"06E",0},
-{"BLTCDAT",CST_WRITEABLE},
-{"BLTBDAT",CST_WRITEABLE},
-{"BLTADAT",CST_WRITEABLE},
+{"BLTCDAT",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTBDAT",CST_WRITEABLE|CST_SUPPORTED},
+{"BLTADAT",CST_WRITEABLE|CST_SUPPORTED},
 {"076",0},
 {"SPRHDAT",CST_WRITEABLE},
 {"07A",0},
 {"07C(ECS)",0},
 {"DSKSYNC",CST_WRITEABLE},
-{"COP1LCH",CST_WRITEABLE},
-{"COP1LCL",CST_WRITEABLE},
-{"COP2LCH",CST_WRITEABLE},
-{"COP2LCL",CST_WRITEABLE},
+{"COP1LCH",CST_WRITEABLE|CST_SUPPORTED},
+{"COP1LCL",CST_WRITEABLE|CST_SUPPORTED},
+{"COP2LCH",CST_WRITEABLE|CST_SUPPORTED},
+{"COP2LCL",CST_WRITEABLE|CST_SUPPORTED},
 {"COPJMP1",CST_STROBEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteCOPJMP1},
 {"COPJMP2",CST_STROBEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteCOPJMP2},
-{"COPINS",CST_WRITEABLE},
+{"COPINS",CST_WRITEABLE|CST_SUPPORTED},
 {"DIWSTRT",CST_WRITEABLE},
 {"DIWSTOP",CST_WRITEABLE},
 {"DDFSTRT",CST_WRITEABLE},
@@ -494,38 +490,38 @@ CST_Regs customChipRegisters[] =
 {"SPR7CTL",CST_WRITEABLE},
 {"SPR7DATA",CST_WRITEABLE},
 {"SPR7DATB",CST_WRITEABLE},
-{"COLOR00",CST_WRITEABLE},
-{"COLOR01",CST_WRITEABLE},
-{"COLOR02",CST_WRITEABLE},
-{"COLOR03",CST_WRITEABLE},
-{"COLOR04",CST_WRITEABLE},
-{"COLOR05",CST_WRITEABLE},
-{"COLOR06",CST_WRITEABLE},
-{"COLOR07",CST_WRITEABLE},
-{"COLOR08",CST_WRITEABLE},
-{"COLOR09",CST_WRITEABLE},
-{"COLOR10",CST_WRITEABLE},
-{"COLOR11",CST_WRITEABLE},
-{"COLOR12",CST_WRITEABLE},
-{"COLOR13",CST_WRITEABLE},
-{"COLOR14",CST_WRITEABLE},
-{"COLOR15",CST_WRITEABLE},
-{"COLOR16",CST_WRITEABLE},
-{"COLOR17",CST_WRITEABLE},
-{"COLOR18",CST_WRITEABLE},
-{"COLOR19",CST_WRITEABLE},
-{"COLOR20",CST_WRITEABLE},
-{"COLOR21",CST_WRITEABLE},
-{"COLOR22",CST_WRITEABLE},
-{"COLOR23",CST_WRITEABLE},
-{"COLOR24",CST_WRITEABLE},
-{"COLOR25",CST_WRITEABLE},
-{"COLOR26",CST_WRITEABLE},
-{"COLOR27",CST_WRITEABLE},
-{"COLOR28",CST_WRITEABLE},
-{"COLOR29",CST_WRITEABLE},
-{"COLOR30",CST_WRITEABLE},
-{"COLOR31",CST_WRITEABLE},
+{"COLOR00",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR01",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR02",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR03",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR04",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR05",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR06",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR07",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR08",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR09",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR10",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR11",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR12",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR13",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR14",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR15",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR16",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR17",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR18",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR19",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR20",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR21",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR22",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR23",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR24",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR25",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR26",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR27",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR28",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR29",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR30",CST_WRITEABLE|CST_SUPPORTED},
+{"COLOR31",CST_WRITEABLE|CST_SUPPORTED},
 {"",CST_END},
 };
 

@@ -23,6 +23,8 @@
 		387E77CA1014DF2100662C8C /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = 002F3A2C09D0888800EBEB88 /* SDLMain.m */; };
 		387E77CE1014DF3700662C8C /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97324FDCFA39411CA2CEA /* AppKit.framework */; };
 		387E77CF1014DF3800662C8C /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		3884A0F81016208B000A22B4 /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 3884A0F71016208B000A22B4 /* blitter.c */; };
+		3884A1B1101658CE000A22B4 /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 3884A0F71016208B000A22B4 /* blitter.c */; };
 		38EA7B6310107B67006C83D9 /* copper.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5910107B67006C83D9 /* copper.c */; };
 		38EA7B6410107B67006C83D9 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5B10107B67006C83D9 /* cpu.c */; };
 		38EA7B6510107B67006C83D9 /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5D10107B67006C83D9 /* customchip.c */; };
@@ -66,6 +68,8 @@
 		32CA4F630368D1EE00C91783 /* ami_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ami_Prefix.pch; sourceTree = "<group>"; };
 		387E77C71014DEFC00662C8C /* ami.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ami.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		387E77C91014DEFC00662C8C /* Info copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info copy.plist"; sourceTree = "<group>"; };
+		3884A0F61016208B000A22B4 /* blitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blitter.h; sourceTree = "<group>"; };
+		3884A0F71016208B000A22B4 /* blitter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = blitter.c; sourceTree = "<group>"; };
 		38EA7B5710107B67006C83D9 /* ciachip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ciachip.c; sourceTree = "<group>"; };
 		38EA7B5810107B67006C83D9 /* ciachip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciachip.h; sourceTree = "<group>"; };
 		38EA7B5910107B67006C83D9 /* copper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = copper.c; sourceTree = "<group>"; };
@@ -167,6 +171,8 @@
 				38EA7B6110107B67006C83D9 /* mytypes.h */,
 				32CA4F630368D1EE00C91783 /* ami_Prefix.pch */,
 				002F3A3E09D088BA00EBEB88 /* main.c */,
+				3884A0F61016208B000A22B4 /* blitter.h */,
+				3884A0F71016208B000A22B4 /* blitter.c */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -283,6 +289,7 @@
 				387E77BD1014DEFC00662C8C /* memory.c in Sources */,
 				387E77BE1014DEFC00662C8C /* ciachip.c in Sources */,
 				387E77CA1014DF2100662C8C /* SDLMain.m in Sources */,
+				3884A1B1101658CE000A22B4 /* blitter.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,6 +303,7 @@
 				38EA7B6510107B67006C83D9 /* customchip.c in Sources */,
 				38EA7B6610107B67006C83D9 /* memory.c in Sources */,
 				387E77AE1014DDE900662C8C /* ciachip.c in Sources */,
+				3884A0F81016208B000A22B4 /* blitter.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -22,8 +22,6 @@
 #include "memory.h"
 #include "customchip.h"
 
-#define SOFT_BREAK	{ char* bob=0; 	*bob=0; }
-
 extern u_int8_t	*cstMemory;
 
 CPU_Regs cpu_regs;
@@ -2642,18 +2640,21 @@ void CPU_SUBQ(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 			{
 				case 1:
 					eat=MEM_getByte(ead);
-					ear=(ead - eas)&zMask;
+					ear=(eat - eas)&zMask;
 					MEM_setByte(ead,ear);
+					ead=eat;
 					break;
 				case 2:
 					eat=MEM_getWord(ead);
-					ear=(ead - eas)&zMask;
+					ear=(eat - eas)&zMask;
 					MEM_setWord(ead,ear);
+					ead=eat;
 					break;
 				case 4:
 					eat=MEM_getLong(ead);
-					ear=(ead - eas)&zMask;
+					ear=(eat - eas)&zMask;
 					MEM_setLong(ead,ear);
+					ead=eat;
 					break;
 			}
 		}
@@ -3855,18 +3856,21 @@ void CPU_ADDQ(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 			{
 				case 1:
 					eat=MEM_getByte(ead);
-					ear=(ead + eas)&zMask;
+					ear=(eat + eas)&zMask;
 					MEM_setByte(ead,ear);
+					ead=eat;
 					break;
 				case 2:
 					eat=MEM_getWord(ead);
-					ear=(ead + eas)&zMask;
+					ear=(eat + eas)&zMask;
 					MEM_setWord(ead,ear);
+					ead=eat;
 					break;
 				case 4:
 					eat=MEM_getLong(ead);
-					ear=(ead + eas)&zMask;
+					ear=(eat + eas)&zMask;
 					MEM_setLong(ead,ear);
+					ead=eat;
 					break;
 			}
 		}
@@ -4517,11 +4521,11 @@ void CPU_EXT(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 	cpu_regs.D[op2]&=~zMask;
 	cpu_regs.D[op2]|=ead;
 	
-	if (cpu_regs.D[op4] & nMask)
+	if (cpu_regs.D[op2] & nMask)
 		cpu_regs.SR|=CPU_STATUS_N;
     else
 		cpu_regs.SR&=~CPU_STATUS_N;
-    if (cpu_regs.D[op4] & zMask)
+    if (cpu_regs.D[op2] & zMask)
 		cpu_regs.SR&=~CPU_STATUS_Z;
     else
 		cpu_regs.SR|=CPU_STATUS_Z;
@@ -6030,7 +6034,7 @@ void CPU_CheckForInterrupt()
 		// Disk Sync
 		// RBF serial port recieve buffer full
 		//
-		if (cstMemory[0x1E]&0x18)
+		if (cstMemory[0x1E]&cstMemory[0x1C]&0x18)
 		{
 			CPU_GENERATE_EXCEPTION(0x74);
 			cpu_regs.SR&=0xF8FF;
@@ -6047,7 +6051,7 @@ void CPU_CheckForInterrupt()
 		// AUD1
 		// AUD0
 		//
-		if ((cstMemory[0x1E]&0x07) || (cstMemory[0x1F]&0x80))
+		if ((cstMemory[0x1E]&cstMemory[0x1C]&0x07) || (cstMemory[0x1F]&cstMemory[0x1D]&0x80))
 		{
 			CPU_GENERATE_EXCEPTION(0x70);
 			cpu_regs.SR&=0xF8FF;
@@ -6063,7 +6067,7 @@ void CPU_CheckForInterrupt()
 		// Start of VBL
 		// Copper
 		//
-		if ((cstMemory[0x1F]&0x70))
+		if ((cstMemory[0x1F]&cstMemory[0x1D]&0x70))
 		{
 			CPU_GENERATE_EXCEPTION(0x6C);
 			cpu_regs.SR&=0xF8FF;
@@ -6077,7 +6081,7 @@ void CPU_CheckForInterrupt()
 		// Level 2
 		// IO ports and timers
 		//
-		if ((cstMemory[0x1F]&0x08))
+		if ((cstMemory[0x1F]&cstMemory[0x1D]&0x08))
 		{
 			CPU_GENERATE_EXCEPTION(0x68);
 			cpu_regs.SR&=0xF8FF;
@@ -6093,12 +6097,13 @@ void CPU_CheckForInterrupt()
 		// DSKBLK
 		// TBE
 		//
-		if ((cstMemory[0x1F]&0x07))
+		if ((cstMemory[0x1F]&cstMemory[0x1D]&0x07))
 		{
 			CPU_GENERATE_EXCEPTION(0x64);
 			cpu_regs.SR&=0xF8FF;
 			cpu_regs.SR|=0x0100;
 			cpuStopped=0;
+			startDebug=1;
 			return;
 		}
 	}
@@ -6125,11 +6130,11 @@ void CPU_Step()
 	
     // DEBUGGER
 
-	if (cpu_regs.PC == 0xfe8f8e)
+/*	if (cpu_regs.PC == 0xfc1f20)
 	{
-		startDebug=0;
+		startDebug=1;
 	}
-
+*/
 	if (startDebug)
 	{	
 		DumpEmulatorState();
