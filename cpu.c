@@ -259,6 +259,10 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 		case 0x1D:
 		case 0x1E:
 		case 0x1F:
+			if ((operand==0x1F) && (length==1))
+			{
+				printf("BIZZARE\n");
+			}
 			ea = cpu_regs.A[operand-0x18];
 			cpu_regs.A[operand-0x18]+=length;
 			break;
@@ -270,6 +274,10 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 		case 0x25:
 		case 0x26:
 		case 0x27:
+			if ((operand==0x27) && (length==1))
+			{
+				printf("BIZZARE\n");
+			}
 			cpu_regs.A[operand-0x20]-=length;
 			ea = cpu_regs.A[operand-0x20];
 			break;
@@ -3535,6 +3543,7 @@ void CPU_MOVEMd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_
 	{
 		ear = 15;
 		ead+=len;
+		cpu_regs.A[op2-0x20]+=len;
 		while (eas)
 		{
 			if (eas & 0x01)
@@ -6103,11 +6112,14 @@ void CPU_CheckForInterrupt()
 			cpu_regs.SR&=0xF8FF;
 			cpu_regs.SR|=0x0100;
 			cpuStopped=0;
-			startDebug=1;
+//			startDebug=1;
 			return;
 		}
 	}
-}	
+}
+
+u_int32_t lastPC;
+int readyToTrap=0;	
 
 void CPU_Step()
 {
@@ -6117,6 +6129,8 @@ void CPU_Step()
 
     CPU_CheckForInterrupt();
 
+	lastPC=cpu_regs.PC;
+	
     opcode = MEM_getWord(cpu_regs.PC);
     
     if (CPU_Information[opcode])
@@ -6130,11 +6144,15 @@ void CPU_Step()
 	
     // DEBUGGER
 
-/*	if (cpu_regs.PC == 0xfc1f20)
+	if (cpu_regs.PC == 0xfc090e)
 	{
-		startDebug=1;
+		static once=0;
+		if (once==3)
+			startDebug=1;
+		else
+			once++;
 	}
-*/
+
 	if (startDebug)
 	{	
 		DumpEmulatorState();
@@ -6152,4 +6170,18 @@ void CPU_Step()
 	{
 		CPU_JumpTable[opcode](operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
 	}
+/*
+	if (MEM_getLong(0x6c)==0)
+	{
+		if (readyToTrap)
+		{
+			startDebug=1;
+			printf("Last PC %08X\n",lastPC);
+		}
+	}
+	else
+	{
+		readyToTrap=1;
+	}*/
 }
+
