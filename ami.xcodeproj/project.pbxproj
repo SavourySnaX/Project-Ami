@@ -10,6 +10,10 @@
 		002F39FA09D0881F00EBEB88 /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 002F39F909D0881F00EBEB88 /* SDL.framework */; };
 		002F3A3F09D088BA00EBEB88 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 002F3A3E09D088BA00EBEB88 /* main.c */; };
 		002F3AF109D08F1000EBEB88 /* SDLMain.nib in Resources */ = {isa = PBXBuildFile; fileRef = 002F3AEF09D08F1000EBEB88 /* SDLMain.nib */; };
+		38025D8E101CD7DE00589437 /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = 002F3A2C09D0888800EBEB88 /* SDLMain.m */; };
+		38025D91101CD82000589437 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97325FDCFA39411CA2CEA /* Foundation.framework */; };
+		38025D92101CD82800589437 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		38025D93101CD82B00589437 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97324FDCFA39411CA2CEA /* AppKit.framework */; };
 		387E77AE1014DDE900662C8C /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5710107B67006C83D9 /* ciachip.c */; };
 		387E77B61014DEFC00662C8C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		387E77B71014DEFC00662C8C /* SDLMain.nib in Resources */ = {isa = PBXBuildFile; fileRef = 002F3AEF09D08F1000EBEB88 /* SDLMain.nib */; };
@@ -101,6 +105,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				002F39FA09D0881F00EBEB88 /* SDL.framework in Frameworks */,
+				38025D91101CD82000589437 /* Foundation.framework in Frameworks */,
+				38025D92101CD82800589437 /* Cocoa.framework in Frameworks */,
+				38025D93101CD82B00589437 /* AppKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,6 +311,7 @@
 				38EA7B6610107B67006C83D9 /* memory.c in Sources */,
 				387E77AE1014DDE900662C8C /* ciachip.c in Sources */,
 				3884A0F81016208B000A22B4 /* blitter.c in Sources */,
+				38025D8E101CD7DE00589437 /* SDLMain.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

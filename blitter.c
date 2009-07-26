@@ -57,8 +57,8 @@ u_int16_t BLT_GetNextBltSource(u_int8_t useMask,u_int8_t bltPtrStart,u_int8_t bl
 		
 		cstMemory[bltPtrStart]=(bltAAddress>>24)&0x00;
 		cstMemory[bltPtrStart+1]=(bltAAddress>>16)&0x07;
-		cstMemory[bltPtrStart+2]=(bltAAddress>>24)&0xFF;
-		cstMemory[bltPtrStart+3]=(bltAAddress>>16)&0xFE;
+		cstMemory[bltPtrStart+2]=(bltAAddress>>8)&0xFF;
+		cstMemory[bltPtrStart+3]=(bltAAddress>>0)&0xFE;
 	}
 						
 	return (((u_int16_t)cstMemory[bltDataStart])<<8) | cstMemory[bltDataStart+1];
@@ -84,8 +84,8 @@ void BLT_SetDest(u_int16_t bltD,u_int8_t bltPtrStart,u_int8_t bltDataStart,u_int
 		
 		cstMemory[bltPtrStart]=(bltAAddress>>24)&0x00;
 		cstMemory[bltPtrStart+1]=(bltAAddress>>16)&0x07;
-		cstMemory[bltPtrStart+2]=(bltAAddress>>24)&0xFF;
-		cstMemory[bltPtrStart+3]=(bltAAddress>>16)&0xFE;
+		cstMemory[bltPtrStart+2]=(bltAAddress>>8)&0xFF;
+		cstMemory[bltPtrStart+3]=(bltAAddress>>0)&0xFE;
 	}
 }
 
@@ -98,14 +98,20 @@ void BLT_Update()
 		if (cstMemory[0x43]&0x01)
 		{
 			printf("Blitter In Line Mode (unsupported)\n");
-			SOFT_BREAK;
+								bltStart=0;
+								cstMemory[0x1F]|=0x40;			// set interrupt blitter finished
+								cstMemory[0x02]&=~(0x40);		// Clear busy
+			//SOFT_BREAK;
 		}
 		else
 		{
 			if (cstMemory[0x43]&0x02)
 			{
 				printf("Blitter In Descending Mode (unsupported)\n");
-				SOFT_BREAK;
+								bltStart=0;
+								cstMemory[0x1F]|=0x40;			// set interrupt blitter finished
+								cstMemory[0x02]&=~(0x40);		// Clear busy
+//				SOFT_BREAK;
 			}
 			else
 			{
@@ -119,7 +125,10 @@ void BLT_Update()
 					if ( (cstMemory[0x42]&0xF0) || (cstMemory[0x40]&0xF0) )
 					{
 						printf("Blitter Using Shift (unsupported)\n");
-						SOFT_BREAK;
+								bltStart=0;
+								cstMemory[0x1F]|=0x40;			// set interrupt blitter finished
+								cstMemory[0x02]&=~(0x40);		// Clear busy
+//						SOFT_BREAK;
 					}
 					else
 					{
@@ -222,7 +231,7 @@ void BLT_StartBlit()
 			bltHeight=1024;
 		bltZero=1;
 		bltStart=1;
-/*		
+		
 		printf("[WRN] Blitter Is Being Used\n");
 
 		printf("Blitter Registers : BLTAFWM : %02X%02X\n",cstMemory[0x44],cstMemory[0x45]);
@@ -246,5 +255,5 @@ void BLT_StartBlit()
 		printf("Blitter Registers : BLTCPTL : %02X%02X\n",cstMemory[0x4A],cstMemory[0x4B]);
 		printf("Blitter Registers : BLTDPTH : %02X%02X\n",cstMemory[0x54],cstMemory[0x55]);
 		printf("Blitter Registers : BLTDPTL : %02X%02X\n",cstMemory[0x56],cstMemory[0x57]);
-*/
+
 }

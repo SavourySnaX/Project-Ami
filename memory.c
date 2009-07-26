@@ -64,6 +64,10 @@ u_int8_t MEM_getByte(u_int32_t address)
 u_int16_t MEM_getWord(u_int32_t address)
 {
 	u_int16_t retVal;
+	if (address&1)
+	{
+		SOFT_BREAK;
+	}
 	retVal = MEM_getByte(address)<<8;
 	retVal|= MEM_getByte(address+1);
 	
@@ -73,6 +77,10 @@ u_int16_t MEM_getWord(u_int32_t address)
 u_int32_t MEM_getLong(u_int32_t address)
 {
 	u_int32_t retVal;
+	if (address&1)
+	{
+		SOFT_BREAK;
+	}
 	retVal = MEM_getWord(address)<<16;
 	retVal|= MEM_getWord(address+2);
 	
@@ -105,12 +113,27 @@ void MEM_setByte(u_int32_t address,u_int8_t byte)
 
 void MEM_setWord(u_int32_t address, u_int16_t word)
 {
+	if (address&1)
+	{
+		SOFT_BREAK;
+	}
 	MEM_setByte(address,word>>8);
 	MEM_setByte(address+1,word&0xFF);
 }
 
+extern int startDebug;
+
 void MEM_setLong(u_int32_t address, u_int32_t dword)
 {
+	if (address&1)
+	{
+		SOFT_BREAK;
+	}
+	if (address==0x19a6)
+	{
+		printf("Writing %08x\n",dword);
+//		startDebug=1;
+	}
 	MEM_setWord(address,dword>>16);
 	MEM_setWord(address+2,dword&0xFFFF);
 }

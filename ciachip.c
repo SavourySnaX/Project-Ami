@@ -88,11 +88,9 @@ void CIA_Update()
 				{
 					ciaMemory[0x1F]&=~0x01;		// stop timer
 				}
-				else
-				{
-					// continous mode
-					bTBCnt=bTBLatch;
-				}
+				
+				bTBCnt=bTBLatch;				// timer allways re-latches
+
 				ciaMemory[0x1D]|=0x02;			// signal interrupt request (won't actually interrupt unless mask set however)
 /*				if (ciab_icr&0x02)
 				{
@@ -113,11 +111,9 @@ void CIA_Update()
 				{
 					ciaMemory[0x0F]&=~0x01;		// stop timer
 				}
-				else
-				{
-					// continous mode
-					aTBCnt=aTBLatch;
-				}
+				
+				aTBCnt=aTBLatch;		// Timer allways re-latches
+
 				ciaMemory[0x0D]|=0x02;			// signal interrupt request (won't actually interrupt unless mask set however)
 				if (ciaa_icr&0x02)
 				{
