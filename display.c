@@ -34,52 +34,79 @@ extern u_int16_t	verticalClock;
 
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo);
 
+u_int32_t GetPixelAddress(u_int8_t bplBase,u_int32_t hor,u_int32_t ver)
+{
+    u_int32_t bpl1;
+
+    bpl1 = cstMemory[bplBase+1]&0x07;
+    bpl1 <<= 8;
+    bpl1|= cstMemory[bplBase+2];
+    bpl1 <<= 8;
+    bpl1|= cstMemory[bplBase+3];
+
+    bpl1+=hor/8;	// This is all a big fat lie!
+    bpl1+=ver*(320/8);
+
+    return bpl1;
+}
+
+void DecodePixel2(u_int32_t hor,u_int32_t ver)
+{
+    u_int8_t	ch,cl;
+    u_int32_t	bpl1,bpl2;
+    u_int32_t	pix1,pix2;
+
+    bpl1 = GetPixelAddress(0xE0,hor,ver);
+    bpl2 = GetPixelAddress(0xE4,hor,ver);
+
+    pix1 = MEM_getByte(bpl1) & (1<<(hor&7));
+    pix2 = MEM_getByte(bpl2) & (1<<(hor&7));
+
+    if (pix1 && pix2)
+    {
+	ch=cstMemory[0x186];
+	cl=cstMemory[0x187];
+    }
+    else if ((!pix1) && pix2)
+    {
+	ch=cstMemory[0x184];
+	cl=cstMemory[0x185];
+    }
+    else if (pix1 && (!pix2))
+    {
+	ch=cstMemory[0x182];
+	cl=cstMemory[0x183];
+    }
+    else
+    {
+	ch=cstMemory[0x180];
+	cl=cstMemory[0x181];
+    }
+
+    doPixel(hor,ver,ch,cl);
+}
+
+void DecodePixel0(u_int32_t hor,u_int32_t ver)
+{
+    u_int8_t	ch,cl;
+
+    ch=cstMemory[0x180];
+    cl=cstMemory[0x181];
+
+    doPixel(hor,ver,ch,cl);
+}
+
 void DSP_Update()
 {
-	u_int8_t ch=cstMemory[0x180],cl=cstMemory[0x181];
-
-	// hack!
-	u_int32_t bpl0 = cstMemory[0xE1]&0x07;
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE2];
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE3];
-
-	bpl0+=(horizontalClock*2)/8;	// This is all a big fat lie!
-	bpl0+=verticalClock*(320/8);
-
-	u_int8_t bpldata = MEM_getByte(bpl0);
-
-	if (bpldata & (1<<((horizontalClock*2)&7)))
-	{
-		ch=cstMemory[0x182];
-		cl=cstMemory[0x183];
-	}
-
-	// end hack!
-
-	doPixel(horizontalClock*2,verticalClock,ch,cl);
-
-	ch=cstMemory[0x180],cl=cstMemory[0x181];
-
-	// hack!
-	bpl0 = cstMemory[0xE1]&0x07;
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE2];
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE3];
-
-	bpl0+=(horizontalClock*2+1)/8;	// This is all a big fat lie!
-	bpl0+=verticalClock*(320/8);
-
-	bpldata = MEM_getByte(bpl0);
-
-	if (bpldata & (1<<((horizontalClock*2+1)&7)))
-	{
-		ch=cstMemory[0x182];
-		cl=cstMemory[0x183];
-	}
-
-	// end hack!
-	doPixel(horizontalClock*2+1,verticalClock,ch,cl);
+    switch ((cstMemory[0x100]&0x70)>>4)
+    {
+	case 0:
+	    DecodePixel0(horizontalClock*2,verticalClock);
+	    DecodePixel0(horizontalClock*2+1,verticalClock);
+	    break;
+	case 2:
+	    DecodePixel2(horizontalClock*2,verticalClock);
+	    DecodePixel2(horizontalClock*2+1,verticalClock);
+	    break;
+    }
 }
