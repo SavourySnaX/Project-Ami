@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define LINE_LENGTH ((228)*2)		// 228 / 227 alternating
-#define WIDTH LINE_LENGTH
+#define AMI_LINE_LENGTH ((228)*2)		// 228 / 227 alternating
+#define WIDTH AMI_LINE_LENGTH
 #define HEIGHT 262
 #define BPP 4
 #define DEPTH 32
@@ -27,6 +27,7 @@
 #include "ciachip.h"
 #include "copper.h"
 #include "blitter.h"
+#include "display.h"
 
 int decrpyt_rom()
 {
@@ -79,11 +80,6 @@ int decrpyt_rom()
     {
 		b = romData[a] ^ keyData[a%keySize];
 		fputc(b,outData);
-		//printf("%02X[%02X]",romData[a],b);
-		/*	if (b>30)
-		 {
-		 printf("%c",b);
-		 }*/
     }
     fclose(outData);
 	
@@ -127,7 +123,7 @@ void setpixel(SDL_Surface *screen, int x, int y, Uint8 r, Uint8 g, Uint8 b)
 }
 
 
-Uint32 videoMemory[LINE_LENGTH*262];
+Uint32 videoMemory[AMI_LINE_LENGTH*262];
 #endif
 int g_newScreenNotify = 0;
 
@@ -140,11 +136,11 @@ void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 	u_int8_t g = (colLo&0xF0);
 	u_int8_t b = (colLo&0x0F)<<4;
 
-	if (y>=262 || x>=LINE_LENGTH)
+	if (y>=262 || x>=AMI_LINE_LENGTH)
 		return;
 
 	colour = SDL_MapRGB(screen->format, r,g,b);
-	pixmem32 = &videoMemory[y*LINE_LENGTH + x];
+	pixmem32 = &videoMemory[y*AMI_LINE_LENGTH + x];
 	*pixmem32 = colour;
 #endif
 }
@@ -157,7 +153,7 @@ void DrawScreen(SDL_Surface* screen, int h)
     for(y = 0; y < screen->h; y++ ) 
     {
         ytimesw = y*screen->pitch/BPP;
-	memcpy((Uint32*)screen->pixels + ytimesw,videoMemory + y*LINE_LENGTH,LINE_LENGTH*4);
+	memcpy((Uint32*)screen->pixels + ytimesw,videoMemory + y*AMI_LINE_LENGTH,AMI_LINE_LENGTH*4);
     }
 
 }
@@ -186,6 +182,7 @@ int main(int argc,char **argv)
 	CPR_InitialiseCopper();
 	CIA_InitialiseCustom();
 	BLT_InitialiseBlitter();
+	DSP_InitialiseDisplay();
 
     CPU_Reset();
     
@@ -210,6 +207,7 @@ int main(int argc,char **argv)
 	    while (1)
 #endif
 	    {
+			DSP_Update();
 		    CST_Update();
 		    CPR_Update();
 		    CIA_Update();

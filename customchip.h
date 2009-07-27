@@ -9,6 +9,8 @@
 
 #include "mytypes.h"
 
+#define LINE_LENGTH	228
+
 void CST_initialiseCustom();
 void CST_Update();
 

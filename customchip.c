@@ -53,62 +53,12 @@ CST_WriteMap	cst_write[CUSTOMCHIPMEMORY];
 u_int8_t	horizontalClock=0;
 u_int16_t	verticalClock=0;
 
-void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo);
 extern int g_newScreenNotify;
-
-#define LINE_LENGTH	228
 
 int cLineLength=LINE_LENGTH - 1;	// first line is a short line
 
 void CST_Update()
 {
-	u_int8_t ch=cstMemory[0x180],cl=cstMemory[0x181];
-
-	// hack!
-	u_int32_t bpl0 = cstMemory[0xE1]&0x07;
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE2];
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE3];
-
-	bpl0+=(horizontalClock*2)/8;	// This is all a big fat lie!
-	bpl0+=verticalClock*(320/8);
-
-	u_int8_t bpldata = MEM_getByte(bpl0);
-
-	if (bpldata & (1<<((horizontalClock*2)&7)))
-	{
-		ch=cstMemory[0x182];
-		cl=cstMemory[0x183];
-	}
-
-	// end hack!
-
-	doPixel(horizontalClock*2,verticalClock,ch,cl);
-
-	ch=cstMemory[0x180],cl=cstMemory[0x181];
-
-	// hack!
-	bpl0 = cstMemory[0xE1]&0x07;
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE2];
-	bpl0 <<=8;
-	bpl0|=cstMemory[0xE3];
-
-	bpl0+=(horizontalClock*2+1)/8;	// This is all a big fat lie!
-	bpl0+=verticalClock*(320/8);
-
-	bpldata = MEM_getByte(bpl0);
-
-	if (bpldata & (1<<((horizontalClock*2+1)&7)))
-	{
-		ch=cstMemory[0x182];
-		cl=cstMemory[0x183];
-	}
-
-	// end hack!
-	doPixel(horizontalClock*2+1,verticalClock,ch,cl);
-
 	horizontalClock++;
 	if (horizontalClock>cLineLength)
 	{
