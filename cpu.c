@@ -5423,14 +5423,13 @@ void CPU_ASR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 
 	eas = cpu_regs.D[op4]&zMask;
 	ead = (eas >> op1)&zMask;
-	cpu_regs.D[op4]&=~zMask;
-	cpu_regs.D[op4]|=ead;
-	
 	if (eas&nMask)
 	{
-		eas|=(~((nMask >> (op1 -1) )-1))&zMask;		// set sign bits
+		ead|=(~((nMask >> (op1 -1) )-1))&zMask;		// set sign bits
 	}
-	
+	cpu_regs.D[op4]&=~zMask;
+	cpu_regs.D[op4]|=ead;
+		
 	if (op1==0)
 	{
 		cpu_regs.SR &= ~CPU_STATUS_C;
@@ -6417,16 +6416,16 @@ void CPU_Step()
     }
 	
     // DEBUGGER
-
-/*	if (cpu_regs.PC == 0xfc7c86)			//FE961E  NOP
+/*
+	if (cpu_regs.PC == 0xfc570c)			//FE961E  NOP
 	{
 		static once=0;
 		if (once==0)
 			startDebug=1;
 		else
 			once++;
-	}*/
-
+	}
+*/
 	if (startDebug)
 	{	
 		for (a=0;a<PCCACHESIZE;a++)

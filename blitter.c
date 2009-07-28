@@ -89,6 +89,8 @@ void BLT_SetDest(u_int16_t bltD,u_int8_t bltPtrStart,u_int8_t bltDataStart,u_int
 	}
 }
 
+extern int startDebug;
+
 void BLT_Update()
 {
 	if (bltStart && (cstMemory[0x03]&0x40) && (cstMemory[0x02]&0x02))
@@ -97,7 +99,55 @@ void BLT_Update()
 		
 		if (cstMemory[0x43]&0x01)
 		{
+			int16_t tmp;
+			int16_t tmp2;
+			
 			printf("Blitter In Line Mode (unsupported)\n");
+			
+			switch ((cstMemory[0x43] & 0x1C)>>2)
+			{
+			case 0:
+				printf("Blitter Octent : SSE\n");
+				break;
+			case 1:
+				printf("Blitter Octent : NNE\n");
+				break;
+			case 2:
+				printf("Blitter Octent : SSW\n");
+				break;
+			case 3:
+				printf("Blitter Octent : NNW\n");
+				break;
+			case 4:
+				printf("Blitter Octent : SEE\n");
+				break;
+			case 5:
+				printf("Blitter Octent : SWW\n");
+				break;
+			case 6:
+				printf("Blitter Octent : NEE\n");
+				break;
+			case 7:
+				printf("Blitter Octent : NWW\n");
+				break;
+			}
+			
+			tmp = cstMemory[0x62];
+			tmp<<=8;
+			tmp|= cstMemory[0x63];
+			
+			printf("dy = %d (%08X)\n",tmp/4,tmp);
+
+			tmp2 = cstMemory[0x64];
+			tmp2<<=8;
+			tmp2|= cstMemory[0x65];
+			
+			printf("dx = %d (%08X)\n",(tmp - tmp2)/4,tmp2);
+			
+			printf("line length = %d (%02X)\n",bltHeight,bltWidth);
+			
+//			startDebug=1;
+			
 								bltStart=0;
 								cstMemory[0x1F]|=0x40;			// set interrupt blitter finished
 								cstMemory[0x02]&=~(0x40);		// Clear busy

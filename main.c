@@ -159,6 +159,9 @@ void DrawScreen(SDL_Surface* screen, int h)
 }
 #endif
 
+int g_frameSkip=0;
+#define FRAME_SKIP	4
+
 int main(int argc,char **argv)
 {
     unsigned char *romPtr;
@@ -217,25 +220,30 @@ int main(int argc,char **argv)
 #if !DISABLE_DISPLAY		    
 		    if (g_newScreenNotify)
 		    {
-			    if(SDL_MUSTLOCK(screen))
-			    {
-				    if(SDL_LockSurface(screen) >= 0) 
-				    {
-					unlock=1;
-				    }
-			    }
-			DrawScreen(screen,1);
-			
-			if(unlock && SDL_MUSTLOCK(screen))
-			{
-				unlock=0;	
-				SDL_UnlockSurface(screen);
-			}
-			SDL_Flip(screen); 
-
+				if (g_frameSkip==FRAME_SKIP)
+				{
+					g_frameSkip=0;
+					if(SDL_MUSTLOCK(screen))
+					{
+						if(SDL_LockSurface(screen) >= 0) 
+						{
+							unlock=1;
+						}
+					}
+					DrawScreen(screen,1);
+					
+					if(unlock && SDL_MUSTLOCK(screen))
+					{
+						unlock=0;	
+						SDL_UnlockSurface(screen);
+					}
+					SDL_Flip(screen); 
+					
+				}
 			    g_newScreenNotify=0;
-		    }
-			    
+				g_frameSkip++;
+			}
+			
 
 		    while(SDL_PollEvent(&event)) 
 		    {      
