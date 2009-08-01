@@ -12,11 +12,7 @@
 
 #include "config.h"
 
-#if !DISABLE_DISPLAY
-#include "SDL.h"
 
-#define __IGNORE_TYPES
-#endif
 #include "ciachip.h"
 #include "customchip.h"
 

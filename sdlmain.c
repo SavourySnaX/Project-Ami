@@ -1,6 +1,6 @@
 /* 
  
- Mac OS X main file (I`ll need to sort the other platforms out later)
+ Decrypt cloanto rom
  
  */
 
@@ -15,9 +15,11 @@
 
 #include "config.h"
 
-#include <OpenGL/OpenGL.h>
-#include <GLUT/GLUT.h>
-#include "/usr/local/include/GL/glfw.h"
+#if !DISABLE_DISPLAY
+#include "SDL.h"
+
+#define __IGNORE_TYPES
+#endif
 
 #include "cpu.h"
 #include "memory.h"
@@ -105,7 +107,6 @@ unsigned char *load_rom(char *romName)
 	return romData;
 }
 
-/*
 #if !DISABLE_DISPLAY
 SDL_Surface *screen;
 
@@ -123,12 +124,11 @@ void setpixel(SDL_Surface *screen, int x, int y, Uint8 r, Uint8 g, Uint8 b)
 
 
 Uint32 videoMemory[AMI_LINE_LENGTH*262];
-#endif*/
+#endif
 int g_newScreenNotify = 0;
 
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 {
-/*
 #if !DISABLE_DISPLAY
 	Uint32 *pixmem32;
 	Uint32 colour;
@@ -142,9 +142,9 @@ void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 	colour = SDL_MapRGB(screen->format, r,g,b);
 	pixmem32 = &videoMemory[y*AMI_LINE_LENGTH + x];
 	*pixmem32 = colour;
-#endif*/
+#endif
 }
-/*
+
 #if !DISABLE_DISPLAY
 void DrawScreen(SDL_Surface* screen, int h)
 { 
@@ -158,81 +158,11 @@ void DrawScreen(SDL_Surface* screen, int h)
 
 }
 #endif
-*/
+
 int g_frameSkip=0;
 #define FRAME_SKIP	4
 
-#define BOX_SIZE	1.0f
-
-void drawScene() 
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	
-    glBegin(GL_QUADS); //Begin quadrilateral coordinates
-    
-    //Trapezoid
-    glVertex3f(-0.7f, -1.5f, -5.0f);
-    glVertex3f(0.7f, -1.5f, -5.0f);
-    glVertex3f(0.4f, -0.5f, -5.0f);
-    glVertex3f(-0.4f, -0.5f, -5.0f);
-    
-    glEnd(); //End quadrilateral coordinates
-}
-/*
-void update(int value) {
-
-	glutPostRedisplay();
-	glutTimerFunc(25, update, 0);
-}
-*/
-void handleResize(int w, int h) {
-    //Tell OpenGL how to convert from coordinates to pixel values
-    glViewport(0, 0, w, h);
-    
-    glMatrixMode(GL_PROJECTION); //Switch to setting the camera perspective
-    
-    //Set the camera perspective
-    glLoadIdentity(); //Reset the camera
-    gluPerspective(45.0,                  //The camera angle
-                   (double)w / (double)h, //The width-to-height ratio
-                   1.0,                   //The near z clipping coordinate
-                   200.0);                //The far z clipping coordinate
-}
-
-int main( void ) 
-{ 
-	int running = GL_TRUE; 
-	// Initialize GLFW 
-	glfwInit(); 
-	// Open an OpenGL window 
-	if( !glfwOpenWindow( 300,300, 0,0,0,0,0,0, GLFW_WINDOW ) ) 
-	{ 
-		glfwTerminate(); 
-		return 0; 
-	} 
-	handleResize(300,300);
-	// Main loop
-	while( running ) 
-	{ 
-		// OpenGL rendering goes here... 
-		glClear( GL_COLOR_BUFFER_BIT ); 
-		drawScene();
-		// Swap front and back rendering buffers 
-		glfwSwapBuffers(); 
-		// Check if ESC key was pressed or window was closed 
-		running = !glfwGetKey( GLFW_KEY_ESC ) && 
-		glfwGetWindowParam( GLFW_OPENED ); 
-	} 
-	// Close window and terminate GLFW 
-	glfwTerminate(); 
-	// Exit program 
-	return 0; 
-}
-
-int omain(int argc,char **argv)
+int main(int argc,char **argv)
 {
     unsigned char *romPtr;
     
@@ -259,22 +189,7 @@ int omain(int argc,char **argv)
 
     CPU_Reset();
     
-    {
-/*
-		glutInit(&argc, argv);
-		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-		glutInitWindowSize(WIDTH, HEIGHT);
-	
-		glutCreateWindow("Ami");
-	
-		glutDisplayFunc(drawScene);
-		glutReshapeFunc(handleResize);
-		glutTimerFunc(25, update, 0);
-		
-	glEnable(GL_DEPTH_TEST);
-	
-		glutMainLoop();*/
-/*
+    {	
 #if !DISABLE_DISPLAY
 	    SDL_Event event;
 
@@ -284,16 +199,16 @@ int omain(int argc,char **argv)
 
 	    if (SDL_Init(SDL_INIT_VIDEO) < 0 ) return 1;
 
-	    if (!(screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, 0|SDL_HWSURFACE)))
+	    if (!(screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, 0/*SDL_FULLSCREEN*/|SDL_HWSURFACE/**/)))
 	    {
 		    SDL_Quit();
 		    return 1;
 	    }
 
 	    while(!keypress) 
-#else*/
+#else
 	    while (1)
-//#endif
+#endif
 	    {
 			DSP_Update();
 		    CST_Update();
@@ -301,7 +216,7 @@ int omain(int argc,char **argv)
 		    CIA_Update();
 			BLT_Update();
 		    CPU_Step();
-/*
+
 #if !DISABLE_DISPLAY		    
 		    if (g_newScreenNotify)
 		    {
@@ -330,10 +245,88 @@ int omain(int argc,char **argv)
 			}
 			
 
-#endif*/
+		    while(SDL_PollEvent(&event)) 
+		    {      
+			    switch (event.type) 
+			    {
+				    case SDL_QUIT:
+					    keypress = 1;
+					    break;
+//				    case SDL_KEYDOWN:
+//					    keypress = 0;
+//					    break;
+			    }
+		    }
+#endif
 	    }
     }
 	
     return 0;
 }
+
+
+void waveOutClose()
+{
+}
+
+void waveOutUnprepareHeader()
+{
+}
+
+void waveOutWrite()
+{
+}
+
+void waveOutGetErrorTextA()
+{
+}
+
+void waveOutOpen()
+{
+}
+
+void waveOutPrepareHeader()
+{
+}
+
+void joyGetPosEx()
+{
+}
+
+void joyGetNumDevs()
+{
+}
+
+void joyGetDevCapsA()
+{
+}
+
+void mciSendCommandA()
+{
+}
+
+void mciGetErrorStringA()
+{
+}
+
+void timeKillEvent()
+{
+}
+
+void timeEndPeriod()
+{
+}
+
+void timeBeginPeriod()
+{
+}
+
+void timeSetEvent()
+{
+}
+
+void timeGetTime()
+{
+}
+
 

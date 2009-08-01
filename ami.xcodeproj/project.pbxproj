@@ -3,599 +3,282 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 45;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		002F39FA09D0881F00EBEB88 /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 002F39F909D0881F00EBEB88 /* SDL.framework */; };
-		002F3A3F09D088BA00EBEB88 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 002F3A3E09D088BA00EBEB88 /* main.c */; };
-		002F3AF109D08F1000EBEB88 /* SDLMain.nib in Resources */ = {isa = PBXBuildFile; fileRef = 002F3AEF09D08F1000EBEB88 /* SDLMain.nib */; };
-		38025D91101CD82000589437 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97325FDCFA39411CA2CEA /* Foundation.framework */; };
-		38025D92101CD82800589437 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		38025D93101CD82B00589437 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97324FDCFA39411CA2CEA /* AppKit.framework */; };
-		38402247101E4DDC00FFCAC7 /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = 002F3A2C09D0888800EBEB88 /* SDLMain.m */; };
-		38785B2A101CF11000651D05 /* display.c in Sources */ = {isa = PBXBuildFile; fileRef = 38785B29101CF11000651D05 /* display.c */; };
-		387E77AE1014DDE900662C8C /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5710107B67006C83D9 /* ciachip.c */; };
-		387E77B61014DEFC00662C8C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
-		387E77B71014DEFC00662C8C /* SDLMain.nib in Resources */ = {isa = PBXBuildFile; fileRef = 002F3AEF09D08F1000EBEB88 /* SDLMain.nib */; };
-		387E77B91014DEFC00662C8C /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 002F3A3E09D088BA00EBEB88 /* main.c */; };
-		387E77BA1014DEFC00662C8C /* copper.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5910107B67006C83D9 /* copper.c */; };
-		387E77BB1014DEFC00662C8C /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5B10107B67006C83D9 /* cpu.c */; };
-		387E77BC1014DEFC00662C8C /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5D10107B67006C83D9 /* customchip.c */; };
-		387E77BD1014DEFC00662C8C /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5F10107B67006C83D9 /* memory.c */; };
-		387E77BE1014DEFC00662C8C /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5710107B67006C83D9 /* ciachip.c */; };
-		387E77C01014DEFC00662C8C /* SDL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 002F39F909D0881F00EBEB88 /* SDL.framework */; };
-		387E77CA1014DF2100662C8C /* SDLMain.m in Sources */ = {isa = PBXBuildFile; fileRef = 002F3A2C09D0888800EBEB88 /* SDLMain.m */; };
-		387E77CE1014DF3700662C8C /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97324FDCFA39411CA2CEA /* AppKit.framework */; };
-		387E77CF1014DF3800662C8C /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		3884A0F81016208B000A22B4 /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 3884A0F71016208B000A22B4 /* blitter.c */; };
-		3884A1B1101658CE000A22B4 /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 3884A0F71016208B000A22B4 /* blitter.c */; };
-		38EA7B6310107B67006C83D9 /* copper.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5910107B67006C83D9 /* copper.c */; };
-		38EA7B6410107B67006C83D9 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5B10107B67006C83D9 /* cpu.c */; };
-		38EA7B6510107B67006C83D9 /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5D10107B67006C83D9 /* customchip.c */; };
-		38EA7B6610107B67006C83D9 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 38EA7B5F10107B67006C83D9 /* memory.c */; };
-		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
+		384CFC581024739F00CEB158 /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC481024739F00CEB158 /* blitter.c */; };
+		384CFC591024739F00CEB158 /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC4A1024739F00CEB158 /* ciachip.c */; };
+		384CFC5A1024739F00CEB158 /* copper.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC4D1024739F00CEB158 /* copper.c */; };
+		384CFC5B1024739F00CEB158 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC4F1024739F00CEB158 /* cpu.c */; };
+		384CFC5C1024739F00CEB158 /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC511024739F00CEB158 /* customchip.c */; };
+		384CFC5D1024739F00CEB158 /* display.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC531024739F00CEB158 /* display.c */; };
+		384CFC5E1024739F00CEB158 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC551024739F00CEB158 /* memory.c */; };
+		384CFC8210247AF700CEB158 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFC8110247AF700CEB158 /* OpenGL.framework */; };
+		384CFCBA1024854400CEB158 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCB91024854400CEB158 /* Carbon.framework */; };
+		384CFCC01024855400CEB158 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCBF1024855400CEB158 /* AGL.framework */; };
+		384CFCC61024867200CEB158 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCC51024867200CEB158 /* GLUT.framework */; };
+		8DD76FAC0486AB0100D96B5E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* main.c */; settings = {ATTRIBUTES = (); }; };
+		8DD76FB00486AB0100D96B5E /* ami.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* ami.1 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		002F39FD09D0883400EBEB88 /* Copy Frameworks into .app bundle */ = {
+		8DD76FAF0486AB0100D96B5E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
 			files = (
+				8DD76FB00486AB0100D96B5E /* ami.1 in CopyFiles */,
 			);
-			name = "Copy Frameworks into .app bundle";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		387E77C11014DEFC00662C8C /* Copy Frameworks into .app bundle */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-			);
-			name = "Copy Frameworks into .app bundle";
-			runOnlyForDeploymentPostprocessing = 0;
+			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		002F39F909D0881F00EBEB88 /* SDL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL.framework; path = /Library/Frameworks/SDL.framework; sourceTree = "<absolute>"; };
-		002F3A2B09D0888800EBEB88 /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = SOURCE_ROOT; };
-		002F3A2C09D0888800EBEB88 /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = SDLMain.m; sourceTree = SOURCE_ROOT; };
-		002F3A3E09D088BA00EBEB88 /* main.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = SOURCE_ROOT; };
-		002F3AF009D08F1000EBEB88 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/SDLMain.nib; sourceTree = "<group>"; };
-		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
-		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
-		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
-		32CA4F630368D1EE00C91783 /* ami_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ami_Prefix.pch; sourceTree = "<group>"; };
-		38785B28101CF11000651D05 /* display.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = display.h; sourceTree = "<group>"; };
-		38785B29101CF11000651D05 /* display.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = display.c; sourceTree = "<group>"; };
-		387E77C71014DEFC00662C8C /* ami.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ami.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		387E77C91014DEFC00662C8C /* Info copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info copy.plist"; sourceTree = "<group>"; };
-		3884A0F61016208B000A22B4 /* blitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blitter.h; sourceTree = "<group>"; };
-		3884A0F71016208B000A22B4 /* blitter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = blitter.c; sourceTree = "<group>"; };
-		38EA7B5710107B67006C83D9 /* ciachip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ciachip.c; sourceTree = "<group>"; };
-		38EA7B5810107B67006C83D9 /* ciachip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciachip.h; sourceTree = "<group>"; };
-		38EA7B5910107B67006C83D9 /* copper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = copper.c; sourceTree = "<group>"; };
-		38EA7B5A10107B67006C83D9 /* copper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = copper.h; sourceTree = "<group>"; };
-		38EA7B5B10107B67006C83D9 /* cpu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu.c; sourceTree = "<group>"; };
-		38EA7B5C10107B67006C83D9 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
-		38EA7B5D10107B67006C83D9 /* customchip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = customchip.c; sourceTree = "<group>"; };
-		38EA7B5E10107B67006C83D9 /* customchip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = customchip.h; sourceTree = "<group>"; };
-		38EA7B5F10107B67006C83D9 /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
-		38EA7B6010107B67006C83D9 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
-		38EA7B6110107B67006C83D9 /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
-		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		8D1107320486CEB800E47090 /* ami.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ami.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		08FB7796FE84155DC02AAC07 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		384CFC481024739F00CEB158 /* blitter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = blitter.c; sourceTree = "<group>"; };
+		384CFC491024739F00CEB158 /* blitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blitter.h; sourceTree = "<group>"; };
+		384CFC4A1024739F00CEB158 /* ciachip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ciachip.c; sourceTree = "<group>"; };
+		384CFC4B1024739F00CEB158 /* ciachip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciachip.h; sourceTree = "<group>"; };
+		384CFC4C1024739F00CEB158 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		384CFC4D1024739F00CEB158 /* copper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = copper.c; sourceTree = "<group>"; };
+		384CFC4E1024739F00CEB158 /* copper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = copper.h; sourceTree = "<group>"; };
+		384CFC4F1024739F00CEB158 /* cpu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu.c; sourceTree = "<group>"; };
+		384CFC501024739F00CEB158 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
+		384CFC511024739F00CEB158 /* customchip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = customchip.c; sourceTree = "<group>"; };
+		384CFC521024739F00CEB158 /* customchip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = customchip.h; sourceTree = "<group>"; };
+		384CFC531024739F00CEB158 /* display.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = display.c; sourceTree = "<group>"; };
+		384CFC541024739F00CEB158 /* display.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = display.h; sourceTree = "<group>"; };
+		384CFC551024739F00CEB158 /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
+		384CFC561024739F00CEB158 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
+		384CFC571024739F00CEB158 /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
+		384CFC8110247AF700CEB158 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
+		384CFCB91024854400CEB158 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		384CFCBF1024855400CEB158 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
+		384CFCC51024867200CEB158 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = /System/Library/Frameworks/GLUT.framework; sourceTree = "<absolute>"; };
+		384CFCCA10248A4300CEB158 /* info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = info.plist; sourceTree = "<group>"; };
+		8DD76FB20486AB0100D96B5E /* ami */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ami; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6A0FF2C0290799A04C91782 /* ami.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = ami.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		387E77BF1014DEFC00662C8C /* Frameworks */ = {
+		8DD76FAD0486AB0100D96B5E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				387E77C01014DEFC00662C8C /* SDL.framework in Frameworks */,
-				387E77CE1014DF3700662C8C /* AppKit.framework in Frameworks */,
-				387E77CF1014DF3800662C8C /* Cocoa.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8D11072E0486CEB800E47090 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				002F39FA09D0881F00EBEB88 /* SDL.framework in Frameworks */,
-				38025D91101CD82000589437 /* Foundation.framework in Frameworks */,
-				38025D92101CD82800589437 /* Cocoa.framework in Frameworks */,
-				38025D93101CD82B00589437 /* AppKit.framework in Frameworks */,
+				384CFC8210247AF700CEB158 /* OpenGL.framework in Frameworks */,
+				384CFCBA1024854400CEB158 /* Carbon.framework in Frameworks */,
+				384CFCC01024855400CEB158 /* AGL.framework in Frameworks */,
+				384CFCC61024867200CEB158 /* GLUT.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		080E96DDFE201D6D7F000001 /* Classes */ = {
+		08FB7794FE84155DC02AAC07 /* ami */ = {
 			isa = PBXGroup;
 			children = (
-				002F3A2B09D0888800EBEB88 /* SDLMain.h */,
-				002F3A2C09D0888800EBEB88 /* SDLMain.m */,
-			);
-			name = Classes;
-			sourceTree = "<group>";
-		};
-		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				002F39F909D0881F00EBEB88 /* SDL.framework */,
-				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
-			);
-			name = "Linked Frameworks";
-			sourceTree = "<group>";
-		};
-		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
-				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
-			);
-			name = "Other Frameworks";
-			sourceTree = "<group>";
-		};
-		19C28FACFE9D520D11CA2CBB /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				8D1107320486CEB800E47090 /* ami.app */,
-				387E77C71014DEFC00662C8C /* ami.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		29B97314FDCFA39411CA2CEA /* ami */ = {
-			isa = PBXGroup;
-			children = (
-				080E96DDFE201D6D7F000001 /* Classes */,
-				29B97315FDCFA39411CA2CEA /* Other Sources */,
-				29B97317FDCFA39411CA2CEA /* Resources */,
-				29B97323FDCFA39411CA2CEA /* Frameworks */,
-				19C28FACFE9D520D11CA2CBB /* Products */,
+				384CFCC51024867200CEB158 /* GLUT.framework */,
+				384CFCBF1024855400CEB158 /* AGL.framework */,
+				384CFCB91024854400CEB158 /* Carbon.framework */,
+				384CFC8110247AF700CEB158 /* OpenGL.framework */,
+				08FB7795FE84155DC02AAC07 /* Source */,
+				C6A0FF2B0290797F04C91782 /* Documentation */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+				384CFCCA10248A4300CEB158 /* info.plist */,
 			);
 			name = ami;
 			sourceTree = "<group>";
 		};
-		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
+		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				38EA7B5710107B67006C83D9 /* ciachip.c */,
-				38EA7B5810107B67006C83D9 /* ciachip.h */,
-				38EA7B5910107B67006C83D9 /* copper.c */,
-				38EA7B5A10107B67006C83D9 /* copper.h */,
-				38EA7B5B10107B67006C83D9 /* cpu.c */,
-				38EA7B5C10107B67006C83D9 /* cpu.h */,
-				38EA7B5D10107B67006C83D9 /* customchip.c */,
-				38EA7B5E10107B67006C83D9 /* customchip.h */,
-				38EA7B5F10107B67006C83D9 /* memory.c */,
-				38EA7B6010107B67006C83D9 /* memory.h */,
-				38EA7B6110107B67006C83D9 /* mytypes.h */,
-				32CA4F630368D1EE00C91783 /* ami_Prefix.pch */,
-				002F3A3E09D088BA00EBEB88 /* main.c */,
-				3884A0F61016208B000A22B4 /* blitter.h */,
-				3884A0F71016208B000A22B4 /* blitter.c */,
-				38785B28101CF11000651D05 /* display.h */,
-				38785B29101CF11000651D05 /* display.c */,
+				384CFC481024739F00CEB158 /* blitter.c */,
+				384CFC491024739F00CEB158 /* blitter.h */,
+				384CFC4A1024739F00CEB158 /* ciachip.c */,
+				384CFC4B1024739F00CEB158 /* ciachip.h */,
+				384CFC4C1024739F00CEB158 /* config.h */,
+				384CFC4D1024739F00CEB158 /* copper.c */,
+				384CFC4E1024739F00CEB158 /* copper.h */,
+				384CFC4F1024739F00CEB158 /* cpu.c */,
+				384CFC501024739F00CEB158 /* cpu.h */,
+				384CFC511024739F00CEB158 /* customchip.c */,
+				384CFC521024739F00CEB158 /* customchip.h */,
+				384CFC531024739F00CEB158 /* display.c */,
+				384CFC541024739F00CEB158 /* display.h */,
+				384CFC551024739F00CEB158 /* memory.c */,
+				384CFC561024739F00CEB158 /* memory.h */,
+				384CFC571024739F00CEB158 /* mytypes.h */,
+				08FB7796FE84155DC02AAC07 /* main.c */,
 			);
-			name = "Other Sources";
+			name = Source;
 			sourceTree = "<group>";
 		};
-		29B97317FDCFA39411CA2CEA /* Resources */ = {
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D1107310486CEB800E47090 /* Info.plist */,
-				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
-				002F3AEF09D08F1000EBEB88 /* SDLMain.nib */,
-				387E77C91014DEFC00662C8C /* Info copy.plist */,
+				8DD76FB20486AB0100D96B5E /* ami */,
 			);
-			name = Resources;
+			name = Products;
 			sourceTree = "<group>";
 		};
-		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+		C6A0FF2B0290797F04C91782 /* Documentation */ = {
 			isa = PBXGroup;
 			children = (
-				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
-				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+				C6A0FF2C0290799A04C91782 /* ami.1 */,
 			);
-			name = Frameworks;
+			name = Documentation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		387E77B41014DEFC00662C8C /* ami_sdl */ = {
+		8DD76FA90486AB0100D96B5E /* ami */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 387E77C21014DEFC00662C8C /* Build configuration list for PBXNativeTarget "ami_sdl" */;
+			buildConfigurationList = 1DEB928508733DD80010E9CD /* Build configuration list for PBXNativeTarget "ami" */;
 			buildPhases = (
-				387E77B51014DEFC00662C8C /* Resources */,
-				387E77B81014DEFC00662C8C /* Sources */,
-				387E77BF1014DEFC00662C8C /* Frameworks */,
-				387E77C11014DEFC00662C8C /* Copy Frameworks into .app bundle */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ami_sdl;
-			productInstallPath = "$(HOME)/Applications";
-			productName = ami;
-			productReference = 387E77C71014DEFC00662C8C /* ami.app */;
-			productType = "com.apple.product-type.application";
-		};
-		8D1107260486CEB800E47090 /* ami */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "ami" */;
-			buildPhases = (
-				8D1107290486CEB800E47090 /* Resources */,
-				8D11072C0486CEB800E47090 /* Sources */,
-				8D11072E0486CEB800E47090 /* Frameworks */,
-				002F39FD09D0883400EBEB88 /* Copy Frameworks into .app bundle */,
+				8DD76FAB0486AB0100D96B5E /* Sources */,
+				8DD76FAD0486AB0100D96B5E /* Frameworks */,
+				8DD76FAF0486AB0100D96B5E /* CopyFiles */,
+				3848863310248E98008333B0 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = ami;
-			productInstallPath = "$(HOME)/Applications";
+			productInstallPath = "$(HOME)/bin";
 			productName = ami;
-			productReference = 8D1107320486CEB800E47090 /* ami.app */;
-			productType = "com.apple.product-type.application";
+			productReference = 8DD76FB20486AB0100D96B5E /* ami */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		29B97313FDCFA39411CA2CEA /* Project object */ = {
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "ami" */;
-			compatibilityVersion = "Xcode 2.4";
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "ami" */;
+			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
-			mainGroup = 29B97314FDCFA39411CA2CEA /* ami */;
+			mainGroup = 08FB7794FE84155DC02AAC07 /* ami */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8D1107260486CEB800E47090 /* ami */,
-				387E77B41014DEFC00662C8C /* ami_sdl */,
+				8DD76FA90486AB0100D96B5E /* ami */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		387E77B51014DEFC00662C8C /* Resources */ = {
+		3848863310248E98008333B0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				387E77B61014DEFC00662C8C /* InfoPlist.strings in Resources */,
-				387E77B71014DEFC00662C8C /* SDLMain.nib in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8D1107290486CEB800E47090 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
-				002F3AF109D08F1000EBEB88 /* SDLMain.nib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		387E77B81014DEFC00662C8C /* Sources */ = {
+		8DD76FAB0486AB0100D96B5E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				387E77B91014DEFC00662C8C /* main.c in Sources */,
-				387E77BA1014DEFC00662C8C /* copper.c in Sources */,
-				387E77BB1014DEFC00662C8C /* cpu.c in Sources */,
-				387E77BC1014DEFC00662C8C /* customchip.c in Sources */,
-				387E77BD1014DEFC00662C8C /* memory.c in Sources */,
-				387E77BE1014DEFC00662C8C /* ciachip.c in Sources */,
-				387E77CA1014DF2100662C8C /* SDLMain.m in Sources */,
-				3884A1B1101658CE000A22B4 /* blitter.c in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8D11072C0486CEB800E47090 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				002F3A3F09D088BA00EBEB88 /* main.c in Sources */,
-				38EA7B6310107B67006C83D9 /* copper.c in Sources */,
-				38EA7B6410107B67006C83D9 /* cpu.c in Sources */,
-				38EA7B6510107B67006C83D9 /* customchip.c in Sources */,
-				38EA7B6610107B67006C83D9 /* memory.c in Sources */,
-				387E77AE1014DDE900662C8C /* ciachip.c in Sources */,
-				3884A0F81016208B000A22B4 /* blitter.c in Sources */,
-				38785B2A101CF11000651D05 /* display.c in Sources */,
-				38402247101E4DDC00FFCAC7 /* SDLMain.m in Sources */,
+				8DD76FAC0486AB0100D96B5E /* main.c in Sources */,
+				384CFC581024739F00CEB158 /* blitter.c in Sources */,
+				384CFC591024739F00CEB158 /* ciachip.c in Sources */,
+				384CFC5A1024739F00CEB158 /* copper.c in Sources */,
+				384CFC5B1024739F00CEB158 /* cpu.c in Sources */,
+				384CFC5C1024739F00CEB158 /* customchip.c in Sources */,
+				384CFC5D1024739F00CEB158 /* display.c in Sources */,
+				384CFC5E1024739F00CEB158 /* memory.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXVariantGroup section */
-		002F3AEF09D08F1000EBEB88 /* SDLMain.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				002F3AF009D08F1000EBEB88 /* English */,
-			);
-			name = SDLMain.nib;
-			sourceTree = "<group>";
-		};
-		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				089C165DFE840E0CC02AAC07 /* English */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
-
 /* Begin XCBuildConfiguration section */
-		387E77961014DBF500662C8C /* Debug SDL */ = {
+		1DEB928608733DD80010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
-					"$(FRAMEWORK_SEARCH_PATHS)",
-				);
-				GCC_PREPROCESSOR_DEFINITIONS = "DISABLE_DISPLAY=0";
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks/SDL.framework/Headers",
-					/Library/Frameworks/SDL.framework/Headers,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
-			};
-			name = "Debug SDL";
-		};
-		387E77971014DBF500662C8C /* Debug SDL */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
+				INSTALL_PATH = /usr/local/bin;
 				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = YES;
-			};
-			name = "Debug SDL";
-		};
-		387E77981014DBFE00662C8C /* Release SDL */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
-					"$(FRAMEWORK_SEARCH_PATHS)",
-				);
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_PREPROCESSOR_DEFINITIONS = "DISABLE_DISPLAY=0";
-				GCC_UNROLL_LOOPS = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks/SDL.framework/Headers",
-					/Library/Frameworks/SDL.framework/Headers,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
-			};
-			name = "Release SDL";
-		};
-		387E77991014DBFE00662C8C /* Release SDL */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
-			};
-			name = "Release SDL";
-		};
-		387E77C31014DEFC00662C8C /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				INFOPLIST_FILE = "/Users/snax/ami/Info copy.plist";
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = YES;
 			};
 			name = Debug;
 		};
-		387E77C41014DEFC00662C8C /* Debug SDL */ = {
+		1DEB928708733DD80010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				INFOPLIST_FILE = "/Users/snax/ami/Info copy.plist";
-				INSTALL_PATH = "$(HOME)/Applications";
+				INSTALL_PATH = /usr/local/bin;
 				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = YES;
-			};
-			name = "Debug SDL";
-		};
-		387E77C51014DEFC00662C8C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
-				INFOPLIST_FILE = "/Users/snax/ami/Info copy.plist";
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
 		};
-		387E77C61014DEFC00662C8C /* Release SDL */ = {
+		1DEB928A08733DD80010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
-				INFOPLIST_FILE = "/Users/snax/ami/Info copy.plist";
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
-			};
-			name = "Release SDL";
-		};
-		C01FCF4B08A954540054247B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
-				ZERO_LINK = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_PKGINFO_FILE = NO;
+				INFOPLIST_FILE = info.plist;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-lglfw";
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
 			};
 			name = Debug;
 		};
-		C01FCF4C08A954540054247B /* Release */ = {
+		1DEB928B08733DD80010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
-				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = "$(HOME)/Applications";
-				PRODUCT_NAME = ami;
-				WRAPPER_EXTENSION = app;
-			};
-			name = Release;
-		};
-		C01FCF4F08A954540054247B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
-					"$(FRAMEWORK_SEARCH_PATHS)",
-				);
-				GCC_PREPROCESSOR_DEFINITIONS = "DISABLE_DISPLAY=1";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks/SDL.framework/Headers",
-					/Library/Frameworks/SDL.framework/Headers,
-					"$(HEADER_SEARCH_PATHS)",
-				);
+				GENERATE_PKGINFO_FILE = NO;
+				INFOPLIST_FILE = info.plist;
+				OTHER_LDFLAGS = "-lglfw";
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
-			};
-			name = Debug;
-		};
-		C01FCF5008A954540054247B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks",
-					/Library/Frameworks,
-					"$(FRAMEWORK_SEARCH_PATHS)",
-				);
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_PREPROCESSOR_DEFINITIONS = "DISABLE_DISPLAY=1";
-				GCC_UNROLL_LOOPS = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(HOME)/Library/Frameworks/SDL.framework/Headers",
-					/Library/Frameworks/SDL.framework/Headers,
-					"$(HEADER_SEARCH_PATHS)",
-				);
-				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+				SDKROOT = macosx10.5;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		387E77C21014DEFC00662C8C /* Build configuration list for PBXNativeTarget "ami_sdl" */ = {
+		1DEB928508733DD80010E9CD /* Build configuration list for PBXNativeTarget "ami" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				387E77C31014DEFC00662C8C /* Debug */,
-				387E77C41014DEFC00662C8C /* Debug SDL */,
-				387E77C51014DEFC00662C8C /* Release */,
-				387E77C61014DEFC00662C8C /* Release SDL */,
+				1DEB928608733DD80010E9CD /* Debug */,
+				1DEB928708733DD80010E9CD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "ami" */ = {
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "ami" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C01FCF4B08A954540054247B /* Debug */,
-				387E77971014DBF500662C8C /* Debug SDL */,
-				C01FCF4C08A954540054247B /* Release */,
-				387E77991014DBFE00662C8C /* Release SDL */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "ami" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C01FCF4F08A954540054247B /* Debug */,
-				387E77961014DBF500662C8C /* Debug SDL */,
-				C01FCF5008A954540054247B /* Release */,
-				387E77981014DBFE00662C8C /* Release SDL */,
+				1DEB928A08733DD80010E9CD /* Debug */,
+				1DEB928B08733DD80010E9CD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
 }

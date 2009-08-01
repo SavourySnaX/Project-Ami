@@ -9,7 +9,7 @@
 
 #include "mytypes.h"
 
-void CPR_initialiseCopper();
+void CPR_InitialiseCopper();
 void CPR_Update();
 
 void CPR_SetPC(u_int32_t pc);

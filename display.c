@@ -11,12 +11,6 @@
 
 #include "config.h"
 
-#if !DISABLE_DISPLAY
-
-#include "SDL.h"
-
-#define __IGNORE_TYPES
-#endif
 
 #include "display.h"
 #include "memory.h"
@@ -81,7 +75,7 @@ void DecodePixel2(u_int32_t hor,u_int32_t ver)
 	cl=cstMemory[0x181];
     }
 
-    doPixel(hor,ver,ch,cl);
+	doPixel(hor,ver,ch,cl);
 }
 
 void DecodePixel0(u_int32_t hor,u_int32_t ver)

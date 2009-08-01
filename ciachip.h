@@ -9,7 +9,7 @@
 
 #include "mytypes.h"
 
-void CIA_initialiseCustom();
+void CIA_InitialiseCustom();
 void CIA_Update();
 
 u_int8_t MEM_getByteCia(u_int32_t upper24,u_int32_t lower16);

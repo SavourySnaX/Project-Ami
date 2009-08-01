@@ -12,12 +12,6 @@
 
 #include "config.h"
 
-#if !DISABLE_DISPLAY
-
-#include "SDL.h"
-
-#define __IGNORE_TYPES
-#endif
 
 #include "memory.h"
 #include "copper.h"

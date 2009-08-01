@@ -11,7 +11,7 @@
 
 #define LINE_LENGTH	228
 
-void CST_initialiseCustom();
+void CST_InitialiseCustom();
 void CST_Update();
 
 u_int8_t MEM_getByteCustom(u_int32_t upper24,u_int32_t lower16);

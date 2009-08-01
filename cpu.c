@@ -13,11 +13,7 @@
 
 #include "config.h"
 
-#if !DISABLE_DISPLAY
-#include "SDL.h"
 
-#define __IGNORE_TYPES
-#endif
 #include "cpu.h"
 #include "memory.h"
 #include "customchip.h"

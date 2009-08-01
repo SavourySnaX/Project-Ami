@@ -1,3 +1,0 @@
-
-Check writes to address 19A6 should d2 not ce i think
-
