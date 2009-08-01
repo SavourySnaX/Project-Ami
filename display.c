@@ -59,8 +59,8 @@ void DecodePixel2(u_int32_t hor,u_int32_t ver)
     bpl1 = GetPixelAddress(0xE0,hor,ver);
     bpl2 = GetPixelAddress(0xE4,hor,ver);
 
-    pix1 = MEM_getByte(bpl1) & (1<<(hor&7));
-    pix2 = MEM_getByte(bpl2) & (1<<(hor&7));
+    pix1 = MEM_getByte(bpl1) & (1<<(7-(hor&7)));
+    pix2 = MEM_getByte(bpl2) & (1<<(7-(hor&7)));
 
     if (pix1 && pix2)
     {

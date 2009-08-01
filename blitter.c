@@ -172,7 +172,7 @@ void BLT_Update()
 				}
 				else
 				{
-					if ( (cstMemory[0x42]&0xF0) || (cstMemory[0x40]&0xF0) )
+/*					if ( (cstMemory[0x42]&0xF0) || (cstMemory[0x40]&0xF0) )
 					{
 						printf("Blitter Using Shift (unsupported)\n");
 								bltStart=0;
@@ -180,7 +180,7 @@ void BLT_Update()
 								cstMemory[0x02]&=~(0x40);		// Clear busy
 //						SOFT_BREAK;
 					}
-					else
+					else*/
 					{
 						u_int16_t	bltAMask=0xFFFF;
 						u_int16_t	bltA,bltB,bltC,bltD;
@@ -276,7 +276,7 @@ void BLT_StartBlit()
 		bltWidth=cstMemory[0x59]&0x3F;
 		if (!bltWidth)
 			bltWidth=64;
-		bltHeight=((((u_int16_t)cstMemory[0x58])&0xFF)<<2)||((((u_int16_t)cstMemory[0x59])&0xC0)>>6);
+		bltHeight=((((u_int16_t)cstMemory[0x58])&0xFF)<<2)|((((u_int16_t)cstMemory[0x59])&0xC0)>>6);
 		if (!bltHeight)
 			bltHeight=1024;
 		bltZero=1;

@@ -252,9 +252,9 @@ int main(int argc,char **argv)
 				    case SDL_QUIT:
 					    keypress = 1;
 					    break;
-				    case SDL_KEYDOWN:
-					    keypress = 1;
-					    break;
+//				    case SDL_KEYDOWN:
+//					    keypress = 0;
+//					    break;
 			    }
 		    }
 #endif
