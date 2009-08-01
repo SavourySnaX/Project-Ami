@@ -16,7 +16,7 @@
 #include "config.h"
 
 #include <OpenGL/OpenGL.h>
-#include <GLUT/GLUT.h>
+
 #include "/usr/local/include/GL/glfw.h"
 
 #include "cpu.h"
@@ -105,33 +105,14 @@ unsigned char *load_rom(char *romName)
 	return romData;
 }
 
-/*
-#if !DISABLE_DISPLAY
-SDL_Surface *screen;
+u_int8_t videoMemory[AMI_LINE_LENGTH*262*sizeof(u_int32_t)];
 
-
-void setpixel(SDL_Surface *screen, int x, int y, Uint8 r, Uint8 g, Uint8 b)
-{
-    Uint32 *pixmem32;
-    Uint32 colour;  
- 
-    colour = SDL_MapRGB( screen->format, r, g, b );
-  
-    pixmem32 = (Uint32*) screen->pixels  + y + x;
-    *pixmem32 = colour;
-}
-
-
-Uint32 videoMemory[AMI_LINE_LENGTH*262];
-#endif*/
 int g_newScreenNotify = 0;
 
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 {
-/*
-#if !DISABLE_DISPLAY
-	Uint32 *pixmem32;
-	Uint32 colour;
+	u_int32_t *pixmem32;
+	u_int32_t colour;
 	u_int8_t r = (colHi&0x0F)<<4;
 	u_int8_t g = (colLo&0xF0);
 	u_int8_t b = (colLo&0x0F)<<4;
@@ -139,114 +120,102 @@ void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 	if (y>=262 || x>=AMI_LINE_LENGTH)
 		return;
 
-	colour = SDL_MapRGB(screen->format, r,g,b);
-	pixmem32 = &videoMemory[y*AMI_LINE_LENGTH + x];
+	colour = (r<<16) | (g<<8) | (b<<0);
+	pixmem32 = &((u_int32_t*)videoMemory)[y*AMI_LINE_LENGTH + x];
 	*pixmem32 = colour;
-#endif*/
 }
-/*
-#if !DISABLE_DISPLAY
-void DrawScreen(SDL_Surface* screen, int h)
-{ 
-    int x, y, ytimesw;
-  
-    for(y = 0; y < screen->h; y++ ) 
-    {
-        ytimesw = y*screen->pitch/BPP;
-	memcpy((Uint32*)screen->pixels + ytimesw,videoMemory + y*AMI_LINE_LENGTH,AMI_LINE_LENGTH*4);
-    }
 
-}
-#endif
-*/
-int g_frameSkip=0;
-#define FRAME_SKIP	4
-
-#define BOX_SIZE	1.0f
-
-void drawScene() 
+void DrawScreen() 
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBindTexture(GL_TEXTURE_RECTANGLE_EXT, 1);
 	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	// glTexSubImage2D is faster when not using a texture range
+	glTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, AMI_LINE_LENGTH, 262, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, videoMemory);
+	//glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, IMAGE_SIZE, IMAGE_SIZE, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image[draw_image]);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(-1.0f, 1.0f);
 	
-    glBegin(GL_QUADS); //Begin quadrilateral coordinates
-    
-    //Trapezoid
-    glVertex3f(-0.7f, -1.5f, -5.0f);
-    glVertex3f(0.7f, -1.5f, -5.0f);
-    glVertex3f(0.4f, -0.5f, -5.0f);
-    glVertex3f(-0.4f, -0.5f, -5.0f);
-    
-    glEnd(); //End quadrilateral coordinates
+	glTexCoord2f(0.0f, 262.0f);
+	glVertex2f(-1.0f, -1.0f);
+	
+	glTexCoord2f(AMI_LINE_LENGTH, 262.0f);
+	glVertex2f(1.0f, -1.0f);
+	
+	glTexCoord2f(AMI_LINE_LENGTH, 0.0f);
+	glVertex2f(1.0f, 1.0f);
+	glEnd();
+	
+	glFlush();
 }
-/*
-void update(int value) {
 
-	glutPostRedisplay();
-	glutTimerFunc(25, update, 0);
-}
-*/
-void handleResize(int w, int h) {
+void setupGL(int w, int h) 
+{
     //Tell OpenGL how to convert from coordinates to pixel values
     glViewport(0, 0, w, h);
-    
-    glMatrixMode(GL_PROJECTION); //Switch to setting the camera perspective
-    
-    //Set the camera perspective
-    glLoadIdentity(); //Reset the camera
-    gluPerspective(45.0,                  //The camera angle
-                   (double)w / (double)h, //The width-to-height ratio
-                   1.0,                   //The near z clipping coordinate
-                   200.0);                //The far z clipping coordinate
+	
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glClearColor(1.0f, 0.f, 1.0f, 1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	
+	glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+	
+	glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity(); 
+	
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_RECTANGLE_EXT);
+	glBindTexture(GL_TEXTURE_RECTANGLE_EXT, 1);
+	
+	glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_EXT, 0, NULL);
+	
+	glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_STORAGE_HINT_APPLE , GL_STORAGE_CACHED_APPLE);
+	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	
+	glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, AMI_LINE_LENGTH,
+				 262, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, videoMemory);
+	
+	glDisable(GL_DEPTH_TEST);
 }
 
-int main( void ) 
-{ 
-	int running = GL_TRUE; 
+int main(int argc,char **argv)
+{
+    unsigned char *romPtr;
+	int running=1;
+    
 	// Initialize GLFW 
 	glfwInit(); 
 	// Open an OpenGL window 
-	if( !glfwOpenWindow( 300,300, 0,0,0,0,0,0, GLFW_WINDOW ) ) 
+	if( !glfwOpenWindow( AMI_LINE_LENGTH, 262, 0,0,0,0,0,0, GLFW_WINDOW ) ) 
 	{ 
 		glfwTerminate(); 
-		return 0; 
+		return 1; 
 	} 
-	handleResize(300,300);
-	// Main loop
-	while( running ) 
-	{ 
-		// OpenGL rendering goes here... 
-		glClear( GL_COLOR_BUFFER_BIT ); 
-		drawScene();
-		// Swap front and back rendering buffers 
-		glfwSwapBuffers(); 
-		// Check if ESC key was pressed or window was closed 
-		running = !glfwGetKey( GLFW_KEY_ESC ) && 
-		glfwGetWindowParam( GLFW_OPENED ); 
-	} 
-	// Close window and terminate GLFW 
-	glfwTerminate(); 
-	// Exit program 
-	return 0; 
-}
-
-int omain(int argc,char **argv)
-{
-    unsigned char *romPtr;
-    
+	
+	glfwSetWindowTitle("MacAmi");
+	glfwSetWindowPos(670,700);
+	
+	setupGL(AMI_LINE_LENGTH,262);	
+	
     romPtr=load_rom("../../out.rom");
     if (!romPtr)
     {
-	romPtr=load_rom("out.rom");
-	if (!romPtr)
-	{
-	    printf("[ERR] Failed to load rom image\n");
-	    return -1;
-	}
+		romPtr=load_rom("out.rom");
+		if (!romPtr)
+		{
+			printf("[ERR] Failed to load rom image\n");
+			glfwTerminate(); 
+			return 1; 
+		}
     }
-
+	
     CPU_BuildTable();
 	
     MEM_Initialise(romPtr);
@@ -256,84 +225,34 @@ int omain(int argc,char **argv)
 	CIA_InitialiseCustom();
 	BLT_InitialiseBlitter();
 	DSP_InitialiseDisplay();
-
+	
     CPU_Reset();
     
-    {
-/*
-		glutInit(&argc, argv);
-		glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-		glutInitWindowSize(WIDTH, HEIGHT);
-	
-		glutCreateWindow("Ami");
-	
-		glutDisplayFunc(drawScene);
-		glutReshapeFunc(handleResize);
-		glutTimerFunc(25, update, 0);
+	while (running)
+	{
+		DSP_Update();
+		CST_Update();
+		CPR_Update();
+		CIA_Update();
+		BLT_Update();
+		CPU_Step();
 		
-	glEnable(GL_DEPTH_TEST);
-	
-		glutMainLoop();*/
-/*
-#if !DISABLE_DISPLAY
-	    SDL_Event event;
-
-	    int keypress = 0;
-	    int h=0; 
-	    int unlock=0;
-
-	    if (SDL_Init(SDL_INIT_VIDEO) < 0 ) return 1;
-
-	    if (!(screen = SDL_SetVideoMode(WIDTH, HEIGHT, DEPTH, 0|SDL_HWSURFACE)))
-	    {
-		    SDL_Quit();
-		    return 1;
-	    }
-
-	    while(!keypress) 
-#else*/
-	    while (1)
-//#endif
-	    {
-			DSP_Update();
-		    CST_Update();
-		    CPR_Update();
-		    CIA_Update();
-			BLT_Update();
-		    CPU_Step();
-/*
-#if !DISABLE_DISPLAY		    
-		    if (g_newScreenNotify)
-		    {
-				if (g_frameSkip==FRAME_SKIP)
-				{
-					g_frameSkip=0;
-					if(SDL_MUSTLOCK(screen))
-					{
-						if(SDL_LockSurface(screen) >= 0) 
-						{
-							unlock=1;
-						}
-					}
-					DrawScreen(screen,1);
-					
-					if(unlock && SDL_MUSTLOCK(screen))
-					{
-						unlock=0;	
-						SDL_UnlockSurface(screen);
-					}
-					SDL_Flip(screen); 
-					
-				}
-			    g_newScreenNotify=0;
-				g_frameSkip++;
-			}
+		if (g_newScreenNotify)
+		{
+			DrawScreen();
 			
-
-#endif*/
-	    }
-    }
+			glfwSwapBuffers();
+			
+			g_newScreenNotify=0;
+		}
+		
+		// Check if ESC key was pressed or window was closed 
+		running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED ); 
+	}
 	
-    return 0;
+	// Close window and terminate GLFW 
+	glfwTerminate(); 
+	// Exit program 
+	return 0; 
 }
 

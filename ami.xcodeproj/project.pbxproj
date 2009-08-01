@@ -7,18 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		384CFC581024739F00CEB158 /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC481024739F00CEB158 /* blitter.c */; };
-		384CFC591024739F00CEB158 /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC4A1024739F00CEB158 /* ciachip.c */; };
-		384CFC5A1024739F00CEB158 /* copper.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC4D1024739F00CEB158 /* copper.c */; };
-		384CFC5B1024739F00CEB158 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC4F1024739F00CEB158 /* cpu.c */; };
-		384CFC5C1024739F00CEB158 /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC511024739F00CEB158 /* customchip.c */; };
-		384CFC5D1024739F00CEB158 /* display.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC531024739F00CEB158 /* display.c */; };
-		384CFC5E1024739F00CEB158 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 384CFC551024739F00CEB158 /* memory.c */; };
 		384CFC8210247AF700CEB158 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFC8110247AF700CEB158 /* OpenGL.framework */; };
 		384CFCBA1024854400CEB158 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCB91024854400CEB158 /* Carbon.framework */; };
 		384CFCC01024855400CEB158 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCBF1024855400CEB158 /* AGL.framework */; };
-		384CFCC61024867200CEB158 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCC51024867200CEB158 /* GLUT.framework */; };
-		8DD76FAC0486AB0100D96B5E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* main.c */; settings = {ATTRIBUTES = (); }; };
+		389C06BB10249B600006CF6E /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06A910249B600006CF6E /* blitter.c */; };
+		389C06BC10249B600006CF6E /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06AB10249B600006CF6E /* ciachip.c */; };
+		389C06BD10249B600006CF6E /* copper.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06AE10249B600006CF6E /* copper.c */; };
+		389C06BE10249B600006CF6E /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B010249B600006CF6E /* cpu.c */; };
+		389C06BF10249B600006CF6E /* customchip.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B210249B600006CF6E /* customchip.c */; };
+		389C06C010249B600006CF6E /* display.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B410249B600006CF6E /* display.c */; };
+		389C06C110249B600006CF6E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 389C06B610249B600006CF6E /* Info.plist */; };
+		389C06C210249B600006CF6E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B710249B600006CF6E /* main.c */; };
+		389C06C310249B600006CF6E /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B810249B600006CF6E /* memory.c */; };
 		8DD76FB00486AB0100D96B5E /* ami.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* ami.1 */; };
 /* End PBXBuildFile section */
 
@@ -36,28 +36,28 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		08FB7796FE84155DC02AAC07 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
-		384CFC481024739F00CEB158 /* blitter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = blitter.c; sourceTree = "<group>"; };
-		384CFC491024739F00CEB158 /* blitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blitter.h; sourceTree = "<group>"; };
-		384CFC4A1024739F00CEB158 /* ciachip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ciachip.c; sourceTree = "<group>"; };
-		384CFC4B1024739F00CEB158 /* ciachip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciachip.h; sourceTree = "<group>"; };
-		384CFC4C1024739F00CEB158 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
-		384CFC4D1024739F00CEB158 /* copper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = copper.c; sourceTree = "<group>"; };
-		384CFC4E1024739F00CEB158 /* copper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = copper.h; sourceTree = "<group>"; };
-		384CFC4F1024739F00CEB158 /* cpu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu.c; sourceTree = "<group>"; };
-		384CFC501024739F00CEB158 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
-		384CFC511024739F00CEB158 /* customchip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = customchip.c; sourceTree = "<group>"; };
-		384CFC521024739F00CEB158 /* customchip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = customchip.h; sourceTree = "<group>"; };
-		384CFC531024739F00CEB158 /* display.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = display.c; sourceTree = "<group>"; };
-		384CFC541024739F00CEB158 /* display.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = display.h; sourceTree = "<group>"; };
-		384CFC551024739F00CEB158 /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
-		384CFC561024739F00CEB158 /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
-		384CFC571024739F00CEB158 /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
 		384CFC8110247AF700CEB158 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		384CFCB91024854400CEB158 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		384CFCBF1024855400CEB158 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
-		384CFCC51024867200CEB158 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = /System/Library/Frameworks/GLUT.framework; sourceTree = "<absolute>"; };
 		384CFCCA10248A4300CEB158 /* info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = info.plist; sourceTree = "<group>"; };
+		389C06A910249B600006CF6E /* blitter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = blitter.c; sourceTree = "<group>"; };
+		389C06AA10249B600006CF6E /* blitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blitter.h; sourceTree = "<group>"; };
+		389C06AB10249B600006CF6E /* ciachip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ciachip.c; sourceTree = "<group>"; };
+		389C06AC10249B600006CF6E /* ciachip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciachip.h; sourceTree = "<group>"; };
+		389C06AD10249B600006CF6E /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		389C06AE10249B600006CF6E /* copper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = copper.c; sourceTree = "<group>"; };
+		389C06AF10249B600006CF6E /* copper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = copper.h; sourceTree = "<group>"; };
+		389C06B010249B600006CF6E /* cpu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu.c; sourceTree = "<group>"; };
+		389C06B110249B600006CF6E /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
+		389C06B210249B600006CF6E /* customchip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = customchip.c; sourceTree = "<group>"; };
+		389C06B310249B600006CF6E /* customchip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = customchip.h; sourceTree = "<group>"; };
+		389C06B410249B600006CF6E /* display.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = display.c; sourceTree = "<group>"; };
+		389C06B510249B600006CF6E /* display.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = display.h; sourceTree = "<group>"; };
+		389C06B610249B600006CF6E /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		389C06B710249B600006CF6E /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		389C06B810249B600006CF6E /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
+		389C06B910249B600006CF6E /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
+		389C06BA10249B600006CF6E /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* ami */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ami; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6A0FF2C0290799A04C91782 /* ami.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = ami.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -70,7 +70,6 @@
 				384CFC8210247AF700CEB158 /* OpenGL.framework in Frameworks */,
 				384CFCBA1024854400CEB158 /* Carbon.framework in Frameworks */,
 				384CFCC01024855400CEB158 /* AGL.framework in Frameworks */,
-				384CFCC61024867200CEB158 /* GLUT.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,7 +79,6 @@
 		08FB7794FE84155DC02AAC07 /* ami */ = {
 			isa = PBXGroup;
 			children = (
-				384CFCC51024867200CEB158 /* GLUT.framework */,
 				384CFCBF1024855400CEB158 /* AGL.framework */,
 				384CFCB91024854400CEB158 /* Carbon.framework */,
 				384CFC8110247AF700CEB158 /* OpenGL.framework */,
@@ -95,23 +93,24 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				384CFC481024739F00CEB158 /* blitter.c */,
-				384CFC491024739F00CEB158 /* blitter.h */,
-				384CFC4A1024739F00CEB158 /* ciachip.c */,
-				384CFC4B1024739F00CEB158 /* ciachip.h */,
-				384CFC4C1024739F00CEB158 /* config.h */,
-				384CFC4D1024739F00CEB158 /* copper.c */,
-				384CFC4E1024739F00CEB158 /* copper.h */,
-				384CFC4F1024739F00CEB158 /* cpu.c */,
-				384CFC501024739F00CEB158 /* cpu.h */,
-				384CFC511024739F00CEB158 /* customchip.c */,
-				384CFC521024739F00CEB158 /* customchip.h */,
-				384CFC531024739F00CEB158 /* display.c */,
-				384CFC541024739F00CEB158 /* display.h */,
-				384CFC551024739F00CEB158 /* memory.c */,
-				384CFC561024739F00CEB158 /* memory.h */,
-				384CFC571024739F00CEB158 /* mytypes.h */,
-				08FB7796FE84155DC02AAC07 /* main.c */,
+				389C06A910249B600006CF6E /* blitter.c */,
+				389C06AA10249B600006CF6E /* blitter.h */,
+				389C06AB10249B600006CF6E /* ciachip.c */,
+				389C06AC10249B600006CF6E /* ciachip.h */,
+				389C06AD10249B600006CF6E /* config.h */,
+				389C06AE10249B600006CF6E /* copper.c */,
+				389C06AF10249B600006CF6E /* copper.h */,
+				389C06B010249B600006CF6E /* cpu.c */,
+				389C06B110249B600006CF6E /* cpu.h */,
+				389C06B210249B600006CF6E /* customchip.c */,
+				389C06B310249B600006CF6E /* customchip.h */,
+				389C06B410249B600006CF6E /* display.c */,
+				389C06B510249B600006CF6E /* display.h */,
+				389C06B610249B600006CF6E /* Info.plist */,
+				389C06B710249B600006CF6E /* main.c */,
+				389C06B810249B600006CF6E /* memory.c */,
+				389C06B910249B600006CF6E /* memory.h */,
+				389C06BA10249B600006CF6E /* mytypes.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -176,6 +175,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				389C06C110249B600006CF6E /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,14 +186,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8DD76FAC0486AB0100D96B5E /* main.c in Sources */,
-				384CFC581024739F00CEB158 /* blitter.c in Sources */,
-				384CFC591024739F00CEB158 /* ciachip.c in Sources */,
-				384CFC5A1024739F00CEB158 /* copper.c in Sources */,
-				384CFC5B1024739F00CEB158 /* cpu.c in Sources */,
-				384CFC5C1024739F00CEB158 /* customchip.c in Sources */,
-				384CFC5D1024739F00CEB158 /* display.c in Sources */,
-				384CFC5E1024739F00CEB158 /* memory.c in Sources */,
+				389C06BB10249B600006CF6E /* blitter.c in Sources */,
+				389C06BC10249B600006CF6E /* ciachip.c in Sources */,
+				389C06BD10249B600006CF6E /* copper.c in Sources */,
+				389C06BE10249B600006CF6E /* cpu.c in Sources */,
+				389C06BF10249B600006CF6E /* customchip.c in Sources */,
+				389C06C010249B600006CF6E /* display.c in Sources */,
+				389C06C210249B600006CF6E /* main.c in Sources */,
+				389C06C310249B600006CF6E /* memory.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
