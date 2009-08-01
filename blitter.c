@@ -24,8 +24,6 @@
 #include "copper.h"
 #include "customchip.h"
 
-extern u_int8_t		*cstMemory;
-
 int bltStart=0;
 int bltZero=0;
 

@@ -69,8 +69,6 @@ u_int16_t		bTBCnt=0;
 
 u_int16_t		timerSlow=0;
 
-extern u_int8_t		*cstMemory;
-
 void CIA_Update()
 {
 	timerSlow++;

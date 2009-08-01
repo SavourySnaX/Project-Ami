@@ -23,8 +23,6 @@
 #include "copper.h"
 #include "customchip.h"
 
-extern u_int8_t		*cstMemory;
-
 void DSP_InitialiseDisplay()
 {
 }
