@@ -89,7 +89,7 @@ void CIA_Update()
 /*				if (ciab_icr&0x02)
 				{
 					ciaMemory[0x1D]|=0x80;		// set IR bit
-					cstMemory[0x1F]|=0x08;		// set port interrupt
+					CST_ORWRD(CST_INTREQR,0x0008);
 				}*/
 			}
 		}
@@ -112,7 +112,7 @@ void CIA_Update()
 				if (ciaa_icr&0x02)
 				{
 					ciaMemory[0x0D]|=0x80;		// set IR bit
-					cstMemory[0x1F]|=0x08;		// set port interrupt
+					CST_ORWRD(CST_INTREQR,0x0008);
 				}
 			}
 		}

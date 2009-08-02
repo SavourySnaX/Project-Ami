@@ -30,11 +30,7 @@ u_int32_t GetPixelAddress(u_int8_t bplBase,u_int32_t hor,u_int32_t ver)
 {
     u_int32_t bpl1;
 
-    bpl1 = cstMemory[bplBase+1]&0x07;
-    bpl1 <<= 8;
-    bpl1|= cstMemory[bplBase+2];
-    bpl1 <<= 8;
-    bpl1|= cstMemory[bplBase+3];
+	bpl1 = CST_GETLNGU(bplBase,0x0007FFFE);
 
     bpl1+=hor/8;	// This is all a big fat lie!
     bpl1+=ver*(320/8);
@@ -56,23 +52,23 @@ void DecodePixel2(u_int32_t hor,u_int32_t ver)
 
     if (pix1 && pix2)
     {
-	ch=cstMemory[0x186];
-	cl=cstMemory[0x187];
+		ch=CST_GETWRDU(CST_COLOR03,0xFF00)>>8;
+		cl=CST_GETWRDU(CST_COLOR03,0x00FF);
     }
     else if ((!pix1) && pix2)
     {
-	ch=cstMemory[0x184];
-	cl=cstMemory[0x185];
+		ch=CST_GETWRDU(CST_COLOR02,0xFF00)>>8;
+		cl=CST_GETWRDU(CST_COLOR02,0x00FF);
     }
     else if (pix1 && (!pix2))
     {
-	ch=cstMemory[0x182];
-	cl=cstMemory[0x183];
+		ch=CST_GETWRDU(CST_COLOR01,0xFF00)>>8;
+		cl=CST_GETWRDU(CST_COLOR01,0x00FF);
     }
     else
     {
-	ch=cstMemory[0x180];
-	cl=cstMemory[0x181];
+		ch=CST_GETWRDU(CST_COLOR00,0xFF00)>>8;
+		cl=CST_GETWRDU(CST_COLOR00,0x00FF);
     }
 
 	doPixel(hor,ver,ch,cl);
@@ -82,15 +78,15 @@ void DecodePixel0(u_int32_t hor,u_int32_t ver)
 {
     u_int8_t	ch,cl;
 
-    ch=cstMemory[0x180];
-    cl=cstMemory[0x181];
+	ch=CST_GETWRDU(CST_COLOR00,0xFF00)>>8;
+	cl=CST_GETWRDU(CST_COLOR00,0x00FF);
 
     doPixel(hor,ver,ch,cl);
 }
 
 void DSP_Update()
 {
-    switch ((cstMemory[0x100]&0x70)>>4)
+    switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
     {
 	case 0:
 	    DecodePixel0(horizontalClock*2,verticalClock);

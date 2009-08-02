@@ -17,7 +17,6 @@
 #include "copper.h"
 #include "customchip.h"
 
-extern u_int8_t		*cstMemory;
 extern u_int8_t		horizontalClock;
 extern u_int16_t	verticalClock;
 
@@ -43,23 +42,21 @@ void CPR_Update()
 {
 	u_int16_t wrd;
 
-	if ((cstMemory[0x03]&0x80) && (cstMemory[0x02]&0x02))
+	if (CST_GETWRDU(CST_DMACONR,0x0280))
 	{
 		// copper is enabled
 		
 		if (copperCycle==0)
 		{
-//		printf("COPPERLIST: %08X %04X\n",copperPC,MEM_getWord(copperPC));
 			wrd = MEM_getWord(copperPC);
 			copperPC+=2;
-			cstMemory[0x8C]=wrd>>8;
-			cstMemory[0x8D]=wrd&0xFF;
+			CST_SETWRD(CST_COPINS,wrd,0xFFFF);
 			copperCycle=1;
 		}
 		else
 		{
 			copperCycle=0;
-			if (cstMemory[0x8D]&0x01)
+			if (CST_GETWRDU(CST_COPINS,0x0001))
 			{
 				// doing a skip or wait
 				wrd = MEM_getWord(copperPC);
@@ -68,23 +65,21 @@ void CPR_Update()
 				{
 					int bltFinished = 1;
 					// doing a wait
-					u_int8_t vpos=cstMemory[0x8C]&0xFF;
-					u_int8_t hpos=cstMemory[0x8D]&0xFE;
+					u_int8_t vpos=CST_GETWRDU(CST_COPINS,0xFF00)>>8;
+					u_int8_t hpos=CST_GETWRDU(CST_COPINS,0x00FE);
 					u_int8_t maskv;
 					u_int8_t maskh;
 					
 					if (!(wrd&0x8000))
 					{
-						bltFinished = !(cstMemory[0x02]&0x40);
+						bltFinished = !(CST_GETWRDU(CST_DMACONR,0x4000));
 					}
 					
 					maskv=0x80|((wrd>>8)&0x7F);
 					maskh=(wrd&0xFE);
 					
-//					printf("Copper Wait %02x%02x:%04x\n",cstMemory[0x8C],cstMemory[0x8D],wrd);
 					if (bltFinished && ((verticalClock&maskv)>vpos || ((verticalClock&maskv)==vpos && (horizontalClock&maskh)>=hpos)))
 					{
-//		printf("COPPERLIST: WAIT %08X %04X\n",copperPC,MEM_getWord(copperPC));
 						copperPC+=2;
 					}
 					else
@@ -94,24 +89,22 @@ void CPR_Update()
 				}
 				else
 				{
-//		printf("COPPERLIST: SKIP %08X %04X\n",copperPC,MEM_getWord(copperPC));
 					// doing a skip
 					int bltFinished = 1;
 
-					u_int8_t vpos=cstMemory[0x8C]&0xFF;
-					u_int8_t hpos=cstMemory[0x8D]&0xFE;
+					u_int8_t vpos=CST_GETWRDU(CST_COPINS,0xFF00)>>8;
+					u_int8_t hpos=CST_GETWRDU(CST_COPINS,0x00FE);
 					u_int8_t maskv;
 					u_int8_t maskh;
 					
 					if (!(wrd&0x8000))
 					{
-						bltFinished = !(cstMemory[0x02]&0x40);
+						bltFinished = !(CST_GETWRDU(CST_DMACONR,0x4000));
 					}
 					
 					maskv=0x80|((wrd>>8)&0x7F);
 					maskh=(wrd&0xFE);
 					
-//					printf("Copper Wait %02x%02x:%04x\n",cstMemory[0x8C],cstMemory[0x8D],wrd);
 					if (bltFinished && ((verticalClock&maskv)>vpos || ((verticalClock&maskv)==vpos && (horizontalClock&maskh)>=hpos)))
 					{
 						copperPC+=6;		// skip next instruction
@@ -126,19 +119,21 @@ void CPR_Update()
 			{
 				// doing a move
 				u_int16_t destination;
+				u_int8_t  copperDanger=0x20;
 			       
-//		printf("COPPERLIST: MOVE %08X %04X\n",copperPC,MEM_getWord(copperPC));
 				wrd = MEM_getWord(copperPC);
 				copperPC+=2;
 
-//				printf("Copper Move:\n");
-				destination = ((u_int16_t)(cstMemory[0x8C]&0x01))<<8;
-				destination|=cstMemory[0x8D]&0xFE;
+				destination = CST_GETWRDU(CST_COPINS,0x01FE);
 
-				cstMemory[0x8C]=wrd>>8;
-				cstMemory[0x8D]=wrd&0xFF;
+				CST_SETWRD(CST_COPINS,wrd,0xFFFF);
 
-				if (destination>=0x20) // need to check copper danger bit and allow 0x10 and above addresses
+				if (CST_GETWRDU(CST_COPCON,0x0002))
+				{
+					copperDanger=0x10;
+				}
+				
+				if (destination>=copperDanger) // need to check copper danger bit and allow 0x10 and above addresses
 				{
 					MEM_setWord(0xdff000+destination,wrd);
 				}

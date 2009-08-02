@@ -72,17 +72,15 @@ void CST_Update()
 
 			// I`m going to need to clean this all up really (need a proper bus arbitration too)
 
-			if ((cstMemory[0x1C]&0x40) && (cstMemory[0x1D]&0x20))
+			if (CST_GETWRDU(CST_INTENAR,0x4020))
 			{
-				cstMemory[0x1F]|=0x20;				// Have processor poll INTREQR for jobs
+				CST_ORWRD(CST_INTREQR,0x0020);				// Have processor poll INTREQR for jobs
 			}
 
 			cLineLength=LINE_LENGTH-1;
  
 			// reload copper on vbl
-			CPR_SetPC((((u_int32_t)(cstMemory[0x81]&07))<<16)+
-				 (((u_int32_t)(cstMemory[0x82]))<<8)+
-				 (((u_int32_t)(cstMemory[0x83]))));
+			CPR_SetPC(CST_GETLNGU(CST_COP1LCH,0x0007FFFE));
 
 			g_newScreenNotify=1;
 
@@ -94,16 +92,12 @@ void CST_Update()
 
 void CST_setByteCOPJMP1(u_int16_t reg,u_int8_t dontcarestrobe)
 {
-	CPR_SetPC((((u_int32_t)(cstMemory[0x81]&07))<<16)+
-		 (((u_int32_t)(cstMemory[0x82]))<<8)+
-		 (((u_int32_t)(cstMemory[0x83]))));
+	CPR_SetPC(CST_GETLNGU(CST_COP1LCH,0x0007FFFE));
 }
 
 void CST_setByteCOPJMP2(u_int16_t reg,u_int8_t dontcarestrobe)
 {
-	CPR_SetPC((((u_int32_t)(cstMemory[0x85]&07))<<16)+
-		 (((u_int32_t)(cstMemory[0x86]))<<8)+
-		 (((u_int32_t)(cstMemory[0x87]))));
+	CPR_SetPC(CST_GETLNGU(CST_COP2LCH,0x0007FFFE));
 }
 
 void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)
@@ -113,15 +107,13 @@ void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)
 	if (reg&1)
 	{
 		// second byte set do the operation
-		if (cstMemory[0x9A] & 0x80)		// need to or in the set bits
+		if (CST_GETWRDU(CST_INTENA,0x8000))		// need to or in the set bits
 		{
-			cstMemory[0x1C] |= cstMemory[0x9A]&0x7F;
-			cstMemory[0x1D] |= cstMemory[0x9B];
+			CST_ORWRD(CST_INTENAR,CST_GETWRDU(CST_INTENA,0x7FFF));
 		}
 		else							// need to mask of the set bits
 		{
-			cstMemory[0x1C] &= ~(cstMemory[0x9A]);
-			cstMemory[0x1D] &= ~(cstMemory[0x9B]);
+			CST_ANDWRD(CST_INTENAR,~CST_GETWRDU(CST_INTENA,0xFFFF));
 		}
 	}
 
@@ -135,15 +127,13 @@ void CST_setByteINTREQ(u_int16_t reg,u_int8_t byte)
 	if (reg&1)
 	{
 		// second byte set do the operation
-		if (cstMemory[0x9C] & 0x80)		// need to or in the set bits
+		if (CST_GETWRDU(CST_INTREQ,0x8000))		// need to or in the set bits
 		{
-			cstMemory[0x1E] |= cstMemory[0x9C]&0x7F;
-			cstMemory[0x1F] |= cstMemory[0x9D];
+			CST_ORWRD(CST_INTREQR,CST_GETWRDU(CST_INTREQ,0x7FFF));
 		}
 		else							// need to mask of the set bits
 		{
-			cstMemory[0x1E] &= ~(cstMemory[0x9C]);
-			cstMemory[0x1F] &= ~(cstMemory[0x9D]);
+			CST_ANDWRD(CST_INTREQR,~CST_GETWRDU(CST_INTREQ,0xFFFF));
 		}
 	}
 //	printf("INTREQR : %02X%02X\n",cstMemory[0x1E],cstMemory[0x1F]);
@@ -153,19 +143,24 @@ void CST_setByteINTREQ(u_int16_t reg,u_int8_t byte)
 
 u_int8_t CST_getByteVPOSR(u_int16_t reg)
 {
+	CST_SETWRD(CST_VPOSR,(AGNUS_ID<<8) | 0 | (verticalClock>>8),0xFF01);
+/*	   ((verticalClock&0x0100)|(AGNUS_ID | 0)),0xFFFF);
 	if (reg&1)
 	{
+		CST_SET
 		cstMemory[0x05]=(verticalClock>>8)&1;				// bit 1 is high part of vertical line (ie > 255)
 	}
 	else
 	{
 		cstMemory[0x04]=AGNUS_ID | 0;	// 0 is LOF long frame but i think thats an interlaced thing
-	}
+	}*/
 	return cstMemory[reg];
 }
 
 u_int8_t CST_getByteVHPOSR(u_int16_t reg)
 {
+	CST_SETWRD(CST_VHPOSR,(verticalClock<<8)|horizontalClock,0xFFFF);
+/*
 	if (reg&1)
 	{
 		cstMemory[0x07]=horizontalClock;				// bit 1 is high part of vertical line (ie > 255)
@@ -173,7 +168,7 @@ u_int8_t CST_getByteVHPOSR(u_int16_t reg)
 	else
 	{
 		cstMemory[0x06]=verticalClock&0xFF;
-	}
+	}*/
 	return cstMemory[reg];
 }
 
@@ -184,15 +179,13 @@ void CST_setByteDMACON(u_int16_t reg,u_int8_t byte)
 	if (reg&1)
 	{
 		// second byte set do the operation
-		if (cstMemory[0x96] & 0x80)		// need to or in the set bits
+		if (CST_GETWRDU(CST_DMACON,0x8000))		// need to or in the set bits
 		{
-			cstMemory[0x2] |= cstMemory[0x96]&0x07;
-			cstMemory[0x3] |= cstMemory[0x97];
+			CST_ORWRD(CST_DMACONR,CST_GETWRDU(CST_DMACON,0x7FFF));
 		}
-		else							// need to mask off the set bits
+		else							// need to mask of the set bits
 		{
-			cstMemory[0x2] &= ~(cstMemory[0x96]);
-			cstMemory[0x3] &= ~(cstMemory[0x97]);
+			CST_ANDWRD(CST_DMACONR,~CST_GETWRDU(CST_DMACON,0xFFFF));
 		}
 	}
 }
@@ -223,19 +216,19 @@ void CST_setBytePOTGO(u_int16_t reg,u_int8_t byte)
 	if (reg&1)
 	{
 		// | 0 | 0 | 0 | 0 | 0 | 0 | 0 | START
-		cstMemory[0x17]=0x00;					// PAULA ID = 0
+		cstMemory[CST_POTGOR+1]=0x00;					// PAULA ID = 0
 	}
 	else
 	{
 		// | OUTRY | DATRY | OUTRX | DATRX | OUTLY | DATLY | OUTLX | DATLX
-		cstMemory[0x16]=0x00;
+		cstMemory[CST_POTGOR]=0x00;
 		if ((byte&0x0C)==0x0C)	// check mouse right button
 		{
-			cstMemory[0x16]|=0x04;			// Note bit set means not pressed!
+			cstMemory[CST_POTGOR]|=0x04;			// Note bit set means not pressed!
 		}
 		if ((byte&0x03)==0x03)	// check mouse left button
 		{
-			cstMemory[0x16]|=0x01;			// Note bit set means not pressed!
+			cstMemory[CST_POTGOR]|=0x01;			// Note bit set means not pressed!
 		}
 	}
 }

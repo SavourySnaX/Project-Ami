@@ -18,8 +18,6 @@
 #include "memory.h"
 #include "customchip.h"
 
-extern u_int8_t	*cstMemory;
-
 CPU_Regs cpu_regs;
 
 void CPU_Reset()
@@ -6266,7 +6264,7 @@ void DumpEmulatorState()
 
 void CPU_CheckForInterrupt()
 {
-	if (cstMemory[0x1C]&0x40)
+	if (CST_GETWRDU(CST_INTENAR,0x4000))
 	{
 		// Interrupts are enabled, check for any pending interrupts in priority order, paying attention to 
 		// interrupt level mask in SR
@@ -6286,7 +6284,7 @@ void CPU_CheckForInterrupt()
 		// Disk Sync
 		// RBF serial port recieve buffer full
 		//
-		if (cstMemory[0x1E]&cstMemory[0x1C]&0x18)
+		if (CST_GETWRDU(CST_INTREQR,0x1800)&CST_GETWRDU(CST_INTENAR,0x1800))
 		{
 			CPU_GENERATE_EXCEPTION(0x74);
 			cpu_regs.SR&=0xF8FF;
@@ -6303,7 +6301,7 @@ void CPU_CheckForInterrupt()
 		// AUD1
 		// AUD0
 		//
-		if ((cstMemory[0x1E]&cstMemory[0x1C]&0x07) || (cstMemory[0x1F]&cstMemory[0x1D]&0x80))
+		if (CST_GETWRDU(CST_INTREQR,0x0780)&CST_GETWRDU(CST_INTENAR,0x0780))
 		{
 			CPU_GENERATE_EXCEPTION(0x70);
 			cpu_regs.SR&=0xF8FF;
@@ -6319,7 +6317,7 @@ void CPU_CheckForInterrupt()
 		// Start of VBL
 		// Copper
 		//
-		if ((cstMemory[0x1F]&cstMemory[0x1D]&0x70))
+		if (CST_GETWRDU(CST_INTREQR,0x0070)&CST_GETWRDU(CST_INTENAR,0x0070))
 		{
 			CPU_GENERATE_EXCEPTION(0x6C);
 			cpu_regs.SR&=0xF8FF;
@@ -6333,7 +6331,7 @@ void CPU_CheckForInterrupt()
 		// Level 2
 		// IO ports and timers
 		//
-		if ((cstMemory[0x1F]&cstMemory[0x1D]&0x08))
+		if (CST_GETWRDU(CST_INTREQR,0x0008)&CST_GETWRDU(CST_INTENAR,0x0008))
 		{
 			CPU_GENERATE_EXCEPTION(0x68);
 			cpu_regs.SR&=0xF8FF;
@@ -6349,7 +6347,7 @@ void CPU_CheckForInterrupt()
 		// DSKBLK
 		// TBE
 		//
-		if ((cstMemory[0x1F]&cstMemory[0x1D]&0x07))
+		if (CST_GETWRDU(CST_INTREQR,0x0007)&CST_GETWRDU(CST_INTENAR,0x0007))
 		{
 			CPU_GENERATE_EXCEPTION(0x64);
 			cpu_regs.SR&=0xF8FF;
