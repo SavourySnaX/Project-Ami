@@ -28,7 +28,9 @@ void CPR_SetPC(u_int32_t pc)
 	copperCycle=0;
 	copperPC = pc;
 
+#if ENABLE_COPPER_WARNINGS
 	printf("COPPER JUMPED %08X\n",pc);
+#endif
 }
 
 void CPR_InitialiseCopper()

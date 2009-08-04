@@ -125,11 +125,7 @@ void MEM_setLong(u_int32_t address, u_int32_t dword)
 	{
 		SOFT_BREAK;
 	}
-	if (address==0x19a6)
-	{
-		printf("Writing %08x\n",dword);
-//		startDebug=1;
-	}
+
 	MEM_setWord(address,dword>>16);
 	MEM_setWord(address+2,dword&0xFFFF);
 }

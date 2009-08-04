@@ -19,6 +19,7 @@ typedef struct
 	u_int32_t	USP,ISP;
 }CPU_Regs;
 
+
 #define	CPU_STATUS_T1		(1<<15)
 #define	CPU_STATUS_T0		(1<<14)
 #define	CPU_STATUS_S		(1<<13)

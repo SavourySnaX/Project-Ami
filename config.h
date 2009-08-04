@@ -2,5 +2,11 @@
 #ifndef __AMI_CONFIG
 #define __AMI_CONFIG
 
+#define ENABLE_DISK_WARNINGS	0
+#define ENABLE_CUSTOM_WARNINGS	0
+#define ENABLE_CIA_WARNINGS		0
+#define ENABLE_COPPER_WARNINGS	0
+
+
 #endif//__AMI_CONFIG
 

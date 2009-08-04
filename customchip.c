@@ -156,7 +156,7 @@ void CST_setByteADKCON(u_int16_t reg,u_int8_t byte)
 		}
 	}
 
-	printf("ADKCON : %04X\n",CST_GETWRDU(CST_ADKCONR,0xFFFF));
+//	printf("ADKCON : %04X\n",CST_GETWRDU(CST_ADKCONR,0xFFFF));
 }
 
 
@@ -515,8 +515,10 @@ u_int8_t CST_getByteUnmapped(u_int16_t reg)
 	
 	if ((reg>>1) < sizeof(customChipRegisters))
 		name = customChipRegisters[(reg>>1)].name;
-		
+	
+#if ENABLE_CHIP_WARNINGS
 	printf("[WRN] Read from Unmapped Hardware Register %s %08x\n",name,reg);
+#endif
 
 	return 0;
 }
@@ -527,9 +529,10 @@ u_int8_t CST_getByteCustom(u_int16_t reg)
 	
 	if ((reg>>1) < sizeof(customChipRegisters))
 		name = customChipRegisters[(reg>>1)].name;
-		
-	printf("[MSG] Read from Unsupported Hardware Register %s %08x\n",name,reg);
 	
+#if ENABLE_CHIP_WARNINGS
+	printf("[MSG] Read from Unsupported Hardware Register %s %08x\n",name,reg);
+#endif
 	return cstMemory[reg];
 }
 
@@ -544,8 +547,10 @@ void CST_setByteUnmapped(u_int16_t reg,u_int8_t byte)
 	
 	if ((reg>>1) < sizeof(customChipRegisters))
 		name = customChipRegisters[(reg>>1)].name;
-		
+
+#if ENABLE_CHIP_WARNINGS		
 	printf("[WRN] Write to Unmapped Hardware Register %s %02X -> %08x\n",name,byte,reg);
+#endif
 }
 
 void CST_setByteCustom(u_int16_t reg,u_int8_t byte)
@@ -554,8 +559,10 @@ void CST_setByteCustom(u_int16_t reg,u_int8_t byte)
 	
 	if ((reg>>1) < sizeof(customChipRegisters))
 		name = customChipRegisters[(reg>>1)].name;
-		
+
+#if ENABLE_CHIP_WARNINGS		
 	printf("[MSG] Write to Unsupported Hardware Register %s %02X -> %08x\n",name,byte,reg);
+#endif
 	
 	cstMemory[reg]=byte;
 }
@@ -571,8 +578,10 @@ void CST_setByteStrobe(u_int16_t reg,u_int8_t byte)
 	
 	if ((reg>>1) < sizeof(customChipRegisters))
 		name = customChipRegisters[(reg>>1)].name;
-		
+	
+#if ENABLE_CHIP_WARNINGS
 	printf("[MSG] Strobe Unsupported Hardware Register %s %02X -> %08x\n",name,byte,reg);
+#endif
 }
 
 void CST_setByteStrobeSupported(u_int16_t reg,u_int8_t byte)

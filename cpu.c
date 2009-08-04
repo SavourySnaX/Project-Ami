@@ -145,7 +145,7 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 			tmp = MEM_getWord(adr);
 			if (tmp&0x8000)
 			{
-				sprintf(tempData,"(#%02x,A%d%s,A%d)",tmp&0xFF,(tmp>>12),(tmp&0x0800) ? ".L" : ".W", operand-0x30);
+				sprintf(tempData,"(#%02x,A%d%s,A%d)",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? ".L" : ".W", operand-0x30);
 			}
 			else
 			{
@@ -172,7 +172,7 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,char *mData,char *bD
 			tmp = MEM_getWord(adr);
 			if (tmp&0x8000)
 			{
-				sprintf(tempData,"(#%02x,A%d%s,PC)",tmp&0xFF,(tmp>>12),(tmp&0x0800) ? ".L" : ".W");
+				sprintf(tempData,"(#%02x,A%d%s,PC)",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? ".L" : ".W");
 			}
 			else
 			{
@@ -255,7 +255,8 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 		case 0x1F:
 			if ((operand==0x1F) && (length==1))
 			{
-				printf("BIZZARE\n");
+				//startDebug=1;
+				length=2;
 			}
 			ea = cpu_regs.A[operand-0x18];
 			cpu_regs.A[operand-0x18]+=length;
@@ -270,7 +271,8 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 		case 0x27:
 			if ((operand==0x27) && (length==1))
 			{
-				printf("BIZZARE\n");
+				//startDebug=1;
+				length=2;
 			}
 			cpu_regs.A[operand-0x20]-=length;
 			ea = cpu_regs.A[operand-0x20];
@@ -297,7 +299,7 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 			tmp = MEM_getWord(cpu_regs.PC);
 			if (tmp&0x8000)
 			{
-				ea = cpu_regs.A[(tmp>>12)];
+				ea = cpu_regs.A[(tmp>>12)&0x7];
 				if (!(tmp&0x0800))
 					ea=(int16_t)ea;
 				ea += (int8_t)(tmp&0xFF);
@@ -329,7 +331,7 @@ u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 			tmp = MEM_getWord(cpu_regs.PC);
 			if (tmp&0x8000)
 			{
-				ea = cpu_regs.A[(tmp>>12)];
+				ea = cpu_regs.A[(tmp>>12)&0x7];
 				if (!(tmp&0x0800))
 					ea=(int16_t)ea;
 				ea += (int8_t)(tmp&0xFF);
@@ -2539,6 +2541,25 @@ void CPU_DIS_EORI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
 	
     printf("%s\t%s\n",byteData,mnemonicData);
 }
+
+void CPU_DIS_EORISR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"EORI");
+    strcpy(byteData,"");
+
+	strcat(mnemonicData,"#");
+	strcat(mnemonicData,decodeWord(adr));
+	strcat(byteData,decodeWord(adr));
+	adr+=2;
+	
+	strcat(mnemonicData,",SR");
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -6060,6 +6081,26 @@ void CPU_EORI(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 		cpu_regs.SR&=~CPU_STATUS_N;
 }
 
+void CPU_EORISR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int16_t eas,ead;
+	
+    cpu_regs.PC+=2;
+	
+	eas=MEM_getByte(cpu_regs.PC+1);
+	cpu_regs.PC+=2;
+
+	ead=cpu_regs.SR;
+	
+	eas=(ead^eas)&(CPU_STATUS_X|CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_Z);	// Only affects lower valid bits in flag
+
+	ead&=~(CPU_STATUS_X|CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_Z);
+	
+	ead|=eas;
+	
+	cpu_regs.SR=ead;
+}
+
 
 
 
@@ -6093,6 +6134,7 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
+{"0000101000111100","EORISR",CPU_EORISR,CPU_DIS_EORISR,0},
 {"00001010zzaaaaaa","EORI",CPU_EORI,CPU_DIS_EORI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1110001011aaaaaa","LSR",CPU_LSRm,CPU_DIS_LSRm,1,{0x003F},{0},{7},{{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"0000100001aaaaaa","BCHGI",CPU_BCHGI,CPU_DIS_BCHGI,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -6113,7 +6155,7 @@ CPU_Ins cpu_instructions[] =
 {"1101rrr1mmaaaaaa","ADD",CPU_ADDd,CPU_DIS_ADDd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,7},{{"rrr"},{"00","01","10"},{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1011rrr1zz001ddd","CMPM",CPU_CMPM,CPU_DIS_CMPM,3,{0x0E00,0x00C0,0x0007},{9,6,0},{1,3,1},{{"rrr"},{"00","01","10"},{"rrr"}}},
 {"0100111001010rrr","LINK",CPU_LINK,CPU_DIS_LINK,1,{0x0007},{0},{1},{{"rrr"}}},
-{"0100100001aaaaaa","PEA",CPU_PEA,CPU_DIS_PEA,1,{0x003F},{0},{5},{{"010rrr","101rrr","110rrr","111000","111001"}}},
+{"0100100001aaaaaa","PEA",CPU_PEA,CPU_DIS_PEA,1,{0x003F},{0},{7},{{"010rrr","101rrr","110rrr","111000","111001","111010","111011"}}},
 {"0101cccc11aaaaaa","Scc",CPU_SCC,CPU_DIS_SCC,2,{0x0F00,0x003F},{8,0},{1,8},{{"rrrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"01000100zzaaaaaa","NEG",CPU_NEG,CPU_DIS_NEG,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1100rrr111aaaaaa","MULS",CPU_MULS,CPU_DIS_MULS,2,{0x0E00,0x003F},{9,0},{1,11},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
@@ -6173,7 +6215,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100100001001vvv  4848 -> 484F	BKPT
 /// 0100rrrss0aaaaaa  4000 -> 4FBF	CHK
 /// 1000rrr111aaaaaa  81C0 -> 8FFF	DIVS
-/// 0000101000111100  0A2C -> 0A2C	EORI,CCR + 00000000bbbbbbbb
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
 /// 0100001011aaaaaa  42C0 -> 42FF	MOVE from CCR
 /// 0100010011aaaaaa  44C0 -> 44FF	MOVE to CCR
@@ -6495,7 +6536,7 @@ void CPU_CheckForInterrupt()
 u_int32_t lastPC;
 int readyToTrap=0;	
 
-#define PCCACHESIZE	100
+#define PCCACHESIZE	1000
 
 u_int32_t	pcCache[PCCACHESIZE];
 u_int32_t	cachePos=0;
@@ -6544,14 +6585,14 @@ void CPU_Step()
 	
     // DEBUGGER
 
-/*	if (cpu_regs.PC == 0xfea9ea)			//FE961E  NOP
+	if (cpu_regs.PC == 0x1b0b8 /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
 	{
-		static once=0;
+/*		static once=0;
 		if (once==0)
 			startDebug=1;
 		else
 			once++;
-	}*/
+*/	}
 
 	if (startDebug)
 	{	

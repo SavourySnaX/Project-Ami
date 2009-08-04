@@ -9,6 +9,8 @@
  * Note disk drive is running at ridiculous speeds at present because i`m not obeying any timings
  *
  *
+ *  Going off amiga dos writing of tracks : 831 wrd track gap but i`m going with 830 cos i suspect it writes 1 wrd extra (from memory)
+ *
  */
 
 #include <stdio.h>
@@ -20,8 +22,6 @@
 #include "memory.h"
 #include "customchip.h"
 #include "disk.h"
-
-u_int8_t	*dskData;				// Disk data for inserted disk in drive 0 (no supporting more drives at present!)
 
 int			diskInDrive;
 int			dskMotorOn;
@@ -36,9 +36,12 @@ int			tbBufferPos;
 u_int16_t	prevDskLen;
 int			doDiskDMA;
 
-#define TRACKBUFFER_SIZE	((4 + 2 + 2 + 4 + 4 + 16 + 16 + 4 + 4 + 4 + 4 + 512 + 512)*11)
+#define TRACKGAP_SIZEWRD	((350))
+#define TRACKGAP_SIZE		(TRACKGAP_SIZEWRD*2)
+#define TRACKBUFFER_SIZE	(TRACKGAP_SIZE + (4 + 2 + 2 + 4 + 4 + 16 + 16 + 4 + 4 + 4 + 4 + 512 + 512)*11)
 
-u_int8_t	trackBuffer[TRACKBUFFER_SIZE];
+u_int8_t	mfmDiscBuffer[TRACKBUFFER_SIZE * 80 * 2];			// Represents complete disc image in MFM encoding
+u_int8_t	*trackBuffer;										// Current track pointer
 
 void DSK_MFM_Chk(u_int8_t *chk,u_int8_t *data,u_int32_t length)
 {
@@ -71,11 +74,20 @@ void DSK_MFM_Enc(u_int8_t *even,u_int8_t *odd,u_int8_t *data,u_int32_t length)
 	}
 }
 
-void LoadDiskTrack(int side, int track)
+void DSK_Status()
+{
+#if ENABLE_DISK_WARNINGS
+	printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,0x0007FFFE));
+	printf("Motor %s : Disk Track %d : Disk Side %s\n",dskMotorOn ? "on" : "off",dskTrack,dskSide ? "lower" : "upper");
+	printf("Disk Sync : %04X\n", CST_GETWRDU(CST_DSKSYNC,0xFFFF));
+#endif
+}
+
+void ConvertDiskTrack(int side, int track,u_int8_t *dskData)
 {
 	int s=0;
 	u_int8_t *firstBlock;
-	u_int8_t *writeTrack=trackBuffer;
+	u_int8_t *writeTrack;
 	
 	if (side)
 		side=0;
@@ -83,12 +95,19 @@ void LoadDiskTrack(int side, int track)
 		side=1;
 	
 	firstBlock = &dskData[track * 512 * 22 + side * 512 * 11];
+	writeTrack=&mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
 	
+	for (s=0;s<TRACKGAP_SIZEWRD;s++)
+	{
+		*writeTrack++=0x00;		// Not sure what should go in GAP (try this though)
+		*writeTrack++=0x00;
+	}
+
 	for (s=0;s<11;s++)
 	{
 		u_int8_t	temp[16];
 
-		*writeTrack++=0xAA;		// Set Gap Bytes
+		*writeTrack++=0xAA;		// Set Sync? Bytes
 		*writeTrack++=0xAA;
 		*writeTrack++=0xAA;
 		*writeTrack++=0xAA;
@@ -115,20 +134,34 @@ void LoadDiskTrack(int side, int track)
 		// Insert Checksum here
 
 		writeTrack+=8;
-		DSK_MFM_Enc(writeTrack,writeTrack+512,dskData,512);	// Data
-		dskData+=512;
+		DSK_MFM_Enc(writeTrack,writeTrack+512,firstBlock,512);	// Data
+		firstBlock+=512;
 		writeTrack-=8;
 		DSK_MFM_Chk(temp,writeTrack+8,512*2);
 		DSK_MFM_Enc(writeTrack,writeTrack+4,temp,4);	// Data checksum
 		writeTrack+=8+512*2;
 	}
 	
+
+}
+
+void ConvertDiscImageToMFM(u_int8_t *dskData)
+{
+	int t,s;
+	for (int t=0;t<80;t++)
+	{
+		for (int s=0;s<2;s++)
+		{
+			ConvertDiskTrack(s,t,dskData);
+		}
+	}
 }
 
 void LoadDisk(char *disk)
 {
     FILE *inDisk;
     unsigned long dskSize;
+	u_int8_t *dskData;
 	
     inDisk = fopen(disk,"rb");
     if (!inDisk)
@@ -142,6 +175,10 @@ void LoadDisk(char *disk)
     dskData = (unsigned char *)malloc(dskSize);
     dskSize = fread(dskData,1,dskSize,inDisk);
     fclose(inDisk);
+
+	ConvertDiscImageToMFM(dskData);
+
+	free(dskData);
 
 	diskInDrive=1;
 }
@@ -170,7 +207,19 @@ void DSK_InitialiseDisk()
 void DSK_NotifyDSKLEN(u_int16_t dskLen)
 {
 	if ((dskLen&0x8000) && (prevDskLen&0x8000))
+	{
+		if (dskLen&0x4000)
+		{
+			printf("Warning : Attempting to write to floppy - this may corrupt disk image in ram\n",dskLen&0x3FFF);
+			printf("NOTE : Trackbuffer is %d && write size is %d\n",TRACKBUFFER_SIZE,(	dskLen&0x3FFF)*2);
+		}
+		else
+		{
+			printf("NOTE : Trackbuffer is %d && read size is %d\n",TRACKBUFFER_SIZE,(	dskLen&0x3FFF)*2);
+		}
+
 		doDiskDMA=1;
+	}
 	prevDskLen=dskLen;
 	if (!(prevDskLen&0x8000))
 		doDiskDMA=0;
@@ -187,28 +236,40 @@ void DSK_Update()
 
 		if (sizeLeft)
 		{
-			
-			if ((tbLastSide!=dskSide) || (tbLastTrack!=dskTrack))
+			if (CST_GETWRDU(CST_DSKLEN,0x4000))
 			{
-				LoadDiskTrack(dskSide,dskTrack);
-				tbLastSide=dskSide;
-				tbLastTrack=dskTrack;
-				tbBufferPos=0;
+				u_int32_t srcAddress = CST_GETLNGU(CST_DSKPTH,0x0007FFFE);
+				u_int16_t word;
+				
+				word=MEM_getWord(srcAddress);
+				
+				trackBuffer[tbBufferPos] = word>>8;
+				trackBuffer[tbBufferPos+1]=word&0xFF;
+
+				tbBufferPos+=2;
+				tbBufferPos%=TRACKBUFFER_SIZE;
+				
+				srcAddress+=2;
+
+				CST_SETLNG(CST_DSKPTH,srcAddress,0x0007FFFE);
 			}
-			u_int32_t destAddress = CST_GETLNGU(CST_DSKPTH,0x0007FFFE);
-			u_int16_t word;
-			
-			word = trackBuffer[tbBufferPos]<<8;
-			word|= trackBuffer[tbBufferPos+1];
-			
-			tbBufferPos+=2;
-			tbBufferPos%=TRACKBUFFER_SIZE;
-			
-			MEM_setWord(destAddress,word);
-			destAddress+=2;
-			
-			CST_SETLNG(CST_DSKPTH,destAddress,0x0007FFFE);
-			
+			else
+			{
+				u_int32_t destAddress = CST_GETLNGU(CST_DSKPTH,0x0007FFFE);
+				u_int16_t word;
+				
+				word = trackBuffer[tbBufferPos]<<8;
+				word|= trackBuffer[tbBufferPos+1];
+				
+				tbBufferPos+=2;
+				tbBufferPos%=TRACKBUFFER_SIZE;
+				
+				MEM_setWord(destAddress,word);
+				destAddress+=2;
+				
+				CST_SETLNG(CST_DSKPTH,destAddress,0x0007FFFE);
+			}
+				
 			sizeLeft--;
 			CST_ANDWRD(CST_DSKLEN,0xC000);
 			CST_ORWRD(CST_DSKLEN,sizeLeft);
@@ -240,7 +301,7 @@ int DSK_Removed()
 
 int DSK_Writeable()
 {
-	return 0;
+	return 1;
 }
 
 int DSK_OnTrack(u_int8_t track)
@@ -267,20 +328,29 @@ void DSK_Step()
 		dskTrack=0;
 	if (dskTrack>79)
 		dskTrack=79;
+
+	DSK_Status();
+	
+	trackBuffer=&mfmDiscBuffer[dskTrack * TRACKBUFFER_SIZE * 2 + (dskSide?0:1) * TRACKBUFFER_SIZE];
 }
 
 void DSK_SetMotor(int onOff)
 {
 	dskMotorOn = !onOff;
+	DSK_Status();
 }
 
 void DSK_SetSide(int lower)
 {
 	dskSide=lower;
+	DSK_Status();
+
+	trackBuffer=&mfmDiscBuffer[dskTrack * TRACKBUFFER_SIZE * 2 + (dskSide?0:1) * TRACKBUFFER_SIZE];
 }
 
 void DSK_SetDir(int toZero)
 {
 	dskStepDir=toZero;
+	DSK_Status();
 }
 
