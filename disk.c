@@ -28,6 +28,8 @@ int			dskMotorOn;
 int			dskStepDir;
 int			dskSide;
 int			dskTrack;
+int			dskSync;
+int			dskSyncDma;
 
 int			tbLastSide;
 int			tbLastTrack;
@@ -195,11 +197,15 @@ void DSK_InitialiseDisk()
 	dskStepDir=0;
 	dskSide=0;
 	dskTrack=10;			// Not on track 0 - mostly for testing
+	dskSync=0;
+	dskSyncDma=0;
+
+	trackBuffer=&mfmDiscBuffer[dskTrack * TRACKBUFFER_SIZE * 2 + (dskSide?0:1) * TRACKBUFFER_SIZE];
 	
 	tbLastSide=-1;
 	tbLastTrack=-1;
 	tbBufferPos=0;
-	
+
 	prevDskLen=0;
 	doDiskDMA=0;
 }
@@ -217,7 +223,10 @@ void DSK_NotifyDSKLEN(u_int16_t dskLen)
 		{
 			printf("NOTE : Trackbuffer is %d && read size is %d\n",TRACKBUFFER_SIZE,(	dskLen&0x3FFF)*2);
 		}
-
+		if (CST_GETWRDU(CST_ADKCONR,0x0400))
+		{
+			dskSyncDma=1;
+		}
 		doDiskDMA=1;
 	}
 	prevDskLen=dskLen;
@@ -225,14 +234,38 @@ void DSK_NotifyDSKLEN(u_int16_t dskLen)
 		doDiskDMA=0;
 }
 
+int	DSK_OnSyncWord()
+{
+	return dskSync;
+}
+
 void DSK_Update()
 {
-	static int slow=10;
+	// Handle sync word emulation (NB disk dma is supposed to start with next WORD - this order ensures that but will break anything trying to deal
+	//with interrupts and direct reading of disk data via DSKBYTR)
 	
-	if (CST_GETWRDU(CST_DMACONR,0x0210)==0x0210 && CST_GETWRDU(CST_DSKLEN,0x8000) && doDiskDMA)
+	u_int16_t syncWord;
+	
+	syncWord = CST_GETWRDU(CST_DSKSYNC,0xFFFF);
+	if ((trackBuffer[tbBufferPos]==(syncWord>>8)) && (trackBuffer[tbBufferPos+1]==(syncWord&0xFF)))
+	{
+		dskSync=1;
+		CST_ORWRD(CST_INTREQR,0x1000);		// signal interrupt request (it does this regardless of mask?)
+	}
+	else
+	{
+		dskSync=0;
+	}
+
+	tbBufferPos+=2;							// Disk is always spinning - NB because the speed of disk is not emulated, DMA could fail in future
+	tbBufferPos%=TRACKBUFFER_SIZE;			//once BUS arbitration comes in.
+	
+	if (CST_GETWRDU(CST_DMACONR,0x0210)==0x0210 && CST_GETWRDU(CST_DSKLEN,0x8000) && doDiskDMA && ((dskSyncDma && dskSync)||!dskSyncDma))
 	{
 		// Dma running. 
 		u_int16_t sizeLeft = CST_GETWRDU(CST_DSKLEN,0x3FFF);
+
+		dskSyncDma=0;
 
 		if (sizeLeft)
 		{
@@ -246,9 +279,6 @@ void DSK_Update()
 				trackBuffer[tbBufferPos] = word>>8;
 				trackBuffer[tbBufferPos+1]=word&0xFF;
 
-				tbBufferPos+=2;
-				tbBufferPos%=TRACKBUFFER_SIZE;
-				
 				srcAddress+=2;
 
 				CST_SETLNG(CST_DSKPTH,srcAddress,0x0007FFFE);
@@ -260,9 +290,6 @@ void DSK_Update()
 				
 				word = trackBuffer[tbBufferPos]<<8;
 				word|= trackBuffer[tbBufferPos+1];
-				
-				tbBufferPos+=2;
-				tbBufferPos%=TRACKBUFFER_SIZE;
 				
 				MEM_setWord(destAddress,word);
 				destAddress+=2;

@@ -2544,8 +2544,6 @@ void CPU_DIS_EORI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
 
 void CPU_DIS_EORISR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
-	
     adr+=2;
     strcpy(mnemonicData,"EORI");
     strcpy(byteData,"");
@@ -2559,6 +2557,123 @@ void CPU_DIS_EORISR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_in
 	
     printf("%s\t%s\n",byteData,mnemonicData);
 }
+
+void CPU_DIS_ROXL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	int len;
+
+	adr+=2;
+    strcpy(mnemonicData,"ROXL");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+		sprintf(tempData,"#%02X,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	else
+	{
+		sprintf(tempData,"D%d,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	
+	sprintf(tempData,"D%d",op4);
+	strcat(mnemonicData,tempData);
+
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_ROXR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	int len;
+
+	adr+=2;
+    strcpy(mnemonicData,"ROXR");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+		sprintf(tempData,"#%02X,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	else
+	{
+		sprintf(tempData,"D%d,",op1);
+		strcat(mnemonicData,tempData);
+	}
+	
+	sprintf(tempData,"D%d",op4);
+	strcat(mnemonicData,tempData);
+
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_MOVETOCCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"MOVE.W ");
+    strcpy(byteData,"");
+	
+    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,2);
+	strcat(mnemonicData,",CCR");
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_TRAP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"TRAP ");
+    strcpy(byteData,"");
+	
+	sprintf(tempData,"%02X",op1);
+	strcat(mnemonicData,tempData);
+
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
 
 
 
@@ -6101,11 +6216,197 @@ void CPU_EORISR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_
 	cpu_regs.SR=ead;
 }
 
+void CPU_ROXL(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t eas,ead;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
 
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+	}
+	else
+	{
+		op1 = cpu_regs.D[op1]&0x3F;
+	}
 
+	eas = cpu_regs.D[op4]&zMask;
+	ead = eas;
 
+	if (!op1)
+	{
+		if (cpu_regs.SR&CPU_STATUS_X)
+			cpu_regs.SR|=CPU_STATUS_C;
+		else
+			cpu_regs.SR&=~CPU_STATUS_C;
+	}
+	
+	while (op1)
+	{
+		if (ead & nMask)
+		{
+			ead<<=1;
+			if (cpu_regs.SR&CPU_STATUS_X)
+				ead|=1;
+			ead&=zMask;
+			cpu_regs.SR|=CPU_STATUS_C|CPU_STATUS_X;
+		}
+		else
+		{
+			ead<<=1;
+			if (cpu_regs.SR&CPU_STATUS_X)
+				ead|=1;
+			ead&=zMask;
+			cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
+		}
+		op1--;
+	}
+	cpu_regs.D[op4]&=~zMask;
+	cpu_regs.D[op4]|=ead;
+	
+	if (cpu_regs.D[op4] & nMask)
+		cpu_regs.SR|=CPU_STATUS_N;
+	else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	if (cpu_regs.D[op4] & zMask)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+	else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
 
+void CPU_ROXR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t eas,ead;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
 
+	if (op3==0)
+	{
+		if (op1==0)
+			op1=8;
+	}
+	else
+	{
+		op1 = cpu_regs.D[op1]&0x3F;
+	}
+
+	eas = cpu_regs.D[op4]&zMask;
+	ead = eas;
+
+	if (!op1)
+	{
+		if (cpu_regs.SR&CPU_STATUS_X)
+			cpu_regs.SR|=CPU_STATUS_C;
+		else
+			cpu_regs.SR&=~CPU_STATUS_C;
+	}
+	
+	while (op1)
+	{
+		if (ead & 0x01)
+		{
+			ead>>=1;
+			ead&=~nMask;
+			if (cpu_regs.SR&CPU_STATUS_X)
+				ead|=nMask;
+			ead&=zMask;
+			cpu_regs.SR|=CPU_STATUS_C|CPU_STATUS_X;
+		}
+		else
+		{
+			ead>>=1;
+			ead&=~nMask;
+			if (cpu_regs.SR&CPU_STATUS_X)
+				ead|=nMask;
+			ead&=zMask;
+			cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
+		}
+		op1--;
+	}
+	cpu_regs.D[op4]&=~zMask;
+	cpu_regs.D[op4]|=ead;
+	
+	if (cpu_regs.D[op4] & nMask)
+		cpu_regs.SR|=CPU_STATUS_N;
+	else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	if (cpu_regs.D[op4] & zMask)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+	else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
+
+void CPU_MOVETOCCR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int32_t eas,ead;
+
+	cpu_regs.PC+=2;
+		
+	eas=getSourceEffectiveAddress(op1,2);
+		
+	ead=cpu_regs.SR;
+	
+	eas&=(CPU_STATUS_X|CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_Z);	// Only affects lower valid bits in flag
+
+	ead&=~(CPU_STATUS_X|CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_Z);
+	
+	ead|=eas;
+	
+	cpu_regs.SR=ead;
+}
+
+void CPU_TRAP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	cpu_regs.PC+=2;
+	
+	CPU_GENERATE_EXCEPTION(0x80 + (op1*4));
+}
+
+////////////////////////////////////////////////////////////////////////
 
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 typedef void (*CPU_Function)(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
@@ -6134,6 +6435,10 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
+{"010011100100rrrr","TRAP",CPU_TRAP,CPU_DIS_TRAP,1,{0x000F},{0},{1},{{"rrrr"}}},
+{"0100010011aaaaaa","MOVECCR",CPU_MOVETOCCR,CPU_DIS_MOVETOCCR,1,{0x003F},{0},{11},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
+{"1110ccc0zzm10rrr","ROXR",CPU_ROXR,CPU_DIS_ROXR,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
+{"1110ccc1zzm10rrr","ROXL",CPU_ROXL,CPU_DIS_ROXL,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
 {"0000101000111100","EORISR",CPU_EORISR,CPU_DIS_EORISR,0},
 {"00001010zzaaaaaa","EORI",CPU_EORI,CPU_DIS_EORI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1110001011aaaaaa","LSR",CPU_LSRm,CPU_DIS_LSRm,1,{0x003F},{0},{7},{{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -6217,18 +6522,15 @@ CPU_Ins		*CPU_Information[65536];
 /// 1000rrr111aaaaaa  81C0 -> 8FFF	DIVS
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
 /// 0100001011aaaaaa  42C0 -> 42FF	MOVE from CCR
-/// 0100010011aaaaaa  44C0 -> 44FF	MOVE to CCR
 /// 0100000011aaaaaa  40C0 -> 40FF	MOVE from SR
 /// 0000dddmmm001aaa  0008 -> 0FCF	MOVEP + 2 byte disp
 /// 0100100000aaaaaa  4800 -> 483F	NBCD
 /// 01000000ssaaaaaa  4000 -> 40FF	NEGX
 /// 0000000000111100  003C -> 003C	ORI,CCR + 00000000bbbbbbbb
-/// 1110cccdssi10rrr  E010 -> EFF7	ROXL,ROXR
 /// 0100111001110111  4E77 -> 4E77	RTR
 /// 1000yyy10000rxxx  8100 -> 8F0F	SBCD
 /// 1001yyy1ss00rxxx  9100 -> 9FCF	SUBX
 /// 0100101011aaaaaa  4AC0 -> 4AFF	TAS
-/// 010011100100vvvv  4E40 -> 4E4F	TRAP
 /// 0100111001110110  4E76 -> 4E76	TRAPV
 
 void CPU_DIS_UNKNOWN(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
@@ -6585,14 +6887,14 @@ void CPU_Step()
 	
     // DEBUGGER
 
-	if (cpu_regs.PC == 0x1b0b8 /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
+	if (cpu_regs.PC == 0x3042e /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
 	{
 /*		static once=0;
 		if (once==0)
 			startDebug=1;
 		else
-			once++;
-*/	}
+			once++;*/
+	}
 
 	if (startDebug)
 	{	

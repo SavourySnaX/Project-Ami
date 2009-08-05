@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define AMI_LINE_LENGTH ((228)*2)		// 228 / 227 alternating
+#define AMI_LINE_LENGTH ((228)*4)		// 228 / 227 alternating
 #define WIDTH AMI_LINE_LENGTH
 #define HEIGHT 262
 #define BPP 4

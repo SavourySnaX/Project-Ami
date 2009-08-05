@@ -11,3 +11,5 @@
 
 void DSP_InitialiseDisplay();
 void DSP_Update();
+
+void DSP_NotifyLineEnd();

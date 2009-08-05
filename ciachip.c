@@ -65,8 +65,52 @@ u_int16_t		bTBCnt=0;
 
 u_int16_t		timerSlow=0;
 
+int glfwGetKey(int key);
+
+int keyUp = 1;
+
 void CIA_Update()
 {
+// KB Handler - only recognises ENTER key so far ;-)
+// Note its probably preferable to do this externally via a buffer of keys and let CIA_Update remove events from this buffer
+
+	if (!(ciaMemory[0x0D]&0x04))		// Make sure we don't have a pending interrupt before we do reload serial buffer (this may not be correct!)
+	{
+		if (glfwGetKey(256+38))
+		{
+			if (keyUp)
+			{
+				keyUp=0;
+				// Do send keyup to SDR
+				ciaMemory[0x0C]=~0x88;
+
+				ciaMemory[0x0D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
+				if (ciaa_icr&0x02)
+				{
+					ciaMemory[0x0D]|=0x80;		// set IR bit
+					CST_ORWRD(CST_INTREQR,0x0008);
+				}
+			}
+		}
+		else
+		{
+			if (!keyUp)
+			{
+				keyUp=1;
+				// Do send keydown to SDR
+				ciaMemory[0x0C]=~0x89;
+
+				ciaMemory[0x0D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
+				if (ciaa_icr&0x02)
+				{
+					ciaMemory[0x0D]|=0x80;		// set IR bit
+					CST_ORWRD(CST_INTREQR,0x0008);
+				}
+			}
+		}
+	}
+
+//
 	timerSlow++;
 	
 	if (timerSlow>9)
@@ -119,6 +163,41 @@ void CIA_Update()
 	}
 }
 
+void CIA_setByteSDR(u_int16_t reg,u_int8_t byte)
+{
+	if (reg&0x10)
+	{
+		if (ciaMemory[0x1E]&0x40)
+		{
+			// Serial port set for output
+			ciaMemory[reg]=byte;			// I`ll need to generate an interrupt to indicate data sent (based on timer - that can wait)
+		}
+	}
+	else
+	{
+		if (ciaMemory[0x0E]&0x40)
+		{
+			// Serial port set for output
+			ciaMemory[reg]=byte;			// I`ll need to generate an interrupt to indicate data sent (based on timer - that can wait)
+		}
+	}
+}
+
+extern int startDebug;
+
+u_int8_t CIA_getByteSDR(u_int16_t reg)
+{
+	if (reg&0x10)
+	{
+		return ciaMemory[reg];				// not attached to anything (could be a modem though for instance)
+	}
+	else
+	{
+//		startDebug=1;
+		return ciaMemory[reg];				// attached to keyboard - see cia update for how this gets filled
+	}
+}
+
 void CIA_setBytePRA(u_int16_t reg,u_int8_t byte)
 {
 	if (reg&0x10)
@@ -135,8 +214,6 @@ void CIA_setBytePRA(u_int16_t reg,u_int8_t byte)
 	}
 }
 
-extern int startDebug;
-
 u_int8_t CIA_getBytePRA(u_int16_t reg)
 {
 	if (reg&0x10)
@@ -145,7 +222,6 @@ u_int8_t CIA_getBytePRA(u_int16_t reg)
 	}
 	else
 	{
-//		startDebug=1;
 		u_int8_t byte=ciaMemory[reg]&0xC3;		// FIR1 | FIR0 | ---- | LED | OVL
 		
 		if (!DSK_Removed())
@@ -582,7 +658,7 @@ CIA_Regs ciaChipRegisters[] =
 {"A_TODMID",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODMED,CIA_setByteTODMED},
 {"A_TODHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODHI,CIA_setByteTODHI},
 {"A_unused",0},
-{"A_SDR",CIA_READABLE|CIA_WRITEABLE},
+{"A_SDR",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteSDR,CIA_setByteSDR},
 {"A_ICR",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteICR,CIA_setByteICR},
 {"A_CRA",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteCRA,CIA_setByteCRA},
 {"A_CRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteCRB,CIA_setByteCRB},
@@ -599,7 +675,7 @@ CIA_Regs ciaChipRegisters[] =
 {"B_TODMID",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODMED,CIA_setByteTODMED},
 {"B_TODHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODHI,CIA_setByteTODHI},
 {"B_unused",0},
-{"B_SDR",CIA_READABLE|CIA_WRITEABLE},
+{"B_SDR",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteSDR,CIA_setByteSDR},
 {"B_ICR",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteICR,CIA_setByteICR},
 {"B_CRA",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteCRA,CIA_setByteCRA},
 {"B_CRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteCRB,CIA_setByteCRB},
@@ -612,9 +688,10 @@ u_int8_t CIA_getByteUnmapped(u_int16_t reg)
 	
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
-		
+	
+#if ENABLE_CIA_WARNINGS
 	printf("[WRN] Read from Unmapped Hardware Register %s %08x\n",name,reg);
-
+#endif
 	return 0;
 }
 
@@ -624,9 +701,10 @@ u_int8_t CIA_getByteCustom(u_int16_t reg)
 	
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
-		
-	printf("[MSG] Read from Unsupported Hardware Register %s %08x\n",name,reg);
 	
+#if ENABLE_CIA_WARNINGS
+	printf("[MSG] Read from Unsupported Hardware Register %s %08x\n",name,reg);
+#endif
 	return ciaMemory[reg];
 }
 
@@ -642,7 +720,9 @@ void CIA_setByteUnmapped(u_int16_t reg,u_int8_t byte)
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
 		
+#if ENABLE_CIA_WARNINGS
 	printf("[WRN] Write to Unmapped Hardware Register %s %02X -> %08x\n",name,byte,reg);
+#endif
 }
 
 void CIA_setByteCustom(u_int16_t reg,u_int8_t byte)
@@ -651,9 +731,10 @@ void CIA_setByteCustom(u_int16_t reg,u_int8_t byte)
 	
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
-		
-	printf("[MSG] Write to Unsupported Hardware Register %s %02X -> %08x\n",name,byte,reg);
 	
+#if ENABLE_CIA_WARNINGS
+	printf("[MSG] Write to Unsupported Hardware Register %s %02X -> %08x\n",name,byte,reg);
+#endif
 	ciaMemory[reg]=byte;
 }
 

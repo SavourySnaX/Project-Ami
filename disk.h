@@ -14,6 +14,7 @@ void DSK_Update();
 
 void DSK_NotifyDSKLEN(u_int16_t dskLen);
 
+int	DSK_OnSyncWord();
 
 int DSK_Removed();
 int DSK_Writeable();
