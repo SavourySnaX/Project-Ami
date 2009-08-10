@@ -326,22 +326,22 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>382807821025E7FC006F7CAE</string>
+										<string>382808971026B9EF006F7CAE</string>
 										<key>history</key>
 										<array>
 											<string>384CFCD810248B9200CEB158</string>
 											<string>389C06CE10249C550006CF6E</string>
 											<string>382806051025807D006F7CAE</string>
 											<string>382806061025807D006F7CAE</string>
-											<string>382806071025807D006F7CAE</string>
 											<string>3828060A1025807D006F7CAE</string>
 											<string>382806BD1025BF1B006F7CAE</string>
 											<string>382806BE1025BF1B006F7CAE</string>
-											<string>382806BF1025BF1B006F7CAE</string>
-											<string>382806C01025BF1B006F7CAE</string>
 											<string>382806E71025C300006F7CAE</string>
-											<string>3828077F1025E7FC006F7CAE</string>
-											<string>382807801025E7FC006F7CAE</string>
+											<string>382807D010260660006F7CAE</string>
+											<string>382808371026256C006F7CAE</string>
+											<string>382808381026256C006F7CAE</string>
+											<string>3828088B10263CAE006F7CAE</string>
+											<string>3828088C10263CAE006F7CAE</string>
 										</array>
 										<key>prevStack</key>
 										<array>
@@ -424,6 +424,20 @@
 											<string>382806EA1025C300006F7CAE</string>
 											<string>382807581025DF97006F7CAE</string>
 											<string>382807811025E7FC006F7CAE</string>
+											<string>382807D310260660006F7CAE</string>
+											<string>382807D410260660006F7CAE</string>
+											<string>382807D510260660006F7CAE</string>
+											<string>382807D610260660006F7CAE</string>
+											<string>3828083A1026256C006F7CAE</string>
+											<string>3828083B1026256C006F7CAE</string>
+											<string>3828083C1026256C006F7CAE</string>
+											<string>3828083D1026256C006F7CAE</string>
+											<string>3828083E1026256C006F7CAE</string>
+											<string>3828083F1026256C006F7CAE</string>
+											<string>382808401026256C006F7CAE</string>
+											<string>382808411026256C006F7CAE</string>
+											<string>3828088D10263CAE006F7CAE</string>
+											<string>3828088E10263CAE006F7CAE</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -617,12 +631,11 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>382807831025E7FC006F7CAE</string>
 		<string>382806321025807D006F7CAE</string>
 		<string>382806331025807D006F7CAE</string>
+		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>384CFC681024790200CEB158</string>
 		<string>1CD10A99069EF8BA00B06720</string>
-		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1C78EAAD065D492600B07095</string>
 		<string>/Users/snax/ami/ami.xcodeproj</string>
 	</array>
@@ -859,14 +872,12 @@
 							<key>Dock</key>
 							<array>
 								<dict>
-									<key>BecomeActive</key>
-									<true/>
 									<key>ContentConfiguration</key>
 									<dict>
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>blitter.c</string>
+										<string>cpu.c</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
@@ -887,6 +898,8 @@
 							<string>212pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -932,7 +945,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C530D57069F1CE1000CFCEE</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>

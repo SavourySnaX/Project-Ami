@@ -6447,7 +6447,7 @@ void CPU_Step()
 	{
 		if (readyToTrap)
 		{
-			startDebug=1;
+//			startDebug=1;
 			printf("Last PC %08X\n",lastPC);
 		}
 	}

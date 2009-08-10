@@ -23,11 +23,11 @@ extern u_int8_t	*cstMemory;
 #define CST_GETWRDS(regNum,mask)		((int16_t)(((cstMemory[regNum]<<8)|(cstMemory[regNum+1]))&mask))
 #define CST_GETLNGU(regNum,mask)		((u_int32_t)(((cstMemory[regNum]<<24)|(cstMemory[regNum+1]<<16)|(cstMemory[regNum+2]<<8)|(cstMemory[regNum+3]))&mask))
 
-#define CST_SETWRD(regNum,value,mask)	cstMemory[regNum]=(value&mask)>>8; cstMemory[regNum+1]=(value&mask);
-#define CST_SETLNG(regNum,value,mask)	cstMemory[regNum]=(value&mask)>>24; cstMemory[regNum+1]=(value&mask)>>16; cstMemory[regNum+2]=(value&mask)>>8; cstMemory[regNum+3]=(value&mask);
+#define CST_SETWRD(regNum,value,mask)	{cstMemory[regNum]=(value&mask)>>8; cstMemory[regNum+1]=(value&mask);}
+#define CST_SETLNG(regNum,value,mask)	{cstMemory[regNum]=(value&mask)>>24; cstMemory[regNum+1]=(value&mask)>>16; cstMemory[regNum+2]=(value&mask)>>8; cstMemory[regNum+3]=(value&mask);}
 
-#define CST_ORWRD(regNum,value)			cstMemory[regNum]|=(value&0xFF00)>>8; cstMemory[regNum+1]|=(value&0x00FF);
-#define CST_ANDWRD(regNum,value)		cstMemory[regNum]&=(value&0xFF00)>>8; cstMemory[regNum+1]&=(value&0x00FF);
+#define CST_ORWRD(regNum,value)			{cstMemory[regNum]|=(value&0xFF00)>>8; cstMemory[regNum+1]|=(value&0x00FF);}
+#define CST_ANDWRD(regNum,value)		{cstMemory[regNum]&=(value&0xFF00)>>8; cstMemory[regNum+1]&=(value&0x00FF);}
 
 #define CST_BLTDDAT	(0x0000)
 #define CST_DMACONR	(0x0002)
