@@ -27,6 +27,7 @@
 #include "blitter.h"
 #include "display.h"
 #include "disk.h"
+#include "sprite.h"
 
 int decrpyt_rom()
 {
@@ -229,11 +230,13 @@ int main(int argc,char **argv)
 	BLT_InitialiseBlitter();
 	DSP_InitialiseDisplay();
 	DSK_InitialiseDisk();
+	SPR_InitialiseSprites();
 	
     CPU_Reset();
     
 	while (running)
 	{
+		SPR_Update();
 		DSP_Update();			// Note need to priority order these ultimately
 		CST_Update();
 		DSK_Update();
@@ -244,11 +247,47 @@ int main(int argc,char **argv)
 		
 		if (g_newScreenNotify)
 		{
+			static int lmx=0,lmy=0;
+			int mx,my;
+		
 			DrawScreen();
 			
 			glfwSwapBuffers();
 			
 			g_newScreenNotify=0;
+
+			glfwGetMousePos(&mx,&my);
+			
+			if (mx>=1 && mx<=AMI_LINE_LENGTH && my>=1 && my <=262)
+			{
+				int vertMove = my-lmy;
+				int horiMove = mx-lmx;
+				int oldMoveX = CST_GETWRDU(CST_JOY0DAT,0x00FF);
+				int oldMoveY = CST_GETWRDU(CST_JOY0DAT,0xFF00)>>8;
+				oldMoveX+=horiMove;
+				oldMoveY+=vertMove;
+				
+				CST_SETWRD(CST_JOY0DAT,((oldMoveY&0xFF)<<8)|(oldMoveX&0xFF),0xFFFF);
+				lmx=mx;
+				lmy=my;
+				
+				if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+				{
+					leftMouseUp=0;
+				}
+				else
+				{
+					leftMouseUp=1;
+				}
+				if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT))
+				{
+					rightMouseUp=0;
+				}
+				else
+				{
+					rightMouseUp=1;
+				}
+			}
 		}
 		
 		// Check if ESC key was pressed or window was closed 

@@ -11,6 +11,8 @@
 
 void MEM_Initialise(unsigned char *_romPtr);
 
+void MEM_MapKickstartLow(int yes);
+
 u_int8_t	MEM_getByte(u_int32_t address);
 void		MEM_setByte(u_int32_t address,u_int8_t byte);
 u_int16_t	MEM_getWord(u_int32_t address);

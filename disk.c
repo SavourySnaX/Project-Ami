@@ -192,7 +192,7 @@ void DSK_InitialiseDisk()
 	{
 		LoadDisk("../../wb.adf");
 	}
-	
+
 	dskMotorOn=0;
 	dskStepDir=0;
 	dskSide=0;

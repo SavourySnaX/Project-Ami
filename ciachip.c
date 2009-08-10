@@ -15,6 +15,7 @@
 #include "disk.h"
 #include "ciachip.h"
 #include "customchip.h"
+#include "memory.h"
 
 typedef u_int8_t (*CIA_ReadMap)(u_int16_t reg);
 typedef void (*CIA_WriteMap)(u_int16_t reg,u_int8_t byte);
@@ -47,8 +48,6 @@ u_int8_t		ciab_icr=0;
 
 u_int32_t		todAAlarm=0;
 u_int32_t		todBAlarm=0;
-u_int32_t		todACntLatch=0;
-u_int32_t		todBCntLatch=0;
 u_int32_t		todACntLatchR=0;
 u_int32_t		todBCntLatchR=0;
 u_int32_t		todAReadLatched=0;
@@ -82,7 +81,7 @@ void CIA_Update()
 			{
 				keyUp=0;
 				// Do send keyup to SDR
-				ciaMemory[0x0C]=~0x88;
+				ciaMemory[0x0C]=(u_int8_t)~0x88;
 
 				ciaMemory[0x0D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
 				if (ciaa_icr&0x02)
@@ -98,7 +97,7 @@ void CIA_Update()
 			{
 				keyUp=1;
 				// Do send keydown to SDR
-				ciaMemory[0x0C]=~0x89;
+				ciaMemory[0x0C]=(u_int8_t)~0x89;
 
 				ciaMemory[0x0D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
 				if (ciaa_icr&0x02)
@@ -161,6 +160,28 @@ void CIA_Update()
 			}
 		}
 	}
+	
+// Check tod alarms
+
+	if (todBCnt==todBAlarm && todBStart)
+	{
+		ciaMemory[0x1D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
+		if (ciab_icr&0x04)
+		{
+			ciaMemory[0x1D]|=0x80;		// set IR bit
+			CST_ORWRD(CST_INTREQR,0x2000);
+		}
+	}
+	if (todACnt==todAAlarm && todAStart)
+	{
+		ciaMemory[0x0D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
+		if (ciaa_icr&0x04)
+		{
+			ciaMemory[0x0D]|=0x80;		// set IR bit
+			CST_ORWRD(CST_INTREQR,0x0008);
+		}
+	}
+	
 }
 
 void CIA_setByteSDR(u_int16_t reg,u_int8_t byte)
@@ -211,6 +232,8 @@ void CIA_setBytePRA(u_int16_t reg,u_int8_t byte)
 		// FIR1 | FIR0 | RDY | TK0 | WPR0 | CHNG | LED | OVL
 		ciaMemory[reg]&=~ciaMemory[0x02];		// clear write bits
 		ciaMemory[reg]|=(byte&ciaMemory[0x02]);
+		
+		MEM_MapKickstartLow(ciaMemory[reg]&0x01);
 	}
 }
 
@@ -222,7 +245,9 @@ u_int8_t CIA_getBytePRA(u_int16_t reg)
 	}
 	else
 	{
-		u_int8_t byte=ciaMemory[reg]&0xC3;		// FIR1 | FIR0 | ---- | LED | OVL
+		u_int8_t byte=ciaMemory[reg]&0x83;		// FIR1 | FIR0 | ---- | LED | OVL
+		if (leftMouseUp)
+			byte|=0x40;
 		
 		if (!DSK_Removed())
 			byte|=0x04;
@@ -386,12 +411,13 @@ void CIA_setByteTODLO(u_int16_t reg,u_int8_t byte)
 		{
 			todBAlarm&=0xFFFF00;
 			todBAlarm|=byte;
+
+			printf("Alarm being set : %08X(%08X)\n",todBAlarm,todBCnt);
 		}
 		else
 		{
-			todBCntLatch&=0xFFFF00;
-			todBCntLatch|=byte;
-			todBCnt=todACntLatch;					// start timer from new set time
+			todBCnt&=0xFFFF00;
+			todBCnt|=byte;
 			todBStart=1;
 		}
 	}
@@ -401,12 +427,13 @@ void CIA_setByteTODLO(u_int16_t reg,u_int8_t byte)
 		{
 			todAAlarm&=0xFFFF00;
 			todAAlarm|=byte;
+
+			printf("Alarm being set : %08X(%08X)\n",todAAlarm,todACnt);
 		}
 		else
 		{
-			todACntLatch&=0xFFFF00;
-			todACntLatch|=byte;
-			todACnt=todACntLatch;					// start timer from new set time
+			todACnt&=0xFFFF00;
+			todACnt|=byte;
 			todAStart=1;
 		}
 	}
@@ -451,11 +478,13 @@ void CIA_setByteTODMED(u_int16_t reg,u_int8_t byte)
 		{
 			todBAlarm&=0xFF00FF;
 			todBAlarm|=rbyte<<8;
+			
+			printf("Alarm being set : %08X(%08X)\n",todBAlarm,todBCnt);
 		}
 		else
 		{
-			todBCntLatch&=0xFF00FF;
-			todBCntLatch|=rbyte<<8;
+			todBCnt&=0xFF00FF;
+			todBCnt|=rbyte<<8;
 			todBStart=0;
 		}
 	}
@@ -465,11 +494,13 @@ void CIA_setByteTODMED(u_int16_t reg,u_int8_t byte)
 		{
 			todAAlarm&=0xFF00FF;
 			todAAlarm|=rbyte<<8;
+
+			printf("Alarm being set : %08X(%08X)\n",todAAlarm,todACnt);
 		}
 		else
 		{
-			todACntLatch&=0xFF00FF;
-			todACntLatch|=rbyte<<8;
+			todACnt&=0xFF00FF;
+			todACnt|=rbyte<<8;
 			todAStart=0;
 		}
 	}
@@ -512,11 +543,13 @@ void CIA_setByteTODHI(u_int16_t reg,u_int8_t byte)
 		{
 			todBAlarm&=0x00FFFF;
 			todBAlarm|=rbyte<<16;
+
+			printf("Alarm being set : %08X(%08X)\n",todBAlarm,todBCnt);
 		}
 		else
 		{
-			todBCntLatch&=0x00FFFF;
-			todBCntLatch|=rbyte<<16;
+			todBCnt&=0x00FFFF;
+			todBCnt|=rbyte<<16;
 			todBStart=0;
 		}
 	}
@@ -526,11 +559,13 @@ void CIA_setByteTODHI(u_int16_t reg,u_int8_t byte)
 		{
 			todAAlarm&=0x00FFFF;
 			todAAlarm|=rbyte<<16;
+
+			printf("Alarm being set : %08X(%08X)\n",todAAlarm,todACnt);
 		}
 		else
 		{
-			todACntLatch&=0x00FFFF;
-			todACntLatch|=rbyte<<16;
+			todACnt&=0x00FFFF;
+			todACnt|=rbyte<<16;
 			todAStart=0;
 		}
 	}

@@ -20,6 +20,9 @@
 
 CPU_Regs cpu_regs;
 
+u_int8_t	cpuUsedTable[65536];
+
+
 void CPU_Reset()
 {
 	int a;
@@ -31,8 +34,16 @@ void CPU_Reset()
 	}
 	cpu_regs.SR = CPU_STATUS_S | CPU_STATUS_I2 | CPU_STATUS_I1 | CPU_STATUS_I0;
 	
-	cpu_regs.A[7] = MEM_getLong(0xFC0000);
-	cpu_regs.PC = MEM_getLong(0xFC0004);
+	cpu_regs.A[7] = MEM_getLong(/*0xFC0000*/0);
+	cpu_regs.PC = MEM_getLong(/*0xFC0004*/4);
+
+	if (MEM_getLong(0xFC0000)!=cpu_regs.A[7])
+		printf("%08x : %08x\n",MEM_getLong(0xFC0000),cpu_regs.A[7]);
+	if (MEM_getLong(0xFC0004)!=cpu_regs.PC)
+		printf("%08x : %08x\n",MEM_getLong(0xFC0004),cpu_regs.PC);
+
+	for (int a=0;a<65536;a++)
+		cpuUsedTable[a]=0;
 }
 
 const char *decodeWord(u_int32_t address)
@@ -2674,6 +2685,55 @@ void CPU_DIS_TRAP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
+void CPU_DIS_ADDX(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"ADDX");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+    sprintf(tempData,"D%d,D%d",op3,op1);
+    strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
+void CPU_DIS_DIVS(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"DIVS.W ");
+	strcpy(byteData,"");
+	len=2;
+	
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+	sprintf(tempData,",D%d",op1);
+	strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
 
 
 
@@ -5049,27 +5109,22 @@ void CPU_PEA(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 	MEM_setLong(cpu_regs.A[7],ear);
 }
 
+// NB: This is oddly not a supervisor instruction on MC68000
 void CPU_MOVEFROMSR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
 	u_int32_t ear;
 
-	if (cpu_regs.SR & CPU_STATUS_S)
+	cpu_regs.PC+=2;
+	if ((op1 & 0x38)==0)	// destination is D register
 	{
-		cpu_regs.PC+=2;
-		if ((op1 & 0x38)==0)	// destination is D register
-		{
-			cpu_regs.D[op1]&=~0xFFFF;
-			cpu_regs.D[op1]|=cpu_regs.SR;
-		}
-		else
-		{
-			ear=getEffectiveAddress(op1,2);
-			MEM_setWord(ear,cpu_regs.SR);
-		}
+		cpu_regs.D[op1]&=~0xFFFF;
+		cpu_regs.D[op1]|=cpu_regs.SR;
 	}
 	else
 	{
-		CPU_GENERATE_EXCEPTION(0x20);
+		ear=getEffectiveAddress(op1,2);
+		MEM_getWord(ear);					// processor reads address before writing
+		MEM_setWord(ear,cpu_regs.SR);
 	}
 }
 
@@ -6406,6 +6461,110 @@ void CPU_TRAP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	CPU_GENERATE_EXCEPTION(0x80 + (op1*4));
 }
 
+void CPU_ADDX(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+	ead=cpu_regs.D[op1]&zMask;
+	eas=cpu_regs.D[op3]&zMask;
+	if (cpu_regs.SR & CPU_STATUS_X)
+		eas++;
+	ear=(eas+ead)&zMask;
+	
+	cpu_regs.D[op1]&=~zMask;
+	cpu_regs.D[op1]|=ear;
+	
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	
+	ear&=nMask;
+	eas&=nMask;
+	ead&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	if ((eas & ead) | ((~ear) & ead) | (eas & (~ear)))
+		cpu_regs.SR|=(CPU_STATUS_C|CPU_STATUS_X);
+	else
+		cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
+	if ((eas & ead & (~ear)) | ((~eas) & (~ead) & ear))
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
+}
+
+void CPU_DIVS(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    int32_t ead,eas,eaq,ear;
+	
+    cpu_regs.PC+=2;
+	
+	len=2;
+	
+	ead=(int32_t)cpu_regs.D[op1];
+	eas=(int16_t)(getSourceEffectiveAddress(op2,len)&0xFFFF);
+	
+	if (!eas)
+	{
+		SOFT_BREAK;		// NEED TO DO A TRAP HERE
+	}
+	
+	eaq=ead / eas;
+	ear=ead % eas;
+	
+	cpu_regs.SR&=~CPU_STATUS_C;
+	if (eaq>65535)
+	{
+		cpu_regs.SR|=CPU_STATUS_V;
+	}
+	else
+	{
+		cpu_regs.SR&=~CPU_STATUS_V;
+		
+		cpu_regs.D[op1]=(eaq&0xFFFF)|((ear<<16)&0xFFFF0000);
+
+		if (eaq&0x8000)
+			cpu_regs.SR|=CPU_STATUS_N;
+		else
+			cpu_regs.SR&=~CPU_STATUS_N;
+		
+		if (eaq&0xFFFF)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
+	}	
+}
+
+
 ////////////////////////////////////////////////////////////////////////
 
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
@@ -6431,10 +6590,13 @@ CPU_Ins cpu_instructions[] =
 {"0100011011aaaaaa","MOVESR",CPU_MOVETOSR,CPU_DIS_MOVETOSR,1,{0x003F},{0},{11},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"0000001001111100","ANDSR",CPU_ANDSR,CPU_DIS_ANDSR,0},
 {"0100111001110011","RTE",CPU_RTE,CPU_DIS_RTE,0},
-{"0100000011aaaaaa","MOVESR",CPU_MOVEFROMSR,CPU_DIS_MOVEFROMSR,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
+//{"1101rrr1zz001yyy","ADDX",CPU_ADDXm,CPU_DIS_ADDXm,  D100 -> DFC0      ADDX
+{"0100000011aaaaaa","MOVESR",CPU_MOVEFROMSR,CPU_DIS_MOVEFROMSR,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
+{"1000rrr111aaaaaa","DIVS",CPU_DIVS,CPU_DIS_DIVS,2,{0x0E00,0x003F},{9,0},{1,11},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
+{"1101rrr1zz000ddd","ADDX",CPU_ADDX,CPU_DIS_ADDX,3,{0x0E00,0x00C0,0x0007},{9,6,0},{1,3,1},{{"rrr"},{"00","01","10"},{"rrr"}}},
 {"010011100100rrrr","TRAP",CPU_TRAP,CPU_DIS_TRAP,1,{0x000F},{0},{1},{{"rrrr"}}},
 {"0100010011aaaaaa","MOVECCR",CPU_MOVETOCCR,CPU_DIS_MOVETOCCR,1,{0x003F},{0},{11},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"1110ccc0zzm10rrr","ROXR",CPU_ROXR,CPU_DIS_ROXR,4,{0x0E00,0x000C0,0x0020,0x0007},{9,6,5,0},{1,3,1,1},{{"rrr"},{"00","01","10"},{"r"},{"rrr"}}},
@@ -6515,11 +6677,9 @@ CPU_Decode	CPU_DisTable[65536];
 CPU_Ins		*CPU_Information[65536];
 
 /// 1100xxx10000ryyy  C100 -> FF0F	ABCD
-/// 1101xxx1ss00ryyy  D100 -> DFC0      ADDX
 /// 0000001000111100  022C -> 022C	ANDI,CCR + 00000000bbbbbbbb
 /// 0100100001001vvv  4848 -> 484F	BKPT
 /// 0100rrrss0aaaaaa  4000 -> 4FBF	CHK
-/// 1000rrr111aaaaaa  81C0 -> 8FFF	DIVS
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
 /// 0100001011aaaaaa  42C0 -> 42FF	MOVE from CCR
 /// 0100000011aaaaaa  40C0 -> 40FF	MOVE from SR
@@ -6541,7 +6701,7 @@ void CPU_DIS_UNKNOWN(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 void CPU_UNKNOWN(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
 	printf("ILLEGAL INSTRUCTION %08x\n",cpu_regs.PC);
-	SOFT_BREAK;
+	startDebug=1;
 }
 
 const char *byte_to_binary(u_int32_t x)
@@ -6748,9 +6908,19 @@ void CPU_CheckForInterrupt()
 		//
 		if ((cpu_regs.SR & 0x0700) >= 0x0600)
 			return;
+
 		// Level 6
-		// External line generated
+		// CIAB Interrupts
 		//
+		if (CST_GETWRDU(CST_INTREQR,0x2000)&CST_GETWRDU(CST_INTENAR,0x2000))
+		{
+			CPU_GENERATE_EXCEPTION(0x78);
+			cpu_regs.SR&=0xF8FF;
+			cpu_regs.SR|=0x0600;
+			cpuStopped=0;
+			return;
+		}
+
 		if ((cpu_regs.SR & 0x0700) >= 0x0500)
 			return;
 		// Level 5
@@ -6802,7 +6972,7 @@ void CPU_CheckForInterrupt()
 		if ((cpu_regs.SR & 0x0700) >= 0x0200)
 			return;
 		// Level 2
-		// IO ports and timers
+		// CIAA Interrupts
 		//
 		if (CST_GETWRDU(CST_INTREQR,0x0008)&CST_GETWRDU(CST_INTENAR,0x0008))
 		{
@@ -6887,7 +7057,7 @@ void CPU_Step()
 	
     // DEBUGGER
 
-	if (cpu_regs.PC == 0x3042e /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
+	if (cpu_regs.PC == 0xfc117C /*0x7013a*/ /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
 	{
 /*		static once=0;
 		if (once==0)
@@ -6917,6 +7087,10 @@ void CPU_Step()
 	if (!cpuStopped)			// Don't process instruction cpu halted waiting for interrupt
 	{
 		CPU_JumpTable[opcode](operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
+	if (cpuStopped)
+	{
+		printf("CPU STOPPED : %08x\n",cpu_regs.PC);
+	}
 	}
 
 	if (MEM_getLong(0x6c)==0)

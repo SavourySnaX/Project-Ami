@@ -16,6 +16,8 @@
 #include "customchip.h"
 #include "ciachip.h"
 #include "blitter.h"
+#include "display.h"
+#include "disk.h"
 
 typedef u_int8_t (*CST_ReadMap)(u_int16_t reg);
 typedef void (*CST_WriteMap)(u_int16_t reg,u_int8_t byte);
@@ -47,6 +49,8 @@ CST_WriteMap	cst_write[CUSTOMCHIPMEMORY];
 
 u_int8_t	horizontalClock=0;
 u_int16_t	verticalClock=0;
+
+u_int8_t		leftMouseUp,rightMouseUp;
 
 extern int g_newScreenNotify;
 
@@ -227,9 +231,7 @@ extern int startDebug;
 
 u_int8_t CST_getByteJOY0DAT(u_int16_t reg)
 {
-//	startDebug = 1;
-	return 0x7F;				// reckon this is mickeys 7F being centered
-//	return cstMemory[reg];
+	return cstMemory[reg];
 }
 
 void CST_setBytePOTGO(u_int16_t reg,u_int8_t byte)
@@ -247,9 +249,12 @@ void CST_setBytePOTGO(u_int16_t reg,u_int8_t byte)
 		cstMemory[CST_POTGOR]=0x00;
 		if ((byte&0x0C)==0x0C)	// check mouse right button
 		{
-			cstMemory[CST_POTGOR]|=0x04;			// Note bit set means not pressed!
+			if (rightMouseUp)
+			{
+				cstMemory[CST_POTGOR]|=0x04;			// Note bit set means not pressed!
+			}
 		}
-		if ((byte&0x03)==0x03)	// check mouse left button
+		if ((byte&0x03)==0x03)	// check ????
 		{
 			cstMemory[CST_POTGOR]|=0x01;			// Note bit set means not pressed!
 		}
@@ -402,14 +407,14 @@ CST_Regs customChipRegisters[] =
 {"BPL1PTL",CST_WRITEABLE|CST_SUPPORTED},
 {"BPL2PTH",CST_WRITEABLE|CST_SUPPORTED},
 {"BPL2PTL",CST_WRITEABLE|CST_SUPPORTED},
-{"BPL3PTH",CST_WRITEABLE},
-{"BPL3PTL",CST_WRITEABLE},
-{"BPL4PTH",CST_WRITEABLE},
-{"BPL4PTL",CST_WRITEABLE},
-{"BPL5PTH",CST_WRITEABLE},
-{"BPL5PTL",CST_WRITEABLE},
-{"BPL6PTH",CST_WRITEABLE},
-{"BPL6PTL",CST_WRITEABLE},
+{"BPL3PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BPL3PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"BPL4PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BPL4PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"BPL5PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BPL5PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"BPL6PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"BPL6PTL",CST_WRITEABLE|CST_SUPPORTED},
 {"0F8",0},
 {"0FA",0},
 {"0FC",0},
@@ -430,22 +435,22 @@ CST_Regs customChipRegisters[] =
 {"BPL6DAT",CST_WRITEABLE},
 {"11C",0},
 {"11E",0},
-{"SPR0PTH",CST_WRITEABLE},
-{"SPR0PTL",CST_WRITEABLE},
-{"SPR1PTH",CST_WRITEABLE},
-{"SPR1PTL",CST_WRITEABLE},
-{"SPR2PTH",CST_WRITEABLE},
-{"SPR2PTL",CST_WRITEABLE},
-{"SPR3PTH",CST_WRITEABLE},
-{"SPR3PTL",CST_WRITEABLE},
-{"SPR4PTH",CST_WRITEABLE},
-{"SPR4PTL",CST_WRITEABLE},
-{"SPR5PTH",CST_WRITEABLE},
-{"SPR5PTL",CST_WRITEABLE},
-{"SPR6PTH",CST_WRITEABLE},
-{"SPR6PTL",CST_WRITEABLE},
-{"SPR7PTH",CST_WRITEABLE},
-{"SPR7PTL",CST_WRITEABLE},
+{"SPR0PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR0PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR1PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR1PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR2PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR2PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR3PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR3PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR4PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR4PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR5PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR5PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR6PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR6PTL",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR7PTH",CST_WRITEABLE|CST_SUPPORTED},
+{"SPR7PTL",CST_WRITEABLE|CST_SUPPORTED},
 {"SPR0POS",CST_WRITEABLE},
 {"SPR0CTL",CST_WRITEABLE},
 {"SPR0DATA",CST_WRITEABLE},
@@ -605,6 +610,11 @@ void CST_InitialiseCustom()
 		cst_write[a] = CST_setByteUnmapped;
 		cstMemory[a]=0;
 	}
+	
+	horizontalClock=0;
+	verticalClock=0;
+	leftMouseUp=1;
+	rightMouseUp=1;
 	
 	a=0;
 	while (!(customChipRegisters[a>>1].type & CST_END))

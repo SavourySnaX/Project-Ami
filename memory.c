@@ -38,6 +38,11 @@ u_int8_t MEM_getByteKick(u_int32_t upper24,u_int32_t lower16)
 	return romPtr[ ((upper24 - 0xFC)<<16) | lower16];
 }
 
+u_int8_t MEM_getByteOvlKick(u_int32_t upper24,u_int32_t lower16)
+{
+	return romPtr[ ((upper24 - 0x00)<<16) | lower16];
+}
+
 u_int8_t MEM_getByteUnmapped(u_int32_t upper24,u_int32_t lower16)
 {
 	if (upper24 >= 0xF0)
@@ -231,4 +236,34 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_write[0xFD] = MEM_setByteKick;
 	mem_write[0xFE] = MEM_setByteKick;
 	mem_write[0xFF] = MEM_setByteKick;
+	
+	MEM_MapKickstartLow(1);	// on boot OVL flag is set so kickstart rom should be mirrored into low addresses
+}
+
+void MEM_MapKickstartLow(int yes)
+{
+	if (yes)
+	{
+		mem_read[0x00] = MEM_getByteOvlKick;
+		mem_read[0x01] = MEM_getByteOvlKick;
+		mem_read[0x02] = MEM_getByteOvlKick;
+		mem_read[0x03] = MEM_getByteOvlKick;
+
+		mem_write[0x00] = MEM_setByteKick;
+		mem_write[0x01] = MEM_setByteKick;
+		mem_write[0x02] = MEM_setByteKick;
+		mem_write[0x03] = MEM_setByteKick;
+	}
+	else
+	{
+		mem_read[0x00] = MEM_getByteChip;
+		mem_read[0x01] = MEM_getByteChip;
+		mem_read[0x02] = MEM_getByteChip;
+		mem_read[0x03] = MEM_getByteChip;
+
+		mem_write[0x00] = MEM_setByteChip;
+		mem_write[0x01] = MEM_setByteChip;
+		mem_write[0x02] = MEM_setByteChip;
+		mem_write[0x03] = MEM_setByteChip;
+	}
 }
