@@ -139,6 +139,27 @@ void CST_setByteINTREQ(u_int16_t reg,u_int8_t byte)
 //	printf("INTREQR : %02X%02X\n",cstMemory[0x1E],cstMemory[0x1F]);
 }
 
+void CST_setByteADKCON(u_int16_t reg,u_int8_t byte)
+{
+	cstMemory[reg]=byte;
+	
+	if (reg&1)
+	{
+		// second byte set do the operation
+		if (CST_GETWRDU(CST_ADKCON,0x8000))		// need to or in the set bits
+		{
+			CST_ORWRD(CST_ADKCONR,CST_GETWRDU(CST_ADKCON,0x7FFF));
+		}
+		else							// need to mask of the set bits
+		{
+			CST_ANDWRD(CST_ADKCONR,~CST_GETWRDU(CST_ADKCON,0xFFFF));
+		}
+	}
+
+	printf("ADKCON : %04X\n",CST_GETWRDU(CST_ADKCONR,0xFFFF));
+}
+
+
 #define AGNUS_ID		0					// NTSC agnus or fat agnus
 
 u_int8_t CST_getByteVPOSR(u_int16_t reg)
@@ -233,6 +254,31 @@ void CST_setBytePOTGO(u_int16_t reg,u_int8_t byte)
 	}
 }
 
+void CST_setByteDSKLEN(u_int16_t reg,u_int8_t byte)
+{
+	cstMemory[reg]=byte;
+	
+	if (reg&1)
+	{
+		DSK_NotifyDSKLEN(CST_GETWRDU(CST_DSKLEN,0xFFFF));
+	}
+}
+
+u_int8_t CST_getByteDSKBYTR(u_int16_t reg)
+{
+	u_int16_t wrd;
+	
+	wrd = 0;
+	if (CST_GETWRDU(CST_DMACONR,0x0210)==0x0210 && CST_GETWRDU(CST_DSKLEN,0x8000))
+		wrd|=0x4000;
+	if (CST_GETWRDU(CST_DSKLEN,0x4000))
+		wrd|=0x2000;
+	
+	CST_SETWRD(CST_DSKLEN,wrd,0xFFFF);
+
+	return cstMemory[reg];
+}
+
 
 CST_Regs customChipRegisters[] =
 {
@@ -244,17 +290,17 @@ CST_Regs customChipRegisters[] =
 {"JOY0DAT",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteJOY0DAT,0},
 {"JOY1DAT",CST_READABLE},
 {"CLXDAT",CST_READABLE},
-{"ADKCONR",CST_READABLE},
+{"ADKCONR",CST_READABLE|CST_SUPPORTED},
 {"POT0DAT",CST_READABLE},
 {"POT1DAT",CST_READABLE},
 {"POTGOR",CST_READABLE|CST_SUPPORTED},
 {"SERDATR",CST_READABLE},
-{"DSKBYTR",CST_READABLE},
+{"DSKBYTR",CST_READABLE|CST_SUPPORTED|CST_FUNCTION,CST_getByteDSKBYTR,0},
 {"INTENAR",CST_READABLE|CST_SUPPORTED},
 {"INTREQR",CST_READABLE|CST_SUPPORTED},
 {"DSKPTH",CST_WRITEABLE},
 {"DSKPTL",CST_WRITEABLE},
-{"DSKLEN",CST_WRITEABLE},
+{"DSKLEN",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteDSKLEN},
 {"DSKDAT",CST_WRITEABLE},
 {"REFPT",CST_WRITEABLE},
 {"VPOSW",CST_WRITEABLE},
@@ -315,7 +361,7 @@ CST_Regs customChipRegisters[] =
 {"CLXCON",CST_WRITEABLE},
 {"INTENA",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteINTENA},
 {"INTREQ",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteINTREQ},
-{"ADKCON",CST_WRITEABLE},
+{"ADKCON",CST_WRITEABLE|CST_SUPPORTED|CST_FUNCTION,0,CST_setByteADKCON},
 {"AUD0LCH",CST_WRITEABLE},
 {"AUD0LCL",CST_WRITEABLE},
 {"AUD0LEN",CST_WRITEABLE},

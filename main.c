@@ -26,6 +26,7 @@
 #include "copper.h"
 #include "blitter.h"
 #include "display.h"
+#include "disk.h"
 
 int decrpyt_rom()
 {
@@ -227,13 +228,15 @@ int main(int argc,char **argv)
 	CIA_InitialiseCustom();
 	BLT_InitialiseBlitter();
 	DSP_InitialiseDisplay();
+	DSK_InitialiseDisk();
 	
     CPU_Reset();
     
 	while (running)
 	{
-		DSP_Update();
+		DSP_Update();			// Note need to priority order these ultimately
 		CST_Update();
+		DSK_Update();
 		CPR_Update();
 		CIA_Update();
 		BLT_Update();

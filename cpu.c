@@ -2495,6 +2495,51 @@ void CPU_DIS_LSRm(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
+void CPU_DIS_EORI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	
+    adr+=2;
+    strcpy(mnemonicData,"EORI");
+    strcpy(byteData,"");
+    switch (op1)
+    {
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+	strcat(mnemonicData,"#");
+	switch (len)
+	{
+		case 1:
+		case 2:
+			strcat(mnemonicData,decodeWord(adr));
+			strcat(byteData,decodeWord(adr));
+			adr+=2;
+			break;
+		case 4:
+			strcat(mnemonicData,decodeLong(adr));
+			strcat(byteData,decodeLong(adr));
+			adr+=4;
+			break;
+	}
+	
+	strcat(mnemonicData,",");
+    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -5562,26 +5607,36 @@ void CPU_EORd(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 			break;
     }
 	
-	ead=getEffectiveAddress(op3,len);
-	switch (len)
-	{
-		case 1:
-			eas=MEM_getByte(ead);
-			ear=(cpu_regs.D[op1] ^ eas)&zMask;
-			MEM_setByte(ead,ear);
-			break;
-		case 2:
-			eas=MEM_getWord(ead);
-			ear=(cpu_regs.D[op1] ^ eas)&zMask;
-			MEM_setWord(ead,ear);
-			break;
-		case 4:
-			eas=MEM_getLong(ead);
-			ear=(cpu_regs.D[op1] ^ eas)&zMask;
-			MEM_setLong(ead,ear);
-			break;
+    if ((op3 & 0x38)==0)	// destination is D register
+    {
+		ead=cpu_regs.D[op3]&zMask;
+		ear=(ead ^ cpu_regs.D[op1])&zMask;
+		cpu_regs.D[op3]&=~zMask;
+		cpu_regs.D[op3]|=ear;
     }
-
+    else
+	{
+		ead=getEffectiveAddress(op3,len);
+		switch (len)
+		{
+			case 1:
+				eas=MEM_getByte(ead);
+				ear=(cpu_regs.D[op1] ^ eas)&zMask;
+				MEM_setByte(ead,ear);
+				break;
+			case 2:
+				eas=MEM_getWord(ead);
+				ear=(cpu_regs.D[op1] ^ eas)&zMask;
+				MEM_setWord(ead,ear);
+				break;
+			case 4:
+				eas=MEM_getLong(ead);
+				ear=(cpu_regs.D[op1] ^ eas)&zMask;
+				MEM_setLong(ead,ear);
+				break;
+		}
+	}
+	
     if (ear)
 		cpu_regs.SR&=~CPU_STATUS_Z;
     else
@@ -5930,6 +5985,81 @@ void CPU_LSRm(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 		cpu_regs.SR|=CPU_STATUS_Z;
 }
 
+void CPU_EORI(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op1)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			eas=MEM_getByte(cpu_regs.PC+1);
+			cpu_regs.PC+=2;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			eas=MEM_getWord(cpu_regs.PC);
+			cpu_regs.PC+=2;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			eas=MEM_getLong(cpu_regs.PC);
+			cpu_regs.PC+=4;
+			break;
+    }
+	
+    if ((op2 & 0x38)==0)	// destination is D register
+    {
+		ead=cpu_regs.D[op2]&zMask;
+		ear=(ead ^ eas)&zMask;
+		cpu_regs.D[op2]&=~zMask;
+		cpu_regs.D[op2]|=ear;
+    }
+    else
+    {
+		ead=getEffectiveAddress(op2, len);
+		switch (len)
+		{
+			case 1:
+				ear=(MEM_getByte(ead) ^ eas)&zMask;
+				MEM_setByte(ead,ear&zMask);
+				break;
+			case 2:
+				ear=(MEM_getWord(ead) ^ eas)&zMask;
+				MEM_setWord(ead,ear&zMask);
+				break;
+			case 4:
+				ear=(MEM_getLong(ead) ^ eas)&zMask;
+				MEM_setLong(ead,ear&zMask);
+				break;
+		}
+    }
+	
+	cpu_regs.SR&=~(CPU_STATUS_V|CPU_STATUS_C);
+	
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+    else
+		cpu_regs.SR|=CPU_STATUS_Z;
+	
+	ear&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+}
+
 
 
 
@@ -5963,6 +6093,7 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
+{"00001010zzaaaaaa","EORI",CPU_EORI,CPU_DIS_EORI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1110001011aaaaaa","LSR",CPU_LSRm,CPU_DIS_LSRm,1,{0x003F},{0},{7},{{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"0000100001aaaaaa","BCHGI",CPU_BCHGI,CPU_DIS_BCHGI,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 //{"0000rrr101aaaaaa","BCHG",CPU_BCHG,CPU_DIS_BCHG,2,{0x0E00,0x003F},{9,0},{1,8},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -6042,7 +6173,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100100001001vvv  4848 -> 484F	BKPT
 /// 0100rrrss0aaaaaa  4000 -> 4FBF	CHK
 /// 1000rrr111aaaaaa  81C0 -> 8FFF	DIVS
-/// 00001010ssaaaaaa  0A00 -> 0AFF	EORI + 1,2,4 bytes extra dep wrd size
 /// 0000101000111100  0A2C -> 0A2C	EORI,CCR + 00000000bbbbbbbb
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
 /// 0100001011aaaaaa  42C0 -> 42FF	MOVE from CCR
@@ -6349,6 +6479,9 @@ void CPU_CheckForInterrupt()
 		//
 		if (CST_GETWRDU(CST_INTREQR,0x0007)&CST_GETWRDU(CST_INTENAR,0x0007))
 		{
+//			if (CST_GETWRDU(CST_INTREQR,0x0002))
+//				startDebug=1;
+
 			CPU_GENERATE_EXCEPTION(0x64);
 			cpu_regs.SR&=0xF8FF;
 			cpu_regs.SR|=0x0100;
@@ -6410,16 +6543,16 @@ void CPU_Step()
     }
 	
     // DEBUGGER
-/*
-	if (cpu_regs.PC == 0xfc570c)			//FE961E  NOP
+
+/*	if (cpu_regs.PC == 0xfea9ea)			//FE961E  NOP
 	{
 		static once=0;
 		if (once==0)
 			startDebug=1;
 		else
 			once++;
-	}
-*/
+	}*/
+
 	if (startDebug)
 	{	
 		for (a=0;a<PCCACHESIZE;a++)

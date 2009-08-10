@@ -12,7 +12,7 @@
 
 #include "config.h"
 
-
+#include "disk.h"
 #include "ciachip.h"
 #include "customchip.h"
 
@@ -135,18 +135,58 @@ void CIA_setBytePRA(u_int16_t reg,u_int8_t byte)
 	}
 }
 
+extern int startDebug;
+
 u_int8_t CIA_getBytePRA(u_int16_t reg)
 {
-	return ciaMemory[reg];
+	if (reg&0x10)
+	{
+		return ciaMemory[reg];		
+	}
+	else
+	{
+//		startDebug=1;
+		u_int8_t byte=ciaMemory[reg]&0xC3;		// FIR1 | FIR0 | ---- | LED | OVL
+		
+		if (!DSK_Removed())
+			byte|=0x04;
+		if (DSK_Writeable())
+			byte|=0x08;
+		if (!DSK_OnTrack(0))
+			byte|=0x10;
+		if (!DSK_Ready())
+			byte|=0x20;
+			
+		return byte;
+	}
 }
 
 void CIA_setBytePRB(u_int16_t reg,u_int8_t byte)
 {
 	if (reg&0x10)
 	{
+		if ((ciaMemory[reg]&0x08) && !(byte&0x08))
+		{
+			//Set Motor
+			DSK_SetMotor(ciaMemory[reg]&0x80);
+		}
+		
+		if (!(ciaMemory[reg]&0x01) && (byte&0x01))
+		{
+			// half a step pulse (not 100% correct, but will do for testing
+			DSK_Step();
+		}
+	
 		// MTR | SEL3 | SEL2 | SEL1 | SEL0 | SIDE | DIR | STEP
 		ciaMemory[reg]&=~ciaMemory[0x13];		// clear write bits
 		ciaMemory[reg]|=(byte&ciaMemory[0x13]);
+		
+		if ((ciaMemory[reg]&0x08)==0x00)	// drive active low
+		{
+			// Drive selected.
+			DSK_SetSide(ciaMemory[reg]&0x04);
+			DSK_SetDir(ciaMemory[reg]&0x02);
+		}
 	}
 	else
 	{
@@ -666,7 +706,7 @@ void CIA_InitialiseCustom()
 
 u_int8_t MEM_getByteCia(u_int32_t upper24,u_int32_t lower16)
 {
-	if (lower16&0xF000 == 0xD)
+	if ((lower16&0xF000) == 0xD000)
 		lower16 = ((lower16&0x0F00)>>8)+16;
 	else
 		lower16 = ((lower16&0x0F00)>>8);
@@ -675,7 +715,7 @@ u_int8_t MEM_getByteCia(u_int32_t upper24,u_int32_t lower16)
 
 void MEM_setByteCia(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
 {
-	if (lower16&0xF000 == 0xD)
+	if ((lower16&0xF000) == 0xD000)
 		lower16 = ((lower16&0x0F00)>>8)+16;
 	else
 		lower16 = ((lower16&0x0F00)>>8);

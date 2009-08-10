@@ -19,6 +19,7 @@
 		389C06C110249B600006CF6E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 389C06B610249B600006CF6E /* Info.plist */; };
 		389C06C210249B600006CF6E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B710249B600006CF6E /* main.c */; };
 		389C06C310249B600006CF6E /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B810249B600006CF6E /* memory.c */; };
+		38D5910D1027430B00752082 /* disk.c in Sources */ = {isa = PBXBuildFile; fileRef = 38D5910C1027430B00752082 /* disk.c */; };
 		8DD76FB00486AB0100D96B5E /* ami.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* ami.1 */; };
 /* End PBXBuildFile section */
 
@@ -58,6 +59,8 @@
 		389C06B810249B600006CF6E /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
 		389C06B910249B600006CF6E /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
 		389C06BA10249B600006CF6E /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
+		38D5910B1027430B00752082 /* disk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = disk.h; sourceTree = "<group>"; };
+		38D5910C1027430B00752082 /* disk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = disk.c; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* ami */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ami; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6A0FF2C0290799A04C91782 /* ami.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = ami.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -111,6 +114,8 @@
 				389C06B810249B600006CF6E /* memory.c */,
 				389C06B910249B600006CF6E /* memory.h */,
 				389C06BA10249B600006CF6E /* mytypes.h */,
+				38D5910B1027430B00752082 /* disk.h */,
+				38D5910C1027430B00752082 /* disk.c */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -194,6 +199,7 @@
 				389C06C010249B600006CF6E /* display.c in Sources */,
 				389C06C210249B600006CF6E /* main.c in Sources */,
 				389C06C310249B600006CF6E /* memory.c in Sources */,
+				38D5910D1027430B00752082 /* disk.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

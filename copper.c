@@ -119,7 +119,7 @@ void CPR_Update()
 			{
 				// doing a move
 				u_int16_t destination;
-				u_int8_t  copperDanger=0x20;
+				u_int8_t  copperDanger=0x80;
 			       
 				wrd = MEM_getWord(copperPC);
 				copperPC+=2;
@@ -130,7 +130,7 @@ void CPR_Update()
 
 				if (CST_GETWRDU(CST_COPCON,0x0002))
 				{
-					copperDanger=0x10;
+					copperDanger=0x40;
 				}
 				
 				if (destination>=copperDanger) // need to check copper danger bit and allow 0x10 and above addresses
