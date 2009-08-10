@@ -16,6 +16,8 @@ void DSK_NotifyDSKLEN(u_int16_t dskLen);
 
 int	DSK_OnSyncWord();
 
+void DSK_SelectDrive(int drive,int motor);
+
 int DSK_Removed();
 int DSK_Writeable();
 int DSK_OnTrack(u_int8_t track);

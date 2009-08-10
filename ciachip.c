@@ -266,10 +266,21 @@ void CIA_setBytePRB(u_int16_t reg,u_int8_t byte)
 {
 	if (reg&0x10)
 	{
+		if ((ciaMemory[reg]&0x40) && !(byte&0x40))				// I need to confirm what happens when multiple drive select bits are set (esp. disk dma!)
+		{
+			DSK_SelectDrive(3,ciaMemory[reg]&0x80);
+		}
+		if ((ciaMemory[reg]&0x20) && !(byte&0x20))
+		{
+			DSK_SelectDrive(2,ciaMemory[reg]&0x80);
+		}
+		if ((ciaMemory[reg]&0x10) && !(byte&0x10))
+		{
+			DSK_SelectDrive(1,ciaMemory[reg]&0x80);
+		}
 		if ((ciaMemory[reg]&0x08) && !(byte&0x08))
 		{
-			//Set Motor
-			DSK_SetMotor(ciaMemory[reg]&0x80);
+			DSK_SelectDrive(0,ciaMemory[reg]&0x80);
 		}
 		
 		if (!(ciaMemory[reg]&0x01) && (byte&0x01))
@@ -282,12 +293,12 @@ void CIA_setBytePRB(u_int16_t reg,u_int8_t byte)
 		ciaMemory[reg]&=~ciaMemory[0x13];		// clear write bits
 		ciaMemory[reg]|=(byte&ciaMemory[0x13]);
 		
-		if ((ciaMemory[reg]&0x08)==0x00)	// drive active low
-		{
+//		if ((ciaMemory[reg]&0x08)==0x00)	// drive active low
+//		{
 			// Drive selected.
 			DSK_SetSide(ciaMemory[reg]&0x04);
 			DSK_SetDir(ciaMemory[reg]&0x02);
-		}
+//		}
 	}
 	else
 	{

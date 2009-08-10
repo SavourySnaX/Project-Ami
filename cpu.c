@@ -6682,7 +6682,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100rrrss0aaaaaa  4000 -> 4FBF	CHK
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
 /// 0100001011aaaaaa  42C0 -> 42FF	MOVE from CCR
-/// 0100000011aaaaaa  40C0 -> 40FF	MOVE from SR
 /// 0000dddmmm001aaa  0008 -> 0FCF	MOVEP + 2 byte disp
 /// 0100100000aaaaaa  4800 -> 483F	NBCD
 /// 01000000ssaaaaaa  4000 -> 40FF	NEGX
@@ -7087,10 +7086,10 @@ void CPU_Step()
 	if (!cpuStopped)			// Don't process instruction cpu halted waiting for interrupt
 	{
 		CPU_JumpTable[opcode](operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
-	if (cpuStopped)
+/*	if (cpuStopped)
 	{
 		printf("CPU STOPPED : %08x\n",cpu_regs.PC);
-	}
+	}*/
 	}
 
 	if (MEM_getLong(0x6c)==0)

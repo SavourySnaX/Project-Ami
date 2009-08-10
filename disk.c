@@ -8,8 +8,8 @@
  *
  * Note disk drive is running at ridiculous speeds at present because i`m not obeying any timings
  *
- *
- *  Going off amiga dos writing of tracks : 831 wrd track gap but i`m going with 830 cos i suspect it writes 1 wrd extra (from memory)
+ * Refactored the code to support all 4 disc drives (hopefully)
+ * Added disk identification codes (without which second drive is never used)
  *
  */
 
@@ -23,26 +23,35 @@
 #include "customchip.h"
 #include "disk.h"
 
-int			diskInDrive;
-int			dskMotorOn;
-int			dskStepDir;
-int			dskSide;
-int			dskTrack;
-int			dskSync;
-int			dskSyncDma;
-
-int			tbLastSide;
-int			tbLastTrack;
-int			tbBufferPos;
-
-u_int16_t	prevDskLen;
-int			doDiskDMA;
-
 #define TRACKGAP_SIZEWRD	((350))
 #define TRACKGAP_SIZE		(TRACKGAP_SIZEWRD*2)
 #define TRACKBUFFER_SIZE	(TRACKGAP_SIZE + (4 + 2 + 2 + 4 + 4 + 16 + 16 + 4 + 4 + 4 + 4 + 512 + 512)*11)
 
-u_int8_t	mfmDiscBuffer[TRACKBUFFER_SIZE * 80 * 2];			// Represents complete disc image in MFM encoding
+typedef struct
+{
+	u_int8_t	mfmDiscBuffer[TRACKBUFFER_SIZE * 80 * 2];			// Represents complete disc image in MFM encoding
+
+	int			diskInDrive;
+	int			dskMotorOn;
+	int			dskStepDir;
+	int			dskSide;
+	int			dskTrack;
+	u_int32_t	dskIdBit;
+	u_int32_t	dskIdCode;
+} DiskDrive;
+
+DiskDrive diskDrive[4];
+
+int			dskSync;
+int			dskSyncDma;
+int			tbLastSide;
+int			tbLastTrack;
+int			tbBufferPos;
+int			curDiskDrive;
+
+u_int16_t	prevDskLen;
+int			doDiskDMA;
+
 u_int8_t	*trackBuffer;										// Current track pointer
 
 void DSK_MFM_Chk(u_int8_t *chk,u_int8_t *data,u_int32_t length)
@@ -79,13 +88,17 @@ void DSK_MFM_Enc(u_int8_t *even,u_int8_t *odd,u_int8_t *data,u_int32_t length)
 void DSK_Status()
 {
 #if ENABLE_DISK_WARNINGS
+	printf("Current Drive : %d\n",curDiskDrive);
 	printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,0x0007FFFE));
-	printf("Motor %s : Disk Track %d : Disk Side %s\n",dskMotorOn ? "on" : "off",dskTrack,dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",0,diskDrive[0].dskMotorOn ? "on" : "off",diskDrive[0].dskTrack,diskDrive[0].dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",1,diskDrive[1].dskMotorOn ? "on" : "off",diskDrive[1].dskTrack,diskDrive[1].dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",2,diskDrive[2].dskMotorOn ? "on" : "off",diskDrive[2].dskTrack,diskDrive[2].dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",3,diskDrive[3].dskMotorOn ? "on" : "off",diskDrive[3].dskTrack,diskDrive[3].dskSide ? "lower" : "upper");
 	printf("Disk Sync : %04X\n", CST_GETWRDU(CST_DSKSYNC,0xFFFF));
 #endif
 }
 
-void ConvertDiskTrack(int side, int track,u_int8_t *dskData)
+void ConvertDiskTrack(int side, int track,u_int8_t *dskData,int drive)
 {
 	int s=0;
 	u_int8_t *firstBlock;
@@ -97,7 +110,7 @@ void ConvertDiskTrack(int side, int track,u_int8_t *dskData)
 		side=1;
 	
 	firstBlock = &dskData[track * 512 * 22 + side * 512 * 11];
-	writeTrack=&mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
+	writeTrack=&diskDrive[drive].mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
 	
 	for (s=0;s<TRACKGAP_SIZEWRD;s++)
 	{
@@ -147,19 +160,19 @@ void ConvertDiskTrack(int side, int track,u_int8_t *dskData)
 
 }
 
-void ConvertDiscImageToMFM(u_int8_t *dskData)
+void ConvertDiscImageToMFM(u_int8_t *dskData,int drive)
 {
 	int t,s;
-	for (int t=0;t<80;t++)
+	for (t=0;t<80;t++)
 	{
-		for (int s=0;s<2;s++)
+		for (s=0;s<2;s++)
 		{
-			ConvertDiskTrack(s,t,dskData);
+			ConvertDiskTrack(s,t,dskData,drive);
 		}
 	}
 }
 
-void LoadDisk(char *disk)
+void LoadDisk(char *disk,int drive)
 {
     FILE *inDisk;
     unsigned long dskSize;
@@ -168,7 +181,7 @@ void LoadDisk(char *disk)
     inDisk = fopen(disk,"rb");
     if (!inDisk)
     {
-		diskInDrive=0;
+		diskDrive[drive].diskInDrive=0;
 		return;
     }
     fseek(inDisk,0,SEEK_END);
@@ -178,29 +191,42 @@ void LoadDisk(char *disk)
     dskSize = fread(dskData,1,dskSize,inDisk);
     fclose(inDisk);
 
-	ConvertDiscImageToMFM(dskData);
+	ConvertDiscImageToMFM(dskData,drive);
 
 	free(dskData);
 
-	diskInDrive=1;
+	diskDrive[drive].diskInDrive=1;
+	diskDrive[drive].dskIdCode=0xFFFFFFFF;			// Amiga standard
 }
 
 void DSK_InitialiseDisk()
 {
-	LoadDisk("wb.adf");
-	if (!diskInDrive)
+	int a;
+
+	curDiskDrive=0;
+	for (a=0;a<4;a++)
 	{
-		LoadDisk("../../wb.adf");
+		diskDrive[a].diskInDrive=0;
+		diskDrive[a].dskMotorOn=0;
+		diskDrive[a].dskStepDir=0;
+		diskDrive[a].dskSide=0;
+		diskDrive[a].dskTrack=10;				// Not on track 0 - mostly for testing
+		diskDrive[a].dskIdCode=0x00000000;		// no drive present
 	}
 
-	dskMotorOn=0;
-	dskStepDir=0;
-	dskSide=0;
-	dskTrack=10;			// Not on track 0 - mostly for testing
+	LoadDisk("wb.adf",0);
+	if (!diskDrive[0].diskInDrive)
+	{
+		LoadDisk("../../wb.adf",0);
+	}
+
+	diskDrive[1].diskInDrive=1;		// Adds a completely unformatted disk to drive 1
+	diskDrive[1].dskIdCode=0xFFFFFFFF;
+
 	dskSync=0;
 	dskSyncDma=0;
 
-	trackBuffer=&mfmDiscBuffer[dskTrack * TRACKBUFFER_SIZE * 2 + (dskSide?0:1) * TRACKBUFFER_SIZE];
+	trackBuffer=&diskDrive[0].mfmDiscBuffer[diskDrive[0].dskTrack * TRACKBUFFER_SIZE * 2 + (diskDrive[0].dskSide?0:1) * TRACKBUFFER_SIZE];
 	
 	tbLastSide=-1;
 	tbLastTrack=-1;
@@ -323,7 +349,7 @@ void DSK_Update()
 
 int DSK_Removed()
 {
-	return !diskInDrive;
+	return !diskDrive[curDiskDrive].diskInDrive;
 }
 
 int DSK_Writeable()
@@ -333,51 +359,72 @@ int DSK_Writeable()
 
 int DSK_OnTrack(u_int8_t track)
 {
-	return dskTrack==track;
+	return diskDrive[curDiskDrive].dskTrack==track;
 }
 
 int DSK_Ready()
 {
-	return dskMotorOn;
+	int curCodeBit;
+	
+	if (!diskDrive[curDiskDrive].dskMotorOn && diskDrive[curDiskDrive].dskIdBit!=0)
+	{
+		// potentially running the disk drive identification loop
+		curCodeBit = (diskDrive[curDiskDrive].dskIdCode & diskDrive[curDiskDrive].dskIdBit);
+		
+		diskDrive[curDiskDrive].dskIdBit>>=1;
+		
+		return curCodeBit;
+	}
+	return diskDrive[curDiskDrive].dskMotorOn;
 }
 
 void DSK_Step()
 {
-	if (!dskMotorOn)
+	if (!diskDrive[curDiskDrive].dskMotorOn)
 		return;
 		
-	if (dskStepDir)
-		dskTrack--;
+	if (diskDrive[curDiskDrive].dskStepDir)
+		diskDrive[curDiskDrive].dskTrack--;
 	else
-		dskTrack++;
+		diskDrive[curDiskDrive].dskTrack++;
 		
-	if (dskTrack<0)
-		dskTrack=0;
-	if (dskTrack>79)
-		dskTrack=79;
+	if (diskDrive[curDiskDrive].dskTrack<0)
+		diskDrive[curDiskDrive].dskTrack=0;
+	if (diskDrive[curDiskDrive].dskTrack>79)
+		diskDrive[curDiskDrive].dskTrack=79;
 
 	DSK_Status();
 	
-	trackBuffer=&mfmDiscBuffer[dskTrack * TRACKBUFFER_SIZE * 2 + (dskSide?0:1) * TRACKBUFFER_SIZE];
+	trackBuffer=&diskDrive[curDiskDrive].mfmDiscBuffer[diskDrive[curDiskDrive].dskTrack * TRACKBUFFER_SIZE * 2 + (diskDrive[curDiskDrive].dskSide?0:1) * TRACKBUFFER_SIZE];
 }
 
 void DSK_SetMotor(int onOff)
 {
-	dskMotorOn = !onOff;
+	if (diskDrive[curDiskDrive].dskMotorOn && onOff)
+	{
+		// Reset disk identification shift register
+		diskDrive[curDiskDrive].dskIdBit=0x80000000;
+	}
+	diskDrive[curDiskDrive].dskMotorOn = !onOff;
 	DSK_Status();
 }
 
 void DSK_SetSide(int lower)
 {
-	dskSide=lower;
+	diskDrive[curDiskDrive].dskSide=lower;
 	DSK_Status();
 
-	trackBuffer=&mfmDiscBuffer[dskTrack * TRACKBUFFER_SIZE * 2 + (dskSide?0:1) * TRACKBUFFER_SIZE];
+	trackBuffer=&diskDrive[curDiskDrive].mfmDiscBuffer[diskDrive[curDiskDrive].dskTrack * TRACKBUFFER_SIZE * 2 + (diskDrive[curDiskDrive].dskSide?0:1) * TRACKBUFFER_SIZE];
 }
 
 void DSK_SetDir(int toZero)
 {
-	dskStepDir=toZero;
+	diskDrive[curDiskDrive].dskStepDir=toZero;
 	DSK_Status();
 }
 
+void DSK_SelectDrive(int drive,int motor)
+{
+	curDiskDrive=drive;
+	DSK_SetMotor(motor);
+}

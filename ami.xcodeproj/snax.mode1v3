@@ -307,14 +307,12 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>cpu.c</string>
+								<string>memory.c</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -322,19 +320,17 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>cpu.c</string>
+										<string>memory.c</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>38689C8F1030BD5400452480</string>
+										<string>38689D001030DECF00452480</string>
 										<key>history</key>
 										<array>
 											<string>389C06CE10249C550006CF6E</string>
 											<string>38C2A0621029E4E700C6531F</string>
 											<string>38C2A1A4102A326E00C6531F</string>
-											<string>3834EA1C102CAB2300EBF10F</string>
 											<string>3834EAED102DDB2400EBF10F</string>
-											<string>3834EB71102DDEF500EBF10F</string>
 											<string>3834EBAD102DF71C00EBF10F</string>
 											<string>3834EBCA102DFFED00EBF10F</string>
 											<string>3834EBFB102EA8ED00EBF10F</string>
@@ -343,14 +339,16 @@
 											<string>3834ED151030952400EBF10F</string>
 											<string>3834ED161030952400EBF10F</string>
 											<string>3834ED181030952400EBF10F</string>
-											<string>3834ED381030997400EBF10F</string>
 											<string>3834ED4A10309F2400EBF10F</string>
 											<string>3801DC061030A6B700AAFE81</string>
-											<string>3801DC231030A70D00AAFE81</string>
-											<string>3801DC241030A70D00AAFE81</string>
-											<string>3801DC251030A70D00AAFE81</string>
-											<string>3801DC2E1030A8B500AAFE81</string>
-											<string>3801DC311030A8B500AAFE81</string>
+											<string>38689CAE1030D11200452480</string>
+											<string>38689CB11030D11200452480</string>
+											<string>38689CD21030D63200452480</string>
+											<string>38689CE81030DB8300452480</string>
+											<string>38689CF61030DC6600452480</string>
+											<string>38689CF71030DC6600452480</string>
+											<string>38689CFD1030DECF00452480</string>
+											<string>38689CFE1030DECF00452480</string>
 										</array>
 										<key>prevStack</key>
 										<array>
@@ -375,6 +373,32 @@
 											<string>3834EA78102CB90700EBF10F</string>
 											<string>3834EAF3102DDB2400EBF10F</string>
 											<string>3834ED1D1030952400EBF10F</string>
+											<string>38689C961030C3C300452480</string>
+											<string>38689CA71030CEE500452480</string>
+											<string>38689CA81030CEE500452480</string>
+											<string>38689CA91030CEE500452480</string>
+											<string>38689CB31030D11200452480</string>
+											<string>38689CB41030D11200452480</string>
+											<string>38689CB51030D11200452480</string>
+											<string>38689CB61030D11200452480</string>
+											<string>38689CB71030D11200452480</string>
+											<string>38689CB81030D11200452480</string>
+											<string>38689CB91030D11200452480</string>
+											<string>38689CBA1030D11200452480</string>
+											<string>38689CBB1030D11200452480</string>
+											<string>38689CBC1030D11200452480</string>
+											<string>38689CBD1030D11200452480</string>
+											<string>38689CBE1030D11200452480</string>
+											<string>38689CC51030D15C00452480</string>
+											<string>38689CD51030D63200452480</string>
+											<string>38689CD61030D63200452480</string>
+											<string>38689CD71030D63200452480</string>
+											<string>38689CE31030D92C00452480</string>
+											<string>38689CE91030DB8300452480</string>
+											<string>38689CF21030DBF900452480</string>
+											<string>38689CF91030DC6600452480</string>
+											<string>38689CFA1030DC6600452480</string>
+											<string>38689CFF1030DECF00452480</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -396,6 +420,8 @@
 							<string>371pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -568,7 +594,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>38689C901030BD5400452480</string>
 		<string>38689C8B1030B7DA00452480</string>
 		<string>38689C8C1030B7DA00452480</string>
 		<string>384CFC681024790200CEB158</string>

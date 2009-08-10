@@ -505,11 +505,11 @@ void BLT_StartBlit()
 		if (!CST_GETWRDU(CST_BLTCON1,0x0001))
 		{
 			bltStart=BLT_Read;
-		printf("[WRN] Blitter Is Being Used\n");
+/*		printf("[WRN] Blitter Is Being Used\n");
 
 		printf("Blitter Registers : BLTAFWM : %04X\n",CST_GETWRDU(CST_BLTAFWM,0xFFFF));
 		printf("Blitter Registers : BLTALWM : %04X\n",CST_GETWRDU(CST_BLTALWM,0xFFFF));
-/*		printf("Blitter Registers : BLTCON0 : %04X\n",CST_GETWRDU(CST_BLTCON0,0xFFFF));
+		printf("Blitter Registers : BLTCON0 : %04X\n",CST_GETWRDU(CST_BLTCON0,0xFFFF));
 		printf("Blitter Registers : BLTCON1 : %04X\n",CST_GETWRDU(CST_BLTCON1,0xFFFF));
 		printf("Blitter Registers : BLTSIZE : %04X\n",CST_GETWRDU(CST_BLTSIZE,0xFFFF));
 		printf("Blitter Registers : BLTADAT : %04X\n",CST_GETWRDU(CST_BLTADAT,0xFFFF));
