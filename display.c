@@ -89,12 +89,20 @@ void DSP_Update()
     switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
     {
 	case 0:
-	    DecodePixel0(horizontalClock*2,verticalClock);
-	    DecodePixel0(horizontalClock*2+1,verticalClock);
+		DecodePixel0(horizontalClock*2,verticalClock);
+		DecodePixel0(horizontalClock*2+1,verticalClock);
 	    break;
 	case 2:
-	    DecodePixel2(horizontalClock*2,verticalClock);
-	    DecodePixel2(horizontalClock*2+1,verticalClock);
+//		if (horizontalClock>=(CST_GETWRDU(CST_DDFSTRT,0x00FC)) && horizontalClock<=(CST_GETWRDU(CST_DDFSTOP,0x00FC)))
+		{
+			DecodePixel2(horizontalClock*2,verticalClock);
+			DecodePixel2(horizontalClock*2+1,verticalClock);
+		}
+/*		else
+		{
+			DecodePixel0(horizontalClock*2,verticalClock);
+			DecodePixel0(horizontalClock*2+1,verticalClock);
+		}*/		
 	    break;
     }
 }

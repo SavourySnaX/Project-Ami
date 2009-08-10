@@ -190,6 +190,8 @@ int main(int argc,char **argv)
     unsigned char *romPtr;
 	int running=1;
     
+	Debugger();
+	
 	// Initialize GLFW 
 	glfwInit(); 
 	// Open an OpenGL window 
