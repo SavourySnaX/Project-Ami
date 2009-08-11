@@ -62,6 +62,11 @@ u_int16_t		aTBCnt=0;
 u_int16_t		bTBLatch=0xFFFF;
 u_int16_t		bTBCnt=0;
 
+u_int16_t		aTALatch=0xFFFF;
+u_int16_t		aTACnt=0;
+u_int16_t		bTALatch=0xFFFF;
+u_int16_t		bTACnt=0;
+
 u_int16_t		timerSlow=0;
 
 int glfwGetKey(int key);
@@ -115,6 +120,29 @@ void CIA_Update()
 	if (timerSlow>9)
 	{
 		timerSlow=0;
+		if (ciaMemory[0x1E]&0x01)
+		{
+			bTACnt--;
+			if (bTACnt==0xFFFF)
+			{
+				//Underflow occurred
+				if (ciaMemory[0x1E]&0x08)
+				{
+					ciaMemory[0x1E]&=~0x01;		// stop timer
+				}
+				
+				bTACnt=bTALatch;				// timer allways re-latches
+
+				ciaMemory[0x1D]|=0x01;			// signal interrupt request (won't actually interrupt unless mask set however)
+				if (ciab_icr&0x01)
+				{
+					printf("WARNING : EXPECTING INTERRUPT CIAB TIMER A\n");
+/*					ciaMemory[0x1D]|=0x80;		// set IR bit
+					CST_ORWRD(CST_INTREQR,0x0008);*/
+				}
+			}
+		}
+		
 		if (ciaMemory[0x1F]&0x01)
 		{
 			bTBCnt--;
@@ -129,14 +157,38 @@ void CIA_Update()
 				bTBCnt=bTBLatch;				// timer allways re-latches
 
 				ciaMemory[0x1D]|=0x02;			// signal interrupt request (won't actually interrupt unless mask set however)
-/*				if (ciab_icr&0x02)
+				if (ciab_icr&0x02)
 				{
-					ciaMemory[0x1D]|=0x80;		// set IR bit
-					CST_ORWRD(CST_INTREQR,0x0008);
-				}*/
+					printf("WARNING : EXPECTING INTERRUPT CIAB TIMER B\n");
+/*					ciaMemory[0x1D]|=0x80;		// set IR bit
+					CST_ORWRD(CST_INTREQR,0x0008);*/
+				}
 			}
 		}
 		
+		if (ciaMemory[0x0E]&0x01)
+		{
+//			printf("TBCnt %04X   TODCNT %08X\n",aTBCnt,todACnt);
+			aTACnt--;
+			if (aTACnt==0xFFFF)
+			{
+				//Underflow occurred
+				if (ciaMemory[0x0E]&0x08)
+				{
+					ciaMemory[0x0E]&=~0x01;		// stop timer
+				}
+				
+				aTACnt=aTALatch;		// Timer allways re-latches
+
+				ciaMemory[0x0D]|=0x01;			// signal interrupt request (won't actually interrupt unless mask set however)
+				if (ciaa_icr&0x01)
+				{
+					ciaMemory[0x0D]|=0x80;		// set IR bit
+					CST_ORWRD(CST_INTREQR,0x0008);
+				}
+			}
+		}
+
 		if (ciaMemory[0x0F]&0x01)
 		{
 //			printf("TBCnt %04X   TODCNT %08X\n",aTBCnt,todACnt);
@@ -266,6 +318,10 @@ void CIA_setBytePRB(u_int16_t reg,u_int8_t byte)
 {
 	if (reg&0x10)
 	{
+		if ((byte&0x78) == 0x18)
+		{
+			printf("TWO DRIVES !\n");
+		}
 		if ((ciaMemory[reg]&0x40) && !(byte&0x40))				// I need to confirm what happens when multiple drive select bits are set (esp. disk dma!)
 		{
 			DSK_SelectDrive(3,ciaMemory[reg]&0x80);
@@ -586,7 +642,6 @@ u_int8_t CIA_getByteTODHI(u_int16_t reg)
 {
 	if (reg&0x10)
 	{
-		printf("Reading TODB\n");
 		todBReadLatched=1;
 		todBCntLatchR=todBCnt;
 		if (todBReadLatched)
@@ -610,6 +665,78 @@ u_int8_t CIA_getByteTODHI(u_int16_t reg)
 		{
 			return (todACnt&0xFF0000)>>16;
 		}
+	}
+}
+
+void CIA_setByteTALO(u_int16_t reg,u_int8_t byte)
+{
+	u_int32_t rbyte = byte;
+
+	if (reg&0x10)
+	{
+		bTALatch&=0xFF00;
+		bTALatch|=rbyte;
+	}
+	else
+	{
+		aTALatch&=0xFF00;
+		aTALatch|=rbyte;
+	}
+}
+
+u_int8_t CIA_getByteTALO(u_int16_t reg)
+{
+	if (reg&0x10)
+	{
+		return (bTACnt&0x00FF);
+	}
+	else
+	{
+		return (aTACnt&0x00FF);
+	}
+}
+
+void CIA_setByteTAHI(u_int16_t reg,u_int8_t byte)
+{
+	u_int32_t rbyte = byte;
+
+	if (reg&0x10)
+	{
+		bTALatch&=0x00FF;
+		bTALatch|=rbyte<<8;
+		if (!(ciaMemory[0x1E]&0x01))
+		{
+			bTACnt=bTALatch;
+			if (ciaMemory[0x1E]&0x08)
+			{
+				ciaMemory[0x1E]|=0x01;
+			}
+		}
+	}
+	else
+	{
+		aTALatch&=0x00FF;
+		aTALatch|=rbyte<<8;
+		if (!(ciaMemory[0x0E]&0x01))
+		{
+			aTACnt=aTALatch;
+			if (ciaMemory[0x0E]&0x08)
+			{
+				ciaMemory[0x0E]|=0x01;
+			}
+		}
+	}
+}
+
+u_int8_t CIA_getByteTAHI(u_int16_t reg)
+{
+	if (reg&0x10)
+	{
+		return (bTACnt&0xFF00)>>8;
+	}
+	else
+	{
+		return (aTACnt&0xFF00)>>8;
 	}
 }
 
@@ -696,8 +823,8 @@ CIA_Regs ciaChipRegisters[] =
 {"A_PRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getBytePRB,CIA_setBytePRB},
 {"A_DDRA",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteDDRA,CIA_setByteDDRA},
 {"A_DDRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteDDRB,CIA_setByteDDRB},
-{"A_TALO",CIA_READABLE|CIA_WRITEABLE},
-{"A_TAHI",CIA_READABLE|CIA_WRITEABLE},
+{"A_TALO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTALO,CIA_setByteTALO},
+{"A_TAHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTAHI,CIA_setByteTAHI},
 {"A_TBLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBLO,CIA_setByteTBLO},
 {"A_TBHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBHI,CIA_setByteTBHI},
 {"A_TODLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODLO,CIA_setByteTODLO},
@@ -713,8 +840,8 @@ CIA_Regs ciaChipRegisters[] =
 {"B_PRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getBytePRB,CIA_setBytePRB},
 {"B_DDRA",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteDDRA,CIA_setByteDDRA},
 {"B_DDRB",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteDDRB,CIA_setByteDDRB},
-{"B_TALO",CIA_READABLE|CIA_WRITEABLE},
-{"B_TAHI",CIA_READABLE|CIA_WRITEABLE},
+{"B_TALO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTALO,CIA_setByteTALO},
+{"B_TAHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTAHI,CIA_setByteTAHI},
 {"B_TBLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBLO,CIA_setByteTBLO},
 {"B_TBHI",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTBHI,CIA_setByteTBHI},
 {"B_TODLO",CIA_READABLE|CIA_WRITEABLE|CIA_FUNCTION,CIA_getByteTODLO,CIA_setByteTODLO},
