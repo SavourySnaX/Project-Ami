@@ -42,7 +42,7 @@ void CPU_Reset()
 	if (MEM_getLong(0xFC0004)!=cpu_regs.PC)
 		printf("%08x : %08x\n",MEM_getLong(0xFC0004),cpu_regs.PC);
 
-	for (int a=0;a<65536;a++)
+	for (a=0;a<65536;a++)
 		cpuUsedTable[a]=0;
 }
 

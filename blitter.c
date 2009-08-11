@@ -47,13 +47,13 @@ MTerms	mTermC[65536];
 
 void BLT_InitialiseBlitter()
 {
-	int a;
+	int a,b;
 	
 	bltStart=BLT_Stopped;
 
 	for (a=0;a<65536;a++)
 	{
-		for (int b=0;b<16;b++)
+		for (b=0;b<16;b++)
 		{
 			if (a & (1<<b))
 			{

@@ -2,3 +2,6 @@ run.exe
 run
 run.dSYM
 build
+
+*~
+.*
