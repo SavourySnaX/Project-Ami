@@ -12,6 +12,8 @@
 void CIA_InitialiseCustom();
 void CIA_Update();
 
+extern u_int8_t	*ciaMemory;
+
 u_int8_t MEM_getByteCia(u_int32_t upper24,u_int32_t lower16);
 void MEM_setByteCia(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);
 
@@ -21,3 +23,7 @@ extern u_int32_t		todAReadLatched;
 extern u_int32_t		todBReadLatched;
 extern u_int32_t		todAStart;
 extern u_int32_t		todBStart;
+
+extern u_int8_t			ciaa_icr;
+extern u_int8_t			ciab_icr;
+

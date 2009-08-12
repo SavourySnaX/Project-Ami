@@ -9,7 +9,7 @@
 
 #define AMI_LINE_LENGTH ((228)*4)		// 228 / 227 alternating
 #define WIDTH AMI_LINE_LENGTH
-#define HEIGHT 262
+#define HEIGHT (262*2)
 #define BPP 4
 #define DEPTH 32
 
@@ -28,6 +28,7 @@
 #include "display.h"
 #include "disk.h"
 #include "sprite.h"
+#include "keyboard.h"
 
 int decrpyt_rom()
 {
@@ -107,7 +108,7 @@ unsigned char *load_rom(char *romName)
 	return romData;
 }
 
-u_int8_t videoMemory[AMI_LINE_LENGTH*262*sizeof(u_int32_t)];
+u_int8_t videoMemory[AMI_LINE_LENGTH*HEIGHT*sizeof(u_int32_t)];
 
 int g_newScreenNotify = 0;
 
@@ -119,7 +120,7 @@ void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 	u_int8_t g = (colLo&0xF0);
 	u_int8_t b = (colLo&0x0F)<<4;
 
-	if (y>=262 || x>=AMI_LINE_LENGTH)
+	if (y>=HEIGHT || x>=AMI_LINE_LENGTH)
 		return;
 
 	colour = (r<<16) | (g<<8) | (b<<0);
@@ -132,16 +133,16 @@ void DrawScreen()
 	glBindTexture(GL_TEXTURE_RECTANGLE_EXT, 1);
 	
 	// glTexSubImage2D is faster when not using a texture range
-	glTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, AMI_LINE_LENGTH, 262, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, videoMemory);
+	glTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, AMI_LINE_LENGTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, videoMemory);
 	//glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, IMAGE_SIZE, IMAGE_SIZE, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image[draw_image]);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0f, 0.0f);
 	glVertex2f(-1.0f, 1.0f);
 	
-	glTexCoord2f(0.0f, 262.0f);
+	glTexCoord2f(0.0f, HEIGHT);
 	glVertex2f(-1.0f, -1.0f);
 	
-	glTexCoord2f(AMI_LINE_LENGTH, 262.0f);
+	glTexCoord2f(AMI_LINE_LENGTH, HEIGHT);
 	glVertex2f(1.0f, -1.0f);
 	
 	glTexCoord2f(AMI_LINE_LENGTH, 0.0f);
@@ -182,22 +183,330 @@ void setupGL(int w, int h)
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	
 	glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, AMI_LINE_LENGTH,
-				 262, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, videoMemory);
+				 HEIGHT, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, videoMemory);
 	
 	glDisable(GL_DEPTH_TEST);
 }
+
+u_int8_t keyUpArray[256];
+
+void GLFWCALL kbHandler( int key, int action )
+{
+	if (action==GLFW_PRESS)
+		action=0;
+	else
+		action=1;
+
+	switch (key)
+	{
+//		case GLFW_KEY_KP_MULTIPLY:					NOTE NUMPAD ON PC KB IS VERY DIFFERENT TO AMIGA : TODO
+//			KBD_AddKeyEvent(0xB6 + action);
+//			break;
+		case GLFW_KEY_TAB:
+			KBD_AddKeyEvent(0x84 + action);
+			break;
+		case '`':
+			KBD_AddKeyEvent(0x00 + action);
+			break;
+		case GLFW_KEY_ESC:
+			KBD_AddKeyEvent(0x8A + action);
+			break;
+//		case GLFW_KEY_KP_ADD:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case 'Z':
+			KBD_AddKeyEvent(0x62 + action);
+			break;
+		case 'A':
+			KBD_AddKeyEvent(0x40 + action);
+			break;
+		case 'Q':
+			KBD_AddKeyEvent(0x20 + action);
+			break;
+		case '1':
+			KBD_AddKeyEvent(0x02 + action);
+			break;
+//		case KP_OPENBRACK:
+//			KBD_AddKeyEvent(0xB4 + action);
+//			break;
+//		case GLFW_KEY_KP_9:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case 'X':
+			KBD_AddKeyEvent(0x64 + action);
+			break;
+		case 'S':
+			KBD_AddKeyEvent(0x42 + action);
+			break;
+		case 'W':
+			KBD_AddKeyEvent(0x22 + action);
+			break;
+		case '2':
+			KBD_AddKeyEvent(0x04 + action);
+			break;
+		case GLFW_KEY_F1:
+			KBD_AddKeyEvent(0xA0 + action);
+			break;
+//		case GLFW_KEY_KP_6:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case 'C':
+			KBD_AddKeyEvent(0x66 + action);
+			break;
+		case 'D':
+			KBD_AddKeyEvent(0x44 + action);
+			break;
+		case 'E':
+			KBD_AddKeyEvent(0x24 + action);
+			break;
+		case '3':
+			KBD_AddKeyEvent(0x06 + action);
+			break;
+		case GLFW_KEY_F2:
+			KBD_AddKeyEvent(0xA2 + action);
+			break;
+//		case GLFW_KEY_KP_3:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case 'V':
+			KBD_AddKeyEvent(0x68 + action);
+			break;
+		case 'F':
+			KBD_AddKeyEvent(0x46 + action);
+			break;
+		case 'R':
+			KBD_AddKeyEvent(0x26 + action);
+			break;
+		case '4':
+			KBD_AddKeyEvent(0x08 + action);
+			break;
+		case GLFW_KEY_F3:
+			KBD_AddKeyEvent(0xA4 + action);
+			break;
+//		case GLFW_KEY_KP_.:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case 'B':
+			KBD_AddKeyEvent(0x6A + action);
+			break;
+		case 'G':
+			KBD_AddKeyEvent(0x48 + action);
+			break;
+		case 'T':
+			KBD_AddKeyEvent(0x28 + action);
+			break;
+		case '5':
+			KBD_AddKeyEvent(0x0A + action);
+			break;
+		case GLFW_KEY_F4:
+			KBD_AddKeyEvent(0xA6 + action);
+			break;
+//		case GLFW_KEY_KP_8:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case 'N':
+			KBD_AddKeyEvent(0x6C + action);
+			break;
+		case 'H':
+			KBD_AddKeyEvent(0x4A + action);
+			break;
+		case 'Y':
+			KBD_AddKeyEvent(0x2A + action);
+			break;
+		case '6':
+			KBD_AddKeyEvent(0x0C + action);
+			break;
+		case GLFW_KEY_F5:
+			KBD_AddKeyEvent(0xA8 + action);
+			break;
+//		case GLFW_KEY_KP_5:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case 'M':
+			KBD_AddKeyEvent(0x6E + action);
+			break;
+		case 'J':
+			KBD_AddKeyEvent(0x4C + action);
+			break;
+		case 'U':
+			KBD_AddKeyEvent(0x2C + action);
+			break;
+		case '7':
+			KBD_AddKeyEvent(0x0E + action);
+			break;
+//		case GLFW_KEY_KP_CLOSEBRACK:
+//			KBD_AddKeyEvent(0xA0 + action);
+//			break;
+//		case GLFW_KEY_KP_2:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case ',':
+			KBD_AddKeyEvent(0x70 + action);
+			break;
+		case 'K':
+			KBD_AddKeyEvent(0x4E + action);
+			break;
+		case 'I':
+			KBD_AddKeyEvent(0x2E + action);
+			break;
+		case '8':
+			KBD_AddKeyEvent(0x10 + action);
+			break;
+		case GLFW_KEY_F6:
+			KBD_AddKeyEvent(0xAA + action);
+			break;
+//		case GLFW_KEY_KP_ENTER:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case '.':
+			KBD_AddKeyEvent(0x72 + action);
+			break;
+		case 'L':
+			KBD_AddKeyEvent(0x50 + action);
+			break;
+		case 'O':
+			KBD_AddKeyEvent(0x30 + action);
+			break;
+		case '9':
+			KBD_AddKeyEvent(0x12 + action);
+			break;
+//		case GLFW_KEY_KP_/:
+//			KBD_AddKeyEvent(0xA0 + action);
+//			break;
+//		case GLFW_KEY_KP_7:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case '/':
+			KBD_AddKeyEvent(0x74 + action);
+			break;
+		case ';':
+			KBD_AddKeyEvent(0x52 + action);
+			break;
+		case 'P':
+			KBD_AddKeyEvent(0x32 + action);
+			break;
+		case '0':
+			KBD_AddKeyEvent(0x14 + action);
+			break;
+		case GLFW_KEY_F7:
+			KBD_AddKeyEvent(0xAC + action);
+			break;
+//		case GLFW_KEY_KP_4:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+//		case 'X': (spare)
+//			KBD_AddKeyEvent(0x64 + action);
+//			break;
+		case '\'':
+			KBD_AddKeyEvent(0x54 + action);
+			break;
+		case '[':
+			KBD_AddKeyEvent(0x34 + action);
+			break;
+		case '-':
+			KBD_AddKeyEvent(0x16 + action);
+			break;
+		case GLFW_KEY_F8:
+			KBD_AddKeyEvent(0xAE + action);
+			break;
+//		case GLFW_KEY_KP_1:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case GLFW_KEY_SPACE:
+			KBD_AddKeyEvent(0x80 + action);
+			break;
+//		case GLFW_KEY_ret:
+//			KBD_AddKeyEvent(0x42 + action);
+//			break;
+		case ']':
+			KBD_AddKeyEvent(0x36 + action);
+			break;
+		case '=':
+			KBD_AddKeyEvent(0x18 + action);
+			break;
+		case GLFW_KEY_F9:
+			KBD_AddKeyEvent(0xB0 + action);
+			break;
+//		case GLFW_KEY_KP_0:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case GLFW_KEY_BACKSPACE:
+			KBD_AddKeyEvent(0x82 + action);
+			break;
+		case GLFW_KEY_DEL:
+			KBD_AddKeyEvent(0x8C + action);
+			break;
+		case GLFW_KEY_ENTER:
+			KBD_AddKeyEvent(0x88 + action);
+			break;
+		case '\\':
+			KBD_AddKeyEvent(0x1A + action);
+			break;
+		case GLFW_KEY_F10:
+			KBD_AddKeyEvent(0xB2 + action);
+			break;
+//		case GLFW_KEY_KP_-:
+//			KBD_AddKeyEvent(0xBC + action);
+//			break;
+		case GLFW_KEY_DOWN:
+			KBD_AddKeyEvent(0x9A + action);
+			break;
+		case GLFW_KEY_RIGHT:
+			KBD_AddKeyEvent(0x9C + action);
+			break;
+		case GLFW_KEY_LEFT:
+			KBD_AddKeyEvent(0x9E + action);
+			break;
+		case GLFW_KEY_UP:
+			KBD_AddKeyEvent(0x98 + action);
+			break;
+		case GLFW_KEY_HOME:		// HOME = HELP
+			KBD_AddKeyEvent(0xBE + action);
+			break;
+		case GLFW_KEY_F11:		// left amiga key (cant read windows keys using glfw?!)
+			KBD_AddKeyEvent(0xCC + action);
+			break;
+		case GLFW_KEY_LALT:
+			KBD_AddKeyEvent(0xC8 + action);
+			break;
+		case GLFW_KEY_LSHIFT:
+			KBD_AddKeyEvent(0xC0 + action);
+			break;
+		case GLFW_KEY_LCTRL:
+		case GLFW_KEY_RCTRL:
+			KBD_AddKeyEvent(0xC6 + action);
+			break;
+		case GLFW_KEY_F12:		// right amiga key (cant read windows keys using glfw?!)
+			KBD_AddKeyEvent(0xCE + action);
+			break;
+		case GLFW_KEY_RALT:
+			KBD_AddKeyEvent(0xCA + action);
+			break;
+		case GLFW_KEY_RSHIFT:
+			KBD_AddKeyEvent(0xC2 + action);
+			break;
+	}
+}
+
+int captureMouse=0;
 
 int main(int argc,char **argv)
 {
     unsigned char *romPtr;
 	int running=1;
+	int a;
+	
+	for (a=0;a<256;a++)
+	{
+		keyUpArray[a]=1;
+	}
     
 	Debugger();
 	
 	// Initialize GLFW 
 	glfwInit(); 
 	// Open an OpenGL window 
-	if( !glfwOpenWindow( AMI_LINE_LENGTH, 262, 0,0,0,0,0,0, GLFW_WINDOW ) ) 
+	if( !glfwOpenWindow( AMI_LINE_LENGTH, HEIGHT, 0,0,0,0,0,0, GLFW_WINDOW ) ) 
 	{ 
 		glfwTerminate(); 
 		return 1; 
@@ -206,7 +515,7 @@ int main(int argc,char **argv)
 	glfwSetWindowTitle("MacAmi");
 	glfwSetWindowPos(670,700);
 	
-	setupGL(AMI_LINE_LENGTH,262);	
+	setupGL(AMI_LINE_LENGTH,HEIGHT);	
 	
     romPtr=load_rom("../../out.rom");
     if (!romPtr)
@@ -231,11 +540,15 @@ int main(int argc,char **argv)
 	DSP_InitialiseDisplay();
 	DSK_InitialiseDisk();
 	SPR_InitialiseSprites();
+	KBD_InitialiseKeyboard();
 	
     CPU_Reset();
+	
+	glfwSetKeyCallback(kbHandler);
     
 	while (running)
 	{
+		KBD_Update();
 		SPR_Update();
 		DSP_Update();			// Note need to priority order these ultimately
 		CST_Update();
@@ -255,15 +568,23 @@ int main(int argc,char **argv)
 			glfwSwapBuffers();
 			
 			g_newScreenNotify=0;
-
+			
 			glfwGetMousePos(&mx,&my);
 			
-			if (mx>=1 && mx<=AMI_LINE_LENGTH && my>=1 && my <=262)
+			if ((mx>=1 && mx<=AMI_LINE_LENGTH && my>=1 && my <=HEIGHT) || captureMouse)
 			{
 				int vertMove = my-lmy;
 				int horiMove = mx-lmx;
 				int oldMoveX = CST_GETWRDU(CST_JOY0DAT,0x00FF);
 				int oldMoveY = CST_GETWRDU(CST_JOY0DAT,0xFF00)>>8;
+				if (horiMove>127)
+					horiMove=127;
+				if (horiMove<-128)
+					horiMove=-128;
+				if (vertMove>127)
+					vertMove=127;
+				if (vertMove<-128)
+					vertMove=-128;
 				oldMoveX+=horiMove;
 				oldMoveY+=vertMove;
 				
@@ -278,6 +599,19 @@ int main(int argc,char **argv)
 				else
 				{
 					leftMouseUp=1;
+				}
+				if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE))
+				{
+					if (captureMouse)
+					{
+						captureMouse=0;
+						glfwEnable(GLFW_MOUSE_CURSOR);
+					}
+					else
+					{
+						captureMouse=1;
+						glfwDisable(GLFW_MOUSE_CURSOR);
+					}
 				}
 				if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT))
 				{

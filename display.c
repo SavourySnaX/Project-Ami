@@ -227,22 +227,26 @@ void DSP_HiRes()
 	ch=CST_GETWRDU(CST_COLOR00 + pixel1C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel1C,0x00FF);
 
-	doPixel(horizontalClock*4,verticalClock,ch,cl);
+	doPixel(horizontalClock*4,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4,verticalClock*2+1,ch,cl);
 
 	ch=CST_GETWRDU(CST_COLOR00 + pixel2C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel2C,0x00FF);
 
-	doPixel(horizontalClock*4+1,verticalClock,ch,cl);
+	doPixel(horizontalClock*4+1,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4+1,verticalClock*2+1,ch,cl);
 
 	ch=CST_GETWRDU(CST_COLOR00 + pixel3C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel3C,0x00FF);
 
-	doPixel(horizontalClock*4+2,verticalClock,ch,cl);
+	doPixel(horizontalClock*4+2,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4+2,verticalClock*2+1,ch,cl);
 
 	ch=CST_GETWRDU(CST_COLOR00 + pixel4C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel4C,0x00FF);
 
-	doPixel(horizontalClock*4+3,verticalClock,ch,cl);
+	doPixel(horizontalClock*4+3,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4+3,verticalClock*2+1,ch,cl);
 }
 
 void DSP_LoRes()
@@ -313,14 +317,18 @@ void DSP_LoRes()
 	ch=CST_GETWRDU(CST_COLOR00 + pixel1C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel1C,0x00FF);
 
-	doPixel(horizontalClock*4,verticalClock,ch,cl);
-	doPixel(horizontalClock*4+1,verticalClock,ch,cl);
+	doPixel(horizontalClock*4,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4+1,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4,verticalClock*2+1,ch,cl);
+	doPixel(horizontalClock*4+1,verticalClock*2+1,ch,cl);
 
 	ch=CST_GETWRDU(CST_COLOR00 + pixel2C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel2C,0x00FF);
 
-	doPixel(horizontalClock*4+2,verticalClock,ch,cl);
-	doPixel(horizontalClock*4+3,verticalClock,ch,cl);
+	doPixel(horizontalClock*4+2,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4+3,verticalClock*2,ch,cl);
+	doPixel(horizontalClock*4+2,verticalClock*2+1,ch,cl);
+	doPixel(horizontalClock*4+3,verticalClock*2+1,ch,cl);
 }
 
 void DSP_Update()

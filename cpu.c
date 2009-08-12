@@ -7056,7 +7056,7 @@ void CPU_Step()
 	
     // DEBUGGER
 
-	if (cpu_regs.PC == 0xfc117C /*0x7013a*/ /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
+	if (cpu_regs.PC == 0xfc46da /*0x7013a*/ /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
 	{
 /*		static once=0;
 		if (once==0)

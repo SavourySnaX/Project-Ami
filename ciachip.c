@@ -16,6 +16,7 @@
 #include "ciachip.h"
 #include "customchip.h"
 #include "memory.h"
+#include "keyboard.h"
 
 typedef u_int8_t (*CIA_ReadMap)(u_int16_t reg);
 typedef void (*CIA_WriteMap)(u_int16_t reg,u_int8_t byte);
@@ -69,52 +70,8 @@ u_int16_t		bTACnt=0;
 
 u_int16_t		timerSlow=0;
 
-int glfwGetKey(int key);
-
-int keyUp = 1;
-
 void CIA_Update()
 {
-// KB Handler - only recognises ENTER key so far ;-)
-// Note its probably preferable to do this externally via a buffer of keys and let CIA_Update remove events from this buffer
-
-	if (!(ciaMemory[0x0D]&0x04))		// Make sure we don't have a pending interrupt before we do reload serial buffer (this may not be correct!)
-	{
-		if (glfwGetKey(256+38))
-		{
-			if (keyUp)
-			{
-				keyUp=0;
-				// Do send keyup to SDR
-				ciaMemory[0x0C]=(u_int8_t)~0x88;
-
-				ciaMemory[0x0D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
-				if (ciaa_icr&0x02)
-				{
-					ciaMemory[0x0D]|=0x80;		// set IR bit
-					CST_ORWRD(CST_INTREQR,0x0008);
-				}
-			}
-		}
-		else
-		{
-			if (!keyUp)
-			{
-				keyUp=1;
-				// Do send keydown to SDR
-				ciaMemory[0x0C]=(u_int8_t)~0x89;
-
-				ciaMemory[0x0D]|=0x04;			// signal interrupt request (won't actually interrupt unless mask set however)
-				if (ciaa_icr&0x02)
-				{
-					ciaMemory[0x0D]|=0x80;		// set IR bit
-					CST_ORWRD(CST_INTREQR,0x0008);
-				}
-			}
-		}
-	}
-
-//
 	timerSlow++;
 	
 	if (timerSlow>9)
@@ -435,6 +392,26 @@ void CIA_setByteCRA(u_int16_t reg,u_int8_t byte)
 	
 	if (byte&0x01)
 		printf("Suspected Timer A Start %02X\n",byte);
+
+	if (byte&0x10)
+	{
+		if (reg&0x10)
+		{
+			bTACnt=bTALatch;
+		}
+		else
+		{
+			aTACnt=aTALatch;
+		}
+	}
+
+	if ((!(reg&0x10)) && (!(byte&0x40)) && (ciaMemory[reg]&0x40))
+	{
+		// CIAA and serial port buffer set to output - Most likely this is the keyboard ACK
+		KBD_Acknowledge();
+	}
+		
+	
 	ciaMemory[reg]=byte&0x6F;
 }
 
