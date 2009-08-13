@@ -7,6 +7,8 @@
  *
  */
 
+#include "mytypes.h"
+
 void KBD_InitialiseKeyboard();
 void KBD_Update();
 
