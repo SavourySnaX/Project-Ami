@@ -2735,6 +2735,39 @@ void CPU_DIS_DIVS(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
+void CPU_DIS_SUBX(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+
+    adr+=2;
+    strcpy(mnemonicData,"SUBX");
+    strcpy(byteData,"");
+    switch (op2)
+    {
+		default:
+			strcat(mnemonicData,".? ");
+			len=0;
+			break;
+		case 0x00:
+			strcat(mnemonicData,".B ");
+			len=1;
+			break;
+		case 0x01:
+			strcat(mnemonicData,".W ");
+			len=2;
+			break;
+		case 0x02:
+			strcat(mnemonicData,".L ");
+			len=4;
+			break;
+    }
+	
+    sprintf(tempData,"D%d,D%d",op3,op1);
+    strcat(mnemonicData,tempData);
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -6499,8 +6532,6 @@ void CPU_ADDX(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	
     if (ear)
 		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
 	
 	ear&=nMask;
 	eas&=nMask;
@@ -6564,6 +6595,65 @@ void CPU_DIVS(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	}	
 }
 
+void CPU_SUBX(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    cpu_regs.PC+=2;
+	
+    switch(op2)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+	ead=cpu_regs.D[op1]&zMask;
+	eas=cpu_regs.D[op3]&zMask;
+	if (cpu_regs.SR & CPU_STATUS_X)
+		eas--;
+	ear=(ead-eas)&zMask;
+	
+	cpu_regs.D[op1]&=~zMask;
+	cpu_regs.D[op1]|=ear;
+	
+    if (ear)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+	
+	ear&=nMask;
+	eas&=nMask;
+	ead&=nMask;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	if ((eas & (~ead)) | (ear & (~ead)) | (eas & ear))
+		cpu_regs.SR|=(CPU_STATUS_C|CPU_STATUS_X);
+	else
+		cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
+	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -6593,7 +6683,9 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
-//{"1101rrr1zz001yyy","ADDX",CPU_ADDXm,CPU_DIS_ADDXm,  D100 -> DFC0      ADDX
+/// 1001rrr1zz001ddd  9100 -> 9FCF	SUBX
+{"1001rrr1zz000ddd","SUBX",CPU_SUBX,CPU_DIS_SUBX,3,{0x0E00,0x00C0,0x0007},{9,6,0},{1,3,1},{{"rrr"},{"00","01","10"},{"rrr"}}},
+//{"1101rrr1zz001ddd","ADDX",CPU_ADDXm,CPU_DIS_ADDXm,  D100 -> DFC0      ADDX
 {"0100000011aaaaaa","MOVESR",CPU_MOVEFROMSR,CPU_DIS_MOVEFROMSR,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1000rrr111aaaaaa","DIVS",CPU_DIVS,CPU_DIS_DIVS,2,{0x0E00,0x003F},{9,0},{1,11},{{"rrr"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"1101rrr1zz000ddd","ADDX",CPU_ADDX,CPU_DIS_ADDX,3,{0x0E00,0x00C0,0x0007},{9,6,0},{1,3,1},{{"rrr"},{"00","01","10"},{"rrr"}}},
@@ -6688,7 +6780,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0000000000111100  003C -> 003C	ORI,CCR + 00000000bbbbbbbb
 /// 0100111001110111  4E77 -> 4E77	RTR
 /// 1000yyy10000rxxx  8100 -> 8F0F	SBCD
-/// 1001yyy1ss00rxxx  9100 -> 9FCF	SUBX
 /// 0100101011aaaaaa  4AC0 -> 4AFF	TAS
 /// 0100111001110110  4E76 -> 4E76	TRAPV
 
