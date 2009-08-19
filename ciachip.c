@@ -193,6 +193,8 @@ void CIA_Update()
 	
 }
 
+extern int startDebug;
+
 void CIA_setByteSDR(u_int16_t reg,u_int8_t byte)
 {
 	if (reg&0x10)
@@ -208,12 +210,11 @@ void CIA_setByteSDR(u_int16_t reg,u_int8_t byte)
 		if (ciaMemory[0x0E]&0x40)
 		{
 			// Serial port set for output
+			startDebug=1;
 			ciaMemory[reg]=byte;			// I`ll need to generate an interrupt to indicate data sent (based on timer - that can wait)
 		}
 	}
 }
-
-extern int startDebug;
 
 u_int8_t CIA_getByteSDR(u_int16_t reg)
 {

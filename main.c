@@ -41,7 +41,7 @@ int decrpyt_rom()
     unsigned long keySize;
     int a,b;
 	
-    inRom = fopen("amiga-os-130.rom","rb");
+    inRom = fopen("../../204.rom","rb");
     if (!inRom)
     {
 		printf("FAIL\n");
@@ -54,7 +54,7 @@ int decrpyt_rom()
     romSize = fread(romData,1,romSize,inRom);
     fclose(inRom);
 	
-    inKey = fopen("rom.key","rb");
+    inKey = fopen("../../rom.key","rb");
     if (!inKey)
     {
 		printf("FAIL\n");
@@ -70,7 +70,7 @@ int decrpyt_rom()
     printf("Rom Size = %lu\n",romSize);
     printf("Key Size = %lu\n",keySize);
 	
-    outData = fopen("out.rom","wb");
+    outData = fopen("../../out24.rom","wb");
     if (!outData)
     {
 		printf("FAIL\n");
@@ -190,6 +190,8 @@ void setupGL(int w, int h)
 
 u_int8_t keyUpArray[256];
 
+int doNewOpcodeDebug=0;
+
 void GLFWCALL kbHandler( int key, int action )
 {
 	if (action==GLFW_PRESS)
@@ -199,6 +201,10 @@ void GLFWCALL kbHandler( int key, int action )
 
 	switch (key)
 	{
+		case GLFW_KEY_KP_0:
+			if (!action)
+				doNewOpcodeDebug=1;
+			break;
 //		case GLFW_KEY_KP_MULTIPLY:					NOTE NUMPAD ON PC KB IS VERY DIFFERENT TO AMIGA : TODO
 //			KBD_AddKeyEvent(0xB6 + action);
 //			break;
@@ -502,6 +508,8 @@ int main(int argc,char **argv)
 	}
     
 	Debugger();
+	
+//	decrpyt_rom();
 	
 	// Initialize GLFW 
 	glfwInit(); 

@@ -35,11 +35,13 @@ u_int8_t MEM_getByteChip(u_int32_t upper24,u_int32_t lower16)
 
 u_int8_t MEM_getByteKick(u_int32_t upper24,u_int32_t lower16)
 {
+//	return romPtr[ ((upper24 - 0xF8)<<16) | lower16];
 	return romPtr[ ((upper24 - 0xFC)<<16) | lower16];
 }
 
 u_int8_t MEM_getByteOvlKick(u_int32_t upper24,u_int32_t lower16)
 {
+//	return romPtr[ ((upper24 + 0x04)<<16) | lower16];
 	return romPtr[ ((upper24 - 0x00)<<16) | lower16];
 }
 
@@ -87,6 +89,8 @@ u_int32_t MEM_getLong(u_int32_t address)
 	
 	return retVal;
 }
+
+extern int startDebug;
 
 void MEM_setByteChip(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
 {
@@ -187,7 +191,12 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_read[0xD6] = MEM_getByteCustom;
 	mem_read[0xD7] = MEM_getByteCustom;
 	mem_read[0xDF] = MEM_getByteCustom;
-
+/*
+	mem_read[0xF8] = MEM_getByteKick;
+	mem_read[0xF9] = MEM_getByteKick;
+	mem_read[0xFA] = MEM_getByteKick;
+	mem_read[0xFB] = MEM_getByteKick;
+*/
 	mem_read[0xFC] = MEM_getByteKick;
 	mem_read[0xFD] = MEM_getByteKick;
 	mem_read[0xFE] = MEM_getByteKick;
@@ -231,7 +240,12 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_write[0xD6] = MEM_setByteCustom;
 	mem_write[0xD7] = MEM_setByteCustom;
 	mem_write[0xDF] = MEM_setByteCustom;
-
+/*
+	mem_write[0xF8] = MEM_setByteKick;
+	mem_write[0xF9] = MEM_setByteKick;
+	mem_write[0xFA] = MEM_setByteKick;
+	mem_write[0xFB] = MEM_setByteKick;
+*/
 	mem_write[0xFC] = MEM_setByteKick;
 	mem_write[0xFD] = MEM_setByteKick;
 	mem_write[0xFE] = MEM_setByteKick;
