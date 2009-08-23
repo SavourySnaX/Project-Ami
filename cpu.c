@@ -2814,6 +2814,22 @@ void CPU_DIS_ANDICCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
     printf("%s\t%s\n",byteData,mnemonicData);
 }
 
+void CPU_DIS_ORICCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    adr+=2;
+    strcpy(mnemonicData,"ORI");
+    strcpy(byteData,"");
+
+	strcat(mnemonicData,"#");
+	strcat(mnemonicData,decodeWord(adr));
+	strcat(byteData,decodeWord(adr));
+	adr+=2;
+	
+	strcat(mnemonicData,",CCR");
+	
+    printf("%s\t%s\n",byteData,mnemonicData);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -3777,34 +3793,47 @@ void CPU_LSR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 	}
 
 	eas = cpu_regs.D[op4]&zMask;
-	ead = (eas >> op1)&zMask;
-	cpu_regs.D[op4]&=~zMask;
-	cpu_regs.D[op4]|=ead;
-	
-	if (op1==0)
+	if (op1>31)								// Its like this because the processor is modulo 64 on shifts and >31 with uint32 is not doable in c
 	{
-		cpu_regs.SR &= ~CPU_STATUS_C;
+		ead=0;
+		cpu_regs.D[op4]&=~zMask;
+		cpu_regs.D[op4]|=ead;
+		cpu_regs.SR&=~(CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_X|CPU_STATUS_C);
+		cpu_regs.SR|=CPU_STATUS_Z;
+		if ((eas&0x80000000) && (op1==32) && (op2==2))	// The one case where carry can occur
+			cpu_regs.SR|=CPU_STATUS_X|CPU_STATUS_C;
 	}
 	else
 	{
-		if (eas&(1 << (op1-1)))
+		ead = (eas >> op1)&zMask;
+		cpu_regs.D[op4]&=~zMask;
+		cpu_regs.D[op4]|=ead;
+		
+		if (op1==0)
 		{
-			cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			cpu_regs.SR &= ~CPU_STATUS_C;
 		}
 		else
 		{
-			cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			if (eas&(1 << (op1-1)))
+			{
+				cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			}
+			else
+			{
+				cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			}
 		}
+		cpu_regs.SR &= ~CPU_STATUS_V;
+		if (cpu_regs.D[op4] & nMask)
+			cpu_regs.SR|=CPU_STATUS_N;
+		else
+			cpu_regs.SR&=~CPU_STATUS_N;
+		if (cpu_regs.D[op4] & zMask)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
 	}
-	cpu_regs.SR &= ~CPU_STATUS_V;
-	if (cpu_regs.D[op4] & nMask)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-    if (cpu_regs.D[op4] & zMask)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
 }
 
 void CPU_SWAP(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
@@ -4789,34 +4818,47 @@ void CPU_LSL(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 	}
 
 	eas = cpu_regs.D[op4]&zMask;
-	ead = (eas << op1)&zMask;
-	cpu_regs.D[op4]&=~zMask;
-	cpu_regs.D[op4]|=ead;
-	
-	if (op1==0)
+	if (op1>31)								// Its like this because the processor is modulo 64 on shifts and >31 with uint32 is not doable in c
 	{
-		cpu_regs.SR &= ~CPU_STATUS_C;
+		ead=0;
+		cpu_regs.D[op4]&=~zMask;
+		cpu_regs.D[op4]|=ead;
+		cpu_regs.SR&=~(CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_X);
+		cpu_regs.SR|=CPU_STATUS_Z;
+		if ((eas==1) && (op1==32) && (op2==2))			// the one case where carry can occur
+			cpu_regs.SR|=CPU_STATUS_X|CPU_STATUS_C;
 	}
 	else
 	{
-		if (eas&(nMask >> (op1-1)))
+		ead = (eas << op1)&zMask;
+		cpu_regs.D[op4]&=~zMask;
+		cpu_regs.D[op4]|=ead;
+		
+		if (op1==0)
 		{
-			cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			cpu_regs.SR &= ~CPU_STATUS_C;
 		}
 		else
 		{
-			cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			if (eas&(nMask >> (op1-1)))
+			{
+				cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			}
+			else
+			{
+				cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			}
 		}
+		cpu_regs.SR &= ~CPU_STATUS_V;
+		if (cpu_regs.D[op4] & nMask)
+			cpu_regs.SR|=CPU_STATUS_N;
+		else
+			cpu_regs.SR&=~CPU_STATUS_N;
+		if (cpu_regs.D[op4] & zMask)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
 	}
-	cpu_regs.SR &= ~CPU_STATUS_V;
-	if (cpu_regs.D[op4] & nMask)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-    if (cpu_regs.D[op4] & zMask)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
 }
 
 void CPU_ADDI(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
@@ -5650,53 +5692,69 @@ void CPU_ASL(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 	}
 
 	eas = cpu_regs.D[op4]&zMask;
-	ead = (eas << op1)&zMask;
-	cpu_regs.D[op4]&=~zMask;
-	cpu_regs.D[op4]|=ead;
-	
-	if (op1==0)
+	if (op1>31)								// Its like this because the processor is modulo 64 on shifts and >31 with uint32 is not doable in c
 	{
-		cpu_regs.SR &= ~CPU_STATUS_C;
+		ead=0;
+		cpu_regs.D[op4]&=~zMask;
+		cpu_regs.D[op4]|=ead;
+		cpu_regs.SR&=~(CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_X);
+		cpu_regs.SR|=CPU_STATUS_Z;
+		if ((eas==1) && (op1==32) && (op2==2))			// the one case where carry can occur
+			cpu_regs.SR|=CPU_STATUS_X|CPU_STATUS_C;
+		if (eas!=0)
+			cpu_regs.SR|=CPU_STATUS_V;
 	}
 	else
 	{
-		if (eas&(nMask >> (op1-1)))
+		ead = (eas << op1)&zMask;
+	
+		cpu_regs.D[op4]&=~zMask;
+		cpu_regs.D[op4]|=ead;
+		
+		if (op1==0)
 		{
-			cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			cpu_regs.SR &= ~CPU_STATUS_C;
 		}
 		else
 		{
-			cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			if (eas&(nMask >> (op1-1)))
+			{
+				cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			}
+			else
+			{
+				cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			}
 		}
-	}
-
-	cpu_regs.SR &= ~CPU_STATUS_V;
-	do
-	{
-		op1--;
-		if ((eas&(nMask >> op1)) && (!(eas & nMask)) || (!(eas&(nMask >> op1))) && (eas & nMask))
+		
+		cpu_regs.SR &= ~CPU_STATUS_V;
+		while(op1)							// This is rubbish, can't think of a better test at present though
 		{
-			cpu_regs.SR |= CPU_STATUS_V;
-			break;
-		}
+			if ( (eas & nMask) ^ ((eas & (nMask >> op1))<<op1) )
+			{
+				cpu_regs.SR |= CPU_STATUS_V;
+				break;
+			}
+			
+			op1--;		
+		};
+		
+		if (cpu_regs.D[op4] & nMask)
+			cpu_regs.SR|=CPU_STATUS_N;
+		else
+			cpu_regs.SR&=~CPU_STATUS_N;
+		if (cpu_regs.D[op4] & zMask)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
 	}
-	while (op1);
-
-	if (cpu_regs.D[op4] & nMask)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-    if (cpu_regs.D[op4] & zMask)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
 }
 
 void CPU_ASR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
     int len;
     u_int32_t nMask,zMask;
-    u_int32_t eas,ead;
+    u_int32_t eas,ead,ear;
 	
     cpu_regs.PC+=2;
 	
@@ -5730,40 +5788,71 @@ void CPU_ASR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t o
 	}
 
 	eas = cpu_regs.D[op4]&zMask;
-	ead = (eas >> op1)&zMask;
-	if (eas&nMask)
+	if (op1>31)								// Its like this because the processor is modulo 64 on shifts and >31 with uint32 is not doable in c
 	{
-		ead|=(~((nMask >> (op1 -1) )-1))&zMask;		// set sign bits
-	}
-	cpu_regs.D[op4]&=~zMask;
-	cpu_regs.D[op4]|=ead;
-		
-	if (op1==0)
-	{
-		cpu_regs.SR &= ~CPU_STATUS_C;
-	}
-	else
-	{
-		if (eas&(1 << (op1-1)))
+		if (eas&nMask)
 		{
-			cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			ead=0xFFFFFFFF&zMask;
+			cpu_regs.D[op4]&=~zMask;
+			cpu_regs.D[op4]|=ead;
+			cpu_regs.SR&=~(CPU_STATUS_Z|CPU_STATUS_V);
+			cpu_regs.SR|=CPU_STATUS_N|CPU_STATUS_X|CPU_STATUS_C;
 		}
 		else
 		{
-			cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			ead=0;
+			cpu_regs.D[op4]&=~zMask;
+			cpu_regs.D[op4]|=ead;
+			cpu_regs.SR&=~(CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_X|CPU_STATUS_C);
+			cpu_regs.SR|=CPU_STATUS_Z;
 		}
 	}
-
-	cpu_regs.SR &= ~CPU_STATUS_V;
-
-	if (cpu_regs.D[op4] & nMask)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-    if (cpu_regs.D[op4] & zMask)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
+	else
+	{
+		ead = (eas >> op1)&zMask;
+		if ((eas&nMask) && op1)
+		{
+			eas|=0xFFFFFFFF & (~zMask);		// correct eas for later carry test
+			ear = (nMask >> (op1-1));
+			if (ear)
+			{
+				ead|=(~(ear-1))&zMask;		// set sign bits
+			}
+			else
+			{
+				ead|=0xFFFFFFFF&zMask;		// set sign bits
+			}
+		}
+		cpu_regs.D[op4]&=~zMask;
+		cpu_regs.D[op4]|=ead;
+		
+		if (op1==0)
+		{
+			cpu_regs.SR &= ~CPU_STATUS_C;
+		}
+		else
+		{
+			if (eas&(1 << (op1-1)))
+			{
+				cpu_regs.SR |= CPU_STATUS_X|CPU_STATUS_C;
+			}
+			else
+			{
+				cpu_regs.SR &= ~(CPU_STATUS_X|CPU_STATUS_C);
+			}
+		}
+		
+		cpu_regs.SR &= ~CPU_STATUS_V;
+		
+		if (cpu_regs.D[op4] & nMask)
+			cpu_regs.SR|=CPU_STATUS_N;
+		else
+			cpu_regs.SR&=~CPU_STATUS_N;
+		if (cpu_regs.D[op4] & zMask)
+			cpu_regs.SR&=~CPU_STATUS_Z;
+		else
+			cpu_regs.SR|=CPU_STATUS_Z;
+	}
 }
 
 void CPU_DIVU(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
@@ -5789,7 +5878,8 @@ void CPU_DIVU(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	cpu_regs.SR&=~CPU_STATUS_C;
 	if (eaq>65535)
 	{
-		cpu_regs.SR|=CPU_STATUS_V;
+		cpu_regs.SR|=CPU_STATUS_V|CPU_STATUS_N;		// MC68000 docs claim N and Z are undefined. however real amiga seems to set N if V happens, Z is cleared
+		cpu_regs.SR&=~CPU_STATUS_Z;
 	}
 	else
 	{
@@ -6568,9 +6658,9 @@ void CPU_ADDX(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	
 	ead=cpu_regs.D[op1]&zMask;
 	eas=cpu_regs.D[op3]&zMask;
-	if (cpu_regs.SR & CPU_STATUS_X)
-		eas++;
 	ear=(eas+ead)&zMask;
+	if (cpu_regs.SR & CPU_STATUS_X)
+		ear=(ear+1)&zMask;
 	
 	cpu_regs.D[op1]&=~zMask;
 	cpu_regs.D[op1]|=ear;
@@ -6618,9 +6708,10 @@ void CPU_DIVS(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	ear=ead % eas;
 	
 	cpu_regs.SR&=~CPU_STATUS_C;
-	if (eaq>65535)
+	if ((eaq<-32768) || (eaq>32767))
 	{
-		cpu_regs.SR|=CPU_STATUS_V;
+		cpu_regs.SR|=CPU_STATUS_V|CPU_STATUS_N;		// MC68000 docs claim N and Z are undefined. however real amiga seems to set N if V happens, Z is cleared
+		cpu_regs.SR&=~CPU_STATUS_Z;
 	}
 	else
 	{
@@ -6669,9 +6760,9 @@ void CPU_SUBX(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 	
 	ead=cpu_regs.D[op1]&zMask;
 	eas=cpu_regs.D[op3]&zMask;
-	if (cpu_regs.SR & CPU_STATUS_X)
-		eas--;
 	ear=(ead-eas)&zMask;
+	if (cpu_regs.SR & CPU_STATUS_X)
+		ear=(ear-1)&zMask;
 	
 	cpu_regs.D[op1]&=~zMask;
 	cpu_regs.D[op1]|=ear;
@@ -6804,6 +6895,26 @@ void CPU_ANDICCR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16
 	cpu_regs.SR=ead;
 }
 
+void CPU_ORICCR(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int16_t eas,ead;
+	
+    cpu_regs.PC+=2;
+	
+	eas=MEM_getByte(cpu_regs.PC+1);
+	cpu_regs.PC+=2;
+
+	ead=cpu_regs.SR;
+	
+	eas=(ead|eas)&(CPU_STATUS_X|CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_Z);	// Only affects lower valid bits in flag
+
+	ead&=~(CPU_STATUS_X|CPU_STATUS_N|CPU_STATUS_V|CPU_STATUS_C|CPU_STATUS_Z);
+	
+	ead|=eas;
+	
+	cpu_regs.SR=ead;
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -6834,6 +6945,7 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // User instructions
+{"0000000000111100","ORCCR",CPU_ORICCR,CPU_DIS_ORICCR,0},
 {"0000001000111100","ANDCCR",CPU_ANDICCR,CPU_DIS_ANDICCR,0},
 {"1110000011aaaaaa","ASR",CPU_ASRm,CPU_DIS_ASRm,1,{0x003F},{0},{7},{{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1110000111aaaaaa","ASL",CPU_ASLm,CPU_DIS_ASLm,1,{0x003F},{0},{7},{{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -6930,7 +7042,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0000dddmmm001aaa  0008 -> 0FCF	MOVEP + 2 byte disp
 /// 0100100000aaaaaa  4800 -> 483F	NBCD
 /// 01000000ssaaaaaa  4000 -> 40FF	NEGX
-/// 0000000000111100  003C -> 003C	ORI,CCR + 00000000bbbbbbbb
 /// 0100111001110111  4E77 -> 4E77	RTR
 /// 1000yyy10000rxxx  8100 -> 8F0F	SBCD
 /// 0100101011aaaaaa  4AC0 -> 4AFF	TAS
@@ -7328,10 +7439,10 @@ void CPU_Step()
 		
 	if (startDebug)
 	{
-		for (a=0;a<PCCACHESIZE;a++)
+/*		for (a=0;a<PCCACHESIZE;a++)
 		{
 			printf("PC History : %08X\n",pcCache[a]);
-		}
+		}*/
 
 		DumpEmulatorState();
 		

@@ -107,7 +107,63 @@ unsigned char *load_rom(char *romName)
 	
 	return romData;
 }
+/*
+extern int startDebug;
 
+void CPU_runTests()
+{
+	FILE *inBin;
+	unsigned long inSize;
+	unsigned long a;
+	unsigned int misCount=0;
+	
+    inBin = fopen("../../test1_22c18.bin","rb");
+    fseek(inBin,0,SEEK_END);
+    inSize = ftell(inBin)-1;
+	fseek(inBin,0,SEEK_SET);
+    fread(&chpPtr[0x22c18],1,inSize,inBin);
+    fclose(inBin);
+
+    inBin = fopen("../../test2_25cb0.bin","rb");
+    fseek(inBin,0,SEEK_END);
+    inSize = ftell(inBin)-1;
+	fseek(inBin,0,SEEK_SET);
+    fread(&chpPtr[0x25cb0],1,inSize,inBin);
+    fclose(inBin);
+	
+	MEM_MapKickstartLow(0);
+
+//	startDebug=1;
+
+	cpu_regs.SR=0x0000;
+	cpu_regs.PC=0x22c18;
+	cpu_regs.A[7]=0x10000;
+	
+	while (cpu_regs.PC!=0x22c1e)
+	{
+		CPU_Step();
+	}
+
+    inBin = fopen("../../test3_31fb0.bin","rb");
+    fseek(inBin,0,SEEK_END);
+    inSize = ftell(inBin)-1;
+	fseek(inBin,0,SEEK_SET);
+    fread(&chpPtr[0x20000],1,inSize,inBin);				// load results to different address and then compare
+    fclose(inBin);
+	
+	for (a=0;a<inSize;a++)
+	{
+		if (chpPtr[0x20000+a]!=chpPtr[0x31fb0+a])
+		{
+			printf("CPU mismatch at : %08x %02x!=%02x\n",0x31fb0+a,chpPtr[0x20000+a],chpPtr[0x31fb0+a]);
+			misCount++;
+		}
+	}
+	
+	printf("And we are done with %d faults\n",misCount);
+	printf("oh well\n");
+}
+*/
 u_int8_t videoMemory[AMI_LINE_LENGTH*HEIGHT*sizeof(u_int32_t)];
 
 int g_newScreenNotify = 0;
@@ -551,6 +607,14 @@ int main(int argc,char **argv)
 	KBD_InitialiseKeyboard();
 	
     CPU_Reset();
+	
+/*//////////
+	
+	CPU_runTests();
+	
+	return;
+	
+//////////*/
 	
 	glfwSetKeyCallback(kbHandler);
     
