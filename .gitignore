@@ -5,3 +5,8 @@ build
 
 *~
 .*
+
+*.key
+*.rom
+*.bin
+*.adf
