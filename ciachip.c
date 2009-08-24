@@ -93,9 +93,8 @@ void CIA_Update()
 				ciaMemory[0x1D]|=0x01;			// signal interrupt request (won't actually interrupt unless mask set however)
 				if (ciab_icr&0x01)
 				{
-					printf("WARNING : EXPECTING INTERRUPT CIAB TIMER A\n");
-/*					ciaMemory[0x1D]|=0x80;		// set IR bit
-					CST_ORWRD(CST_INTREQR,0x0008);*/
+					ciaMemory[0x1D]|=0x80;		// set IR bit
+					CST_ORWRD(CST_INTREQR,0x2000);
 				}
 			}
 		}
@@ -116,9 +115,8 @@ void CIA_Update()
 				ciaMemory[0x1D]|=0x02;			// signal interrupt request (won't actually interrupt unless mask set however)
 				if (ciab_icr&0x02)
 				{
-					printf("WARNING : EXPECTING INTERRUPT CIAB TIMER B\n");
-/*					ciaMemory[0x1D]|=0x80;		// set IR bit
-					CST_ORWRD(CST_INTREQR,0x0008);*/
+					ciaMemory[0x1D]|=0x80;		// set IR bit
+					CST_ORWRD(CST_INTREQR,0x2000);
 				}
 			}
 		}
@@ -210,7 +208,7 @@ void CIA_setByteSDR(u_int16_t reg,u_int8_t byte)
 		if (ciaMemory[0x0E]&0x40)
 		{
 			// Serial port set for output
-			startDebug=1;
+//			startDebug=1;
 			ciaMemory[reg]=byte;			// I`ll need to generate an interrupt to indicate data sent (based on timer - that can wait)
 		}
 	}

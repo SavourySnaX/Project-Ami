@@ -154,15 +154,12 @@ void MEM_Initialise(unsigned char *_romPtr)
 		mem_read[a]=MEM_getByteUnmapped;
 		mem_write[a]=MEM_setByteUnmapped;
 	}
-	
-	mem_read[0x00] = MEM_getByteChip;
-	mem_read[0x01] = MEM_getByteChip;
-	mem_read[0x02] = MEM_getByteChip;
-	mem_read[0x03] = MEM_getByteChip;
-	mem_read[0x04] = MEM_getByteChip;
-	mem_read[0x05] = MEM_getByteChip;
-	mem_read[0x06] = MEM_getByteChip;
-	mem_read[0x07] = MEM_getByteChip;
+
+	for (a=0;a<CHIP_MEM_SIZE / 65536;a++)
+	{
+		mem_read[a] = MEM_getByteChip;
+		mem_write[a]= MEM_setByteChip;
+	}
 
 	mem_read[0xBF] = MEM_getByteCia;
 
@@ -203,15 +200,6 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_read[0xFF] = MEM_getByteKick;
 
 
-
-	mem_write[0x00] = MEM_setByteChip;
-	mem_write[0x01] = MEM_setByteChip;
-	mem_write[0x02] = MEM_setByteChip;
-	mem_write[0x03] = MEM_setByteChip;
-	mem_write[0x04] = MEM_setByteChip;
-	mem_write[0x05] = MEM_setByteChip;
-	mem_write[0x06] = MEM_setByteChip;
-	mem_write[0x07] = MEM_setByteChip;
 
 	mem_write[0xBF] = MEM_setByteCia;
 

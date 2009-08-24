@@ -6944,6 +6944,9 @@ CPU_Ins cpu_instructions[] =
 {"0100111001110011","RTE",CPU_RTE,CPU_DIS_RTE,0},
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
+// Illegal instructions - that programs use
+{"0100001011aaaaaa","010+MOVEfromCCR",CPU_ILLEGAL,CPU_DIS_ILLEGAL,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},	// ODYSSEY demo uses this
+{"0100111001111011","ILLEGAL",CPU_ILLEGAL,CPU_DIS_ILLEGAL,0},		// KS does this one
 // User instructions
 {"0000000000111100","ORCCR",CPU_ORICCR,CPU_DIS_ORICCR,0},
 {"0000001000111100","ANDCCR",CPU_ANDICCR,CPU_DIS_ANDICCR,0},
@@ -6999,8 +7002,6 @@ CPU_Ins cpu_instructions[] =
 {"01000010zzaaaaaa","CLR",CPU_CLR,CPU_DIS_CLR,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"0101ddd0zzaaaaaa","ADDQ",CPU_ADDQ,CPU_DIS_ADDQ,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,9},{{"rrr"},{"00","01","10"},{"000rrr","001!!!","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1000rrr1mmaaaaaa","OR",CPU_ORd,CPU_DIS_ORd,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,7},{{"rrr"},{"00","01","10"},{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
-/// This is not needed really, but its easier to work through the kickstart rom this way
-{"0100111001111011","ILLEGAL",CPU_ILLEGAL,CPU_DIS_ILLEGAL,0},
 {"0100111001110101","RTS",CPU_RTS,CPU_DIS_RTS,0},
 {"01100001dddddddd","BSR",CPU_BSR,CPU_DIS_BSR,1,{0x00FF},{0},{1},{{"rrrrrrrr"}}},
 {"00000100zzaaaaaa","SUBI",CPU_SUBI,CPU_DIS_SUBI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -7038,7 +7039,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100100001001vvv  4848 -> 484F	BKPT
 /// 0100rrrss0aaaaaa  4000 -> 4FBF	CHK
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
-/// 0100001011aaaaaa  42C0 -> 42FF	MOVE from CCR
 /// 0000dddmmm001aaa  0008 -> 0FCF	MOVEP + 2 byte disp
 /// 0100100000aaaaaa  4800 -> 483F	NBCD
 /// 01000000ssaaaaaa  4000 -> 40FF	NEGX
