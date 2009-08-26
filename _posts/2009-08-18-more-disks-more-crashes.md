@@ -12,5 +12,5 @@ title: More disks more crashes
 
  Oh and I fixed the problem with the prefs application, I accidently made an instruction privaledged when it should not have been.
 
- ![Broken keyboard example](/images/keybroke.png)
+ ![Broken keyboard example](/Project-Ami/images/keybroke.png)
 

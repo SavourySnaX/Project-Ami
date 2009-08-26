@@ -26,7 +26,7 @@ title: Ami - News
 <hr/>
 <div class="left_column">
     {% if paginator.next_page %}
-	<a href="/page{{ paginator.next_page }}/">&larr; Older</a>
+	<a href="/Project-Ami/page{{ paginator.next_page }}/">&larr; Older</a>
     {% endif %}
 </div>
 
@@ -34,9 +34,9 @@ title: Ami - News
     {% if paginator.previous_page %}
 	<a href="
 		{% if paginator.previous_page == 1 %}
-			/
+			/Project-Ami/
 		{% else %}
-			/page{{ paginator.previous_page }}
+			/Project-Ami/page{{ paginator.previous_page }}
 		{% endif %}">Newer &rarr;
 	</a>
     {% endif %}

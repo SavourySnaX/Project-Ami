@@ -15,5 +15,5 @@ title: Sprites and Hires
 * The hack i put in recently to allow the enter key to be pressed is definately too much of a bodge (key is never seen by workbench).
 * The prefs application guru meditates.
 
- ![A Useable Workbench](/images/workingbench.png)
+ ![A Useable Workbench](/Project-Ami/images/workingbench.png)
 
