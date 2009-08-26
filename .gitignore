@@ -1,1 +1,14 @@
+run.exe
+run
+run.dSYM
+build
+
+*~
+.*
+
 _site/
+
+*.key
+*.rom
+*.bin
+*.adf
