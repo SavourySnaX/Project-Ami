@@ -6,6 +6,8 @@ build
 *~
 .*
 
+_site/
+
 *.key
 *.rom
 *.bin
