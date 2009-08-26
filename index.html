@@ -13,7 +13,7 @@ title: Ami - News
 
 {% for post in paginator.posts %}
   <div class="right_column"><small>({{ post.author }})  </small>{{ post.date | date_to_string }}</div>
-    <h2><a href="{{ post.url }}" title="[Permalink] {{ post.title }} style="border: none">{{post.title}}</a></h2>
+    <h2><a href="/Project-Ami{{post.url }}" title="[Permalink] {{ post.title }} style="border: none">{{post.title}}</a></h2>
 
     {{ post.content }}
 
