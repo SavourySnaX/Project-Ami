@@ -6,6 +6,8 @@ build
 *~
 .*
 
+cpu_src/
+
 _site/
 
 *.key
