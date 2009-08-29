@@ -27,21 +27,42 @@ THE SOFTWARE.
 /* Defines functions useful for creating the opcode emulation code - included directly to save prototyping everything */
 
 ////// OPCODE HELPERS ////////
-/*
-void OUTPUT_DISSASEMBLE_START(const char *name,u_int16_t opcode)
+
+u_int32_t	nxtStage;
+
+void OUTPUT_OPCODE_START(const char *name,u_int16_t opcode)
 {
-	fprintf(outFile,"\nint DIS_%s_%04X(u_int32_t adr)\n",name,opcode);
-	fprintf(outFile,"{\n");
-	fprintf(outFile,"\tint\tinsLength=0;\n");
-	fprintf(outFile,"\n");
-	fprintf(outFile,"\tstrcpy(mnemonicData,\"%s \");\n",name);
+	fprintf(opsFile,"\nu_int32_t %s_%04X(u_int32_t stage)\n",name,opcode);
+	fprintf(opsFile,"{\n");
+	fprintf(opsFile,"\tswitch (stage)\n");
+	fprintf(opsFile,"\t{\n");
+	nxtStage=1;
 }
 
-void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
+void OUTPUT_OPCODE_END()
+{
+	fprintf(opsFile,"\t}\n");
+	fprintf(opsFile,"\treturn 0;\n");
+	fprintf(opsFile,"}\n");
+}
+
+void OUTPUT_OPCODE_START_STAGE(u_int32_t stage)
+{
+	fprintf(opsFile,"\t\tcase %d:\n",stage);
+	nxtStage=stage;
+}
+
+void OUTPUT_OPCODE_END_STAGE(u_int32_t newStage)
+{
+	fprintf(opsFile,"\t\t\treturn %d;\n",newStage);
+	nxtStage=newStage;
+}
+
+void OUTPUT_COMPUTE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 {
     switch (operand)
     {
-		case 0x00:	/// 000rrr
+		case 0x00:		// D?
 		case 0x01:
 		case 0x02:
 		case 0x03:
@@ -49,9 +70,10 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x05:
 		case 0x06:
 		case 0x07:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"D%d\");\n",operand);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.D[%d];\n",operand);
 			break;
-		case 0x08:	/// 001rrr
+		case 0x08:		// A?
 		case 0x09:
 		case 0x0A:
 		case 0x0B:
@@ -59,9 +81,10 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x0D:
 		case 0x0E:
 		case 0x0F:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"A%d\");\n",operand-0x08);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.A[%d];\n",operand-0x08);
 			break;
-		case 0x10:	/// 010rrr
+		case 0x10:		// (A?)
 		case 0x11:
 		case 0x12:
 		case 0x13:
@@ -69,9 +92,10 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x15:
 		case 0x16:
 		case 0x17:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"(A%d)\");\n",operand-0x10);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.A[%d];\n",operand-0x10);
 			break;
-		case 0x18:	/// 011rrr
+		case 0x18:		// (A?)+
 		case 0x19:
 		case 0x1A:
 		case 0x1B:
@@ -79,9 +103,16 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x1D:
 		case 0x1E:
 		case 0x1F:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"(A%d)+\");\n",operand-0x18);
+/*
+			if ((operand==0x1F) && (length==1))
+			{
+				//startDebug=1;
+				length=2;
+			}
+			ea = cpu_regs.A[operand-0x18];
+			cpu_regs.A[operand-0x18]+=length;*/
 			break;
-		case 0x20:	// 100rrr
+		case 0x20:		// -(A?)
 		case 0x21:
 		case 0x22:
 		case 0x23:
@@ -89,9 +120,15 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x25:
 		case 0x26:
 		case 0x27:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"-(A%d)\");\n",operand-0x20);
+/*			if ((operand==0x27) && (length==1))
+			{
+				//startDebug=1;
+				length=2;
+			}
+			cpu_regs.A[operand-0x20]-=length;
+			ea = cpu_regs.A[operand-0x20];*/
 			break;
-		case 0x28:	// 101rrr
+		case 0x28:		// (XXXX,A?)
 		case 0x29:
 		case 0x2A:
 		case 0x2B:
@@ -99,10 +136,16 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x2D:
 		case 0x2E:
 		case 0x2F:
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%04X,A%d)\",MEM_getWord(adr));\n",operand-0x28);
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.PC;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.PC+=2;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea=cpu_regs.A[%d]+(int16_t)MEM_getWord(cpu_regs.ea);\n",operand-0x28);
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
 			break;
-		case 0x30:	// 110rrr
+		case 0x30:		// (XX,A?,X?)
 		case 0x31:
 		case 0x32:
 		case 0x33:
@@ -110,68 +153,114 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x35:
 		case 0x36:
 		case 0x37:
-			fprintf(outFile,"\t{\n");
-			fprintf(outFile,"\t\tu_int16_t\ttmp;\n");
-			fprintf(outFile,"\n");
-			fprintf(outFile,"\t\ttmp=MEM_getWord(adr);\n");
-			fprintf(outFile,"\t\tif (tmp&0x8000)\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,A%d)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n",operand-0x30);
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t\telse\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,A%d)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n",operand-0x30);
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t}\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.PC;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.PC+=2;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.tmpW=MEM_getWord(cpu_regs.ea);\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tif (cpu_regs.tmpW&0x8000)\n");
+			fprintf(opsFile,"\t\t\t{\n");
+			fprintf(opsFile,"\t\t\t\tcpu_regs.ea = cpu_regs.A[(cpu_regs.tmpW>>12)&0x07];\n");
+			fprintf(opsFile,"\t");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			fprintf(opsFile,"\t\t\t}\n");
+			fprintf(opsFile,"\t\t\telse\n");
+			fprintf(opsFile,"\t\t\t{\n");
+			fprintf(opsFile,"\t\t\t\tcpu_regs.ea = cpu_regs.D[(cpu_regs.tmpW>>12)&0x07];\n");
+			fprintf(opsFile,"\t");
+			OUTPUT_OPCODE_END_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\t}\n");
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tif (!(cpu_regs.tmpW&0x0800)) cpu_regs.ea=(int16_t)cpu_regs.ea;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.ea+=(int8_t)(cpu_regs.tmpW&0xFF);\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.ea+=cpu_regs.A[%d];\n",operand-0x30);
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
 			break;
-		case 0x38:		/// 111000
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(%%04X).W\",MEM_getWord(adr));\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+		case 0x38:		// (XXXX).W
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.PC;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.PC+=2;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea=(int16_t)MEM_getWord(cpu_regs.ea);\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
 			break;
-		case 0x39:		/// 111001
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(%%08X).L\",MEM_getLong(adr));\n");
-			fprintf(outFile,"\tadr+=4;\n\tinsLength+=4;\n");
+		case 0x39:		// (XXXXXXXX).L
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.tmpL = cpu_regs.PC;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.PC+=2;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea=MEM_getWord(cpu_regs.tmpL)<<16;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.tmpL = cpu_regs.PC;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.PC+=2;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea|=MEM_getWord(cpu_regs.tmpL);\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
 			break;
-		case 0x3A:		/// 111010
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(PC,%%04X)\",MEM_getWord(adr));\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+		case 0x3A:		// (XXXX,PC)
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.PC;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.PC+=2;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea+=(int16_t)MEM_getWord(cpu_regs.ea);\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
 			break;
-		case 0x3B:		/// 111100
-			fprintf(outFile,"\t{\n");
-			fprintf(outFile,"\t\tu_int16_t\ttmp;\n");
-			fprintf(outFile,"\n");
-			fprintf(outFile,"\t\ttmp=MEM_getWord(adr);\n");
-			fprintf(outFile,"\t\tif (tmp&0x8000)\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,PC)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t\telse\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,PC)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t}\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+		case 0x3B:		/// (XX,PC,X?)
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.ea = cpu_regs.PC;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.PC+=2;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tcpu_regs.tmpW=MEM_getWord(cpu_regs.ea);\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tif (cpu_regs.tmpW&0x8000)\n");
+			fprintf(opsFile,"\t\t\t{\n");
+			fprintf(opsFile,"\t\t\t\tcpu_regs.ea = cpu_regs.A[(cpu_regs.tmpW>>12)&0x07];\n");
+			fprintf(opsFile,"\t");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			fprintf(opsFile,"\t\t\t}\n");
+			fprintf(opsFile,"\t\t\telse\n");
+			fprintf(opsFile,"\t\t\t{\n");
+			fprintf(opsFile,"\t\t\t\tcpu_regs.ea = cpu_regs.D[(cpu_regs.tmpW>>12)&0x07];\n");
+			fprintf(opsFile,"\t");
+			OUTPUT_OPCODE_END_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\t}\n");
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
+			fprintf(opsFile,"\t\t\tif (!(cpu_regs.tmpW&0x0800)) cpu_regs.ea=(int16_t)cpu_regs.ea;\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.ea+=(int8_t)(cpu_regs.tmpW&0xFF);\n");
+			fprintf(opsFile,"\t\t\tcpu_regs.ea+=cpu_regs.PC;\n");
+			OUTPUT_OPCODE_END_STAGE(nxtStage+1);
+			OUTPUT_OPCODE_START_STAGE(nxtStage);
 			break;
 		case 0x3C:		/// 111100
-			switch (length)
+/*			switch (length)
 			{
-			case 1:
-				fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%02X\",MEM_getByte(adr+1));\n");
-				fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
-				break;
-			case 2:
-				fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%04X\",MEM_getWord(adr));\n");
-				fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
-				break;
-			case 4:
-				fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%08X\",MEM_getLong(adr));\n");
-				fprintf(outFile,"\tadr+=4;\n\tinsLength+=4;\n");
-				break;
-			default:
-				printf("Illegal Effective Address Operand Length : %04X\n",length);
-				exit(-1);
-			}
+				case 1:
+					ea = MEM_getByte(cpu_regs.PC+1);
+					cpu_regs.PC+=2;
+					break;
+				case 2:
+					ea = MEM_getWord(cpu_regs.PC);
+					cpu_regs.PC+=2;
+					break;
+				case 4:
+					ea = MEM_getLong(cpu_regs.PC);
+					cpu_regs.PC+=4;
+					break;
+			}*/
 			break;
 		default:
 			printf("Unknown Effective Address Operand : %04X\n",operand);
@@ -179,31 +268,16 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
     }
 }
 
-void OUTPUT_DISSASEMBLE_OPERAND(char *name, u_int16_t op)
-{
-	char tmp[256];
-	sprintf(tmp,name,op);
-	fprintf(outFile,"\tstrcat(mnemonicData,\"%s\");\n",tmp);
-}
-
-void OUTPUT_DISSASEMBLE_END()
-{
-	fprintf(outFile,"\n");
-	fprintf(outFile,"\treturn insLength;\n");
-	fprintf(outFile,"}\n");
-}
-
 ////// OPCODE HANDLERS ///////
 
 
-void CPU_DIS_LEA(u_int32_t ignored,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+void CPU_LEA(u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	OUTPUT_DISSASEMBLE_START("LEA",opcode);
+	OUTPUT_OPCODE_START("LEA",opcode);
 
-	OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(op2,4);
-	OUTPUT_DISSASEMBLE_OPERAND(",A%d",op1);
+	OUTPUT_COMPUTE_EFFECTIVE_ADDRESS(op2,4);
+	fprintf(opsFile,"\t\t\tcpu_regs.A[%d]=cpu_regs.ea;\n",op1);
+	OUTPUT_OPCODE_END_STAGE(0);
 
-	OUTPUT_DISSASEMBLE_END();
+	OUTPUT_OPCODE_END();
 }
-
-*/

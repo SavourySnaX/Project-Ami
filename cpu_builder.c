@@ -6747,7 +6747,10 @@ void CPU_UNKNOWN(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16
 }
 #endif
 
-FILE *outFile;
+FILE *opsFile;
+FILE *disFile;
+FILE *opsTabFile;
+FILE *disTabFile;
 
 ///////// DISSASEMBLY BUILDERS /////////
 
@@ -6755,32 +6758,24 @@ FILE *outFile;
 
 ///////// INSTRUCTION BUILDERS /////////
 
-void CPU_LEA(u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-/*    u_int32_t ea;
-	
-    cpu_regs.PC+=2;
-    ea = getEffectiveAddress(op2,4);
-    cpu_regs.A[op1] = ea;*/
-}
-
+#include "cpu_builder_opcode.h"
 
 
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 typedef void (*CPU_Function)(u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 
 typedef struct
-	{
-		char baseTable[17];
-		char opcodeName[32];
-		CPU_Function opcode;
-		CPU_Decode   decode;
-		int numOperands;
-		u_int16_t   operandMask[8];
-		u_int16_t   operandShift[8];
-		int numValidMasks[8];
-		char validEffectiveAddress[8][64][10];
-	} CPU_Ins;
+{
+	char baseTable[17];
+	char opcodeName[32];
+	CPU_Function opcode;
+	CPU_Decode   decode;
+	int numOperands;
+	u_int16_t   operandMask[8];
+	u_int16_t   operandShift[8];
+	int numValidMasks[8];
+	char validEffectiveAddress[8][64][10];
+} CPU_Ins;
 
 CPU_Ins cpu_instructions[] = 
 {
@@ -7079,11 +7074,41 @@ void CPU_BuildTable()
 
 int main(int argc,char **argv)
 {
-    outFile = fopen("../../cpu_src/cpu.c","wb");		// needed when running in debugger
-    if (!outFile)
+    opsFile = fopen("../../cpu_src/cpuOps.c","wb");		// needed when running in debugger
+    if (!opsFile)
     {
-		outFile = fopen("cpu_src/cpu.c","wb");
-		if (!outFile)
+		opsFile = fopen("cpu_src/cpuOps.c","wb");
+		if (!opsFile)
+		{
+			printf("Failed to open file for writing, this is bad\n");
+			return -1;
+		}
+    }
+    disFile = fopen("../../cpu_src/cpuDis.c","wb");		// needed when running in debugger
+    if (!disFile)
+    {
+		disFile = fopen("cpu_src/cpuDis.c","wb");
+		if (!disFile)
+		{
+			printf("Failed to open file for writing, this is bad\n");
+			return -1;
+		}
+    }
+    opsTabFile = fopen("../../cpu_src/cpuOpsTable.c","wb");		// needed when running in debugger
+    if (!opsTabFile)
+    {
+		opsTabFile = fopen("cpu_src/cpuOpsTable.c","wb");
+		if (!opsTabFile)
+		{
+			printf("Failed to open file for writing, this is bad\n");
+			return -1;
+		}
+    }
+    disTabFile = fopen("../../cpu_src/cpuDisTable.c","wb");		// needed when running in debugger
+    if (!disTabFile)
+    {
+		disTabFile = fopen("cpu_src/cpuDisTable.c","wb");
+		if (!disTabFile)
 		{
 			printf("Failed to open file for writing, this is bad\n");
 			return -1;
@@ -7092,7 +7117,10 @@ int main(int argc,char **argv)
 
 	CPU_BuildTable();
 	
-    fclose(outFile);
+    fclose(opsFile);
+    fclose(disFile);
+    fclose(opsTabFile);
+    fclose(disTabFile);
 	
     return 0;
 }

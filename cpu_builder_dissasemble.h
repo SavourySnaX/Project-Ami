@@ -28,13 +28,13 @@ THE SOFTWARE.
 
 ////// DISSASEMBLE HELPERS ////////
 
-void OUTPUT_DISSASEMBLE_START(const char *name,u_int16_t opcode)
+void OUTPUT_DISSASEMBLE_START(const char *name,u_int16_t oode)
 {
-	fprintf(outFile,"\nint DIS_%s_%04X(u_int32_t adr)\n",name,opcode);
-	fprintf(outFile,"{\n");
-	fprintf(outFile,"\tint\tinsLength=0;\n");
-	fprintf(outFile,"\n");
-	fprintf(outFile,"\tstrcpy(mnemonicData,\"%s \");\n",name);
+	fprintf(disFile,"\nint DIS_%s_%04X(u_int32_t adr)\n",name,oode);
+	fprintf(disFile,"{\n");
+	fprintf(disFile,"\tint\tinsLength=0;\n");
+	fprintf(disFile,"\n");
+	fprintf(disFile,"\tstrcpy(mnemonicData,\"%s \");\n",name);
 }
 
 void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
@@ -49,7 +49,7 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x05:
 		case 0x06:
 		case 0x07:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"D%d\");\n",operand);
+			fprintf(disFile,"\tstrcat(mnemonicData,\"D%d\");\n",operand);
 			break;
 		case 0x08:	/// 001rrr
 		case 0x09:
@@ -59,7 +59,7 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x0D:
 		case 0x0E:
 		case 0x0F:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"A%d\");\n",operand-0x08);
+			fprintf(disFile,"\tstrcat(mnemonicData,\"A%d\");\n",operand-0x08);
 			break;
 		case 0x10:	/// 010rrr
 		case 0x11:
@@ -69,7 +69,7 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x15:
 		case 0x16:
 		case 0x17:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"(A%d)\");\n",operand-0x10);
+			fprintf(disFile,"\tstrcat(mnemonicData,\"(A%d)\");\n",operand-0x10);
 			break;
 		case 0x18:	/// 011rrr
 		case 0x19:
@@ -79,7 +79,7 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x1D:
 		case 0x1E:
 		case 0x1F:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"(A%d)+\");\n",operand-0x18);
+			fprintf(disFile,"\tstrcat(mnemonicData,\"(A%d)+\");\n",operand-0x18);
 			break;
 		case 0x20:	// 100rrr
 		case 0x21:
@@ -89,7 +89,7 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x25:
 		case 0x26:
 		case 0x27:
-			fprintf(outFile,"\tstrcat(mnemonicData,\"-(A%d)\");\n",operand-0x20);
+			fprintf(disFile,"\tstrcat(mnemonicData,\"-(A%d)\");\n",operand-0x20);
 			break;
 		case 0x28:	// 101rrr
 		case 0x29:
@@ -99,8 +99,8 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x2D:
 		case 0x2E:
 		case 0x2F:
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%04X,A%d)\",MEM_getWord(adr));\n",operand-0x28);
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+			fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%04X,A%d)\",MEM_getWord(adr));\n",operand-0x28);
+			fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 			break;
 		case 0x30:	// 110rrr
 		case 0x31:
@@ -110,63 +110,63 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 		case 0x35:
 		case 0x36:
 		case 0x37:
-			fprintf(outFile,"\t{\n");
-			fprintf(outFile,"\t\tu_int16_t\ttmp;\n");
-			fprintf(outFile,"\n");
-			fprintf(outFile,"\t\ttmp=MEM_getWord(adr);\n");
-			fprintf(outFile,"\t\tif (tmp&0x8000)\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,A%d)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n",operand-0x30);
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t\telse\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,A%d)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n",operand-0x30);
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t}\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+			fprintf(disFile,"\t{\n");
+			fprintf(disFile,"\t\tu_int16_t\ttmp;\n");
+			fprintf(disFile,"\n");
+			fprintf(disFile,"\t\ttmp=MEM_getWord(adr);\n");
+			fprintf(disFile,"\t\tif (tmp&0x8000)\n");
+			fprintf(disFile,"\t\t{\n");
+			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,A%d)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n",operand-0x30);
+			fprintf(disFile,"\t\t}\n");
+			fprintf(disFile,"\t\telse\n");
+			fprintf(disFile,"\t\t{\n");
+			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,A%d)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n",operand-0x30);
+			fprintf(disFile,"\t\t}\n");
+			fprintf(disFile,"\t}\n");
+			fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 			break;
 		case 0x38:		/// 111000
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(%%04X).W\",MEM_getWord(adr));\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+			fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(%%04X).W\",MEM_getWord(adr));\n");
+			fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 			break;
 		case 0x39:		/// 111001
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(%%08X).L\",MEM_getLong(adr));\n");
-			fprintf(outFile,"\tadr+=4;\n\tinsLength+=4;\n");
+			fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(%%08X).L\",MEM_getLong(adr));\n");
+			fprintf(disFile,"\tadr+=4;\n\tinsLength+=4;\n");
 			break;
 		case 0x3A:		/// 111010
-			fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(PC,%%04X)\",MEM_getWord(adr));\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+			fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(,%%04X)\",MEM_getWord(adr));\n");
+			fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 			break;
 		case 0x3B:		/// 111100
-			fprintf(outFile,"\t{\n");
-			fprintf(outFile,"\t\tu_int16_t\ttmp;\n");
-			fprintf(outFile,"\n");
-			fprintf(outFile,"\t\ttmp=MEM_getWord(adr);\n");
-			fprintf(outFile,"\t\tif (tmp&0x8000)\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,PC)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t\telse\n");
-			fprintf(outFile,"\t\t{\n");
-			fprintf(outFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,PC)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
-			fprintf(outFile,"\t\t}\n");
-			fprintf(outFile,"\t}\n");
-			fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+			fprintf(disFile,"\t{\n");
+			fprintf(disFile,"\t\tu_int16_t\ttmp;\n");
+			fprintf(disFile,"\n");
+			fprintf(disFile,"\t\ttmp=MEM_getWord(adr);\n");
+			fprintf(disFile,"\t\tif (tmp&0x8000)\n");
+			fprintf(disFile,"\t\t{\n");
+			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
+			fprintf(disFile,"\t\t}\n");
+			fprintf(disFile,"\t\telse\n");
+			fprintf(disFile,"\t\t{\n");
+			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
+			fprintf(disFile,"\t\t}\n");
+			fprintf(disFile,"\t}\n");
+			fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 			break;
 		case 0x3C:		/// 111100
 			switch (length)
 			{
 			case 1:
-				fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%02X\",MEM_getByte(adr+1));\n");
-				fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+				fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%02X\",MEM_getByte(adr+1));\n");
+				fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 				break;
 			case 2:
-				fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%04X\",MEM_getWord(adr));\n");
-				fprintf(outFile,"\tadr+=2;\n\tinsLength+=2;\n");
+				fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%04X\",MEM_getWord(adr));\n");
+				fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 				break;
 			case 4:
-				fprintf(outFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%08X\",MEM_getLong(adr));\n");
-				fprintf(outFile,"\tadr+=4;\n\tinsLength+=4;\n");
+				fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"#%%08X\",MEM_getLong(adr));\n");
+				fprintf(disFile,"\tadr+=4;\n\tinsLength+=4;\n");
 				break;
 			default:
 				printf("Illegal Effective Address Operand Length : %04X\n",length);
@@ -183,22 +183,22 @@ void OUTPUT_DISSASEMBLE_OPERAND(char *name, u_int16_t op)
 {
 	char tmp[256];
 	sprintf(tmp,name,op);
-	fprintf(outFile,"\tstrcat(mnemonicData,\"%s\");\n",tmp);
+	fprintf(disFile,"\tstrcat(mnemonicData,\"%s\");\n",tmp);
 }
 
 void OUTPUT_DISSASEMBLE_END()
 {
-	fprintf(outFile,"\n");
-	fprintf(outFile,"\treturn insLength;\n");
-	fprintf(outFile,"}\n");
+	fprintf(disFile,"\n");
+	fprintf(disFile,"\treturn insLength;\n");
+	fprintf(disFile,"}\n");
 }
 
 ////// DISSASEMBLE HANDLERS ///////
 
 
-void CPU_DIS_LEA(u_int32_t ignored,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+void CPU_DIS_LEA(u_int32_t ignored,u_int16_t oode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	OUTPUT_DISSASEMBLE_START("LEA",opcode);
+	OUTPUT_DISSASEMBLE_START("LEA",oode);
 
 	OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(op2,4);
 	OUTPUT_DISSASEMBLE_OPERAND(",A%d",op1);

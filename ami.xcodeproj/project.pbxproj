@@ -31,7 +31,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 38BDAC5410470A12003FF5CD /* cpu_builder */;
+			remoteGlobalIDString = 38BDAC5410470A12003FF5CD;
 			remoteInfo = cpu_builder;
 		};
 /* End PBXContainerItemProxy section */
@@ -76,7 +76,7 @@
 		389C06BA10249B600006CF6E /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
 		38BA4BE61031C4A80039A042 /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = keyboard.h; sourceTree = "<group>"; };
 		38BA4BE71031C4A80039A042 /* keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = keyboard.c; sourceTree = "<group>"; };
-		38BDAC5510470A12003FF5CD /* cpu_builder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = cpu_builder; path = build/Debug/cpu_builder; sourceTree = "<group>"; };
+		38BDAC5510470A12003FF5CD /* cpu_builder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cpu_builder; sourceTree = BUILT_PRODUCTS_DIR; };
 		38BDAC7710470BC3003FF5CD /* cpu_builder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu_builder.c; sourceTree = "<group>"; };
 		38BDACAB10471C77003FF5CD /* cpu_builder_dissasemble.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = cpu_builder_dissasemble.h; sourceTree = "<group>"; };
 		38BDAD2A1047381F003FF5CD /* cpu_builder_opcode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu_builder_opcode.h; sourceTree = "<group>"; };

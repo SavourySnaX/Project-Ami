@@ -34,6 +34,13 @@ typedef struct
 	u_int16_t	SR;		// T1 T0 S M 0 I2 I1 I0 0 0 0 X N Z V C		(bit 15-0) NB low 8 = CCR
 	
 	u_int32_t	USP,ISP;
+	
+	// Hidden registers (basically emulation temporaries)
+	u_int32_t	ea;
+	u_int8_t	tmpB;
+	u_int16_t	tmpW;
+	u_int32_t	tmpL;
+	
 }CPU_Regs;
 
 
@@ -51,8 +58,6 @@ typedef struct
 #define	CPU_STATUS_C		(1<<0)
 
 extern CPU_Regs cpu_regs;
-
-void CPU_BuildTable();
 
 void CPU_Reset();
 
