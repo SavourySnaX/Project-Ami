@@ -286,48 +286,6 @@ void CPU_GENERATE_EXCEPTION(u_int32_t exceptionAddress)
 
 /////////////////////////////////////////////////
 
-void CPU_DIS_MOVE(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-    int len;
-	u_int16_t t1,t2;
-    char tMData[256]={0},tBData[256]={0};
-	
-    adr+=2;
-    strcpy(mnemonicData,"MOVE");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x03:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	t1 = (op2 & 0x38)>>3;
-	t2 = (op2 & 0x07)<<3;
-	op2 = t1|t2;
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-    strcat(mnemonicData,",");				    // needed cos assembler is source,dest
-	strcat(byteData," ");
-    adr+=decodeEffectiveAddress(adr,op2,tMData,tBData,len);
-    strcat(mnemonicData,tMData);
-    strcat(byteData,tBData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
-}
-
 void CPU_DIS_SUBs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
     int len;
@@ -358,115 +316,6 @@ void CPU_DIS_SUBs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int1
     adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
     sprintf(tempData,",D%d",op1);
     strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
-}
-
-void CPU_DIS_SUBQ(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-    int len;
-	
-    adr+=2;
-    strcpy(mnemonicData,"SUBQ");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-    if (op1==0)
-		op1=8;
-    sprintf(tempData,"#%02X,",op1);
-    strcat(mnemonicData,tempData);
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
-}
-
-void CPU_DIS_BCC(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-    adr+=2;
-    strcpy(mnemonicData,"B");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		default:
-			strcat(mnemonicData,"?? ");
-			break;
-		case 0x02:
-			strcat(mnemonicData,"HI ");
-			break;
-		case 0x03:
-			strcat(mnemonicData,"LS ");
-			break;
-		case 0x04:
-			strcat(mnemonicData,"CC ");
-			break;
-		case 0x05:
-			strcat(mnemonicData,"CS ");
-			break;
-		case 0x06:
-			strcat(mnemonicData,"NE ");
-			break;
-		case 0x07:
-			strcat(mnemonicData,"EQ ");
-			break;
-		case 0x08:
-			strcat(mnemonicData,"VC ");
-			break;
-		case 0x09:
-			strcat(mnemonicData,"VS ");
-			break;
-		case 0x0A:
-			strcat(mnemonicData,"PL ");
-			break;
-		case 0x0B:
-			strcat(mnemonicData,"MI ");
-			break;
-		case 0x0C:
-			strcat(mnemonicData,"GE ");
-			break;
-		case 0x0D:
-			strcat(mnemonicData,"LT ");
-			break;
-		case 0x0E:
-			strcat(mnemonicData,"GT ");
-			break;
-		case 0x0F:
-			strcat(mnemonicData,"LE ");
-			break;
-    }
-	
-    if (op2==0)
-	{
-		op2=MEM_getWord(adr);
-		strcat(byteData,decodeWord(adr));
-	}
-	else
-	{
-		if (op2&0x80)
-		{
-			op2|=0xFF00;
-		}
-	}
-	
-	sprintf(tempData,"%08X",adr+(int16_t)op2);
-	strcat(mnemonicData,tempData);
 	
     printf("%s\t%s\n",byteData,mnemonicData);
 }
@@ -2658,94 +2507,6 @@ void CPU_DIS_ORICCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_in
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void CPU_MOVE(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-    int len;
-	u_int16_t t1,t2;
-    u_int32_t ead,eas;
-	
-    cpu_regs.PC+=2;
-	
-    switch(op1)
-    {
-		case 0x01:
-			len=1;
-			break;
-		case 0x03:
-			len=2;
-			break;
-		case 0x02:
-			len=4;
-			break;
-    }
-	
-	t1 = (op2 & 0x38)>>3;
-	t2 = (op2 & 0x07)<<3;
-	op2 = t1|t2;
-	
-    if ((op2 & 0x38)==0)	// destination is D register
-    {
-		eas = getSourceEffectiveAddress(op3,len);
-		switch (len)
-		{
-			case 1:
-				cpu_regs.D[op2]&=0xFFFFFF00;
-				cpu_regs.D[op2]|=eas&0xFF;
-				break;
-			case 2:
-				cpu_regs.D[op2]&=0xFFFF0000;
-				cpu_regs.D[op2]|=eas&0xFFFF;
-				break;
-			case 4:
-				cpu_regs.D[op2]=eas;
-				break;
-		}
-    }
-    else
-    {
-		eas = getSourceEffectiveAddress(op3,len);
-		ead = getEffectiveAddress(op2,len);
-		switch (len)
-		{
-			case 1:
-				MEM_setByte(ead,eas&0xFF);
-				break;
-			case 2:
-				MEM_setWord(ead,eas&0xFFFF);
-				break;
-			case 4:
-				MEM_setLong(ead,eas);
-				break;
-		}
-    }
-	
-    cpu_regs.SR&=~(CPU_STATUS_V|CPU_STATUS_C);
-    u_int32_t nMask,zMask;
-    switch (len)
-    {
-		case 1:
-			nMask=0x80;
-			zMask=0xFF;
-			break;
-		case 2:
-			nMask=0x8000;
-			zMask=0xFFFF;
-			break;
-		case 4:
-			nMask=0x80000000;
-			zMask=0xFFFFFFFF;
-			break;
-    }
-    if (eas & nMask)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-    if (eas & zMask)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
-}
-
 void CPU_SUBs(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
     int len;
@@ -2802,187 +2563,6 @@ void CPU_SUBs(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t 
 		cpu_regs.SR|=CPU_STATUS_V;
 	else
 		cpu_regs.SR&=~CPU_STATUS_V;
-}
-
-void CPU_SUBQ(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-    int len;
-    u_int32_t nMask,zMask;
-    u_int32_t ead,eas,ear,eat;
-	
-    cpu_regs.PC+=2;
-	
-	if (op1==0)
-		op1=8;
-	
-    switch(op2)
-    {
-		case 0x00:
-			len=1;
-			nMask=0x80;
-			zMask=0xFF;
-			break;
-		case 0x01:
-			len=2;
-			nMask=0x8000;
-			zMask=0xFFFF;
-			break;
-		case 0x02:
-			len=4;
-			nMask=0x80000000;
-			zMask=0xFFFFFFFF;
-			break;
-    }
-	
-	eas=op1&zMask;
-    if ((op3 & 0x38)==0)	// destination is D register
-    {
-		ead=cpu_regs.D[op3]&zMask;
-		ear=(ead - eas)&zMask;
-		cpu_regs.D[op3]&=~zMask;
-		cpu_regs.D[op3]|=ear;
-    }
-    else
-    {
-		if ((op3 & 0x38)==0x08)
-		{
-			if (zMask==0xFF)
-			{
-				SOFT_BREAK;
-			}
-			ead=cpu_regs.A[op3&0x07]&zMask;
-			ear=(ead - eas)&zMask;
-			cpu_regs.A[op3&0x07]&=~zMask;
-			cpu_regs.A[op3&0x07]|=ear;
-		}
-		else
-		{
-			ead=getEffectiveAddress(op3,len);
-			switch (len)
-			{
-				case 1:
-					eat=MEM_getByte(ead);
-					ear=(eat - eas)&zMask;
-					MEM_setByte(ead,ear);
-					ead=eat;
-					break;
-				case 2:
-					eat=MEM_getWord(ead);
-					ear=(eat - eas)&zMask;
-					MEM_setWord(ead,ear);
-					ead=eat;
-					break;
-				case 4:
-					eat=MEM_getLong(ead);
-					ear=(eat - eas)&zMask;
-					MEM_setLong(ead,ear);
-					ead=eat;
-					break;
-			}
-		}
-    }
-	
-	if ((op3 & 0x38)==0x08)
-		return;
-	
-    if (ear)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
-	
-	ear&=nMask;
-	eas&=nMask;
-	ead&=nMask;
-	
-    if (ear)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-	
-	if ((eas & (~ead)) | (ear & (~ead)) | (eas & ear))
-		cpu_regs.SR|=(CPU_STATUS_C|CPU_STATUS_X);
-	else
-		cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
-	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
-		cpu_regs.SR|=CPU_STATUS_V;
-	else
-		cpu_regs.SR&=~CPU_STATUS_V;
-}
-
-void CPU_BCC(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-	int cc=0;
-	u_int32_t ead;
-	
-	cpu_regs.PC+=2;
-	
-    switch (op1)
-    {
-		default:
-			SOFT_BREAK;
-			break;
-		case 0x02:
-			cc = ((~cpu_regs.SR)&CPU_STATUS_C) && ((~cpu_regs.SR)&CPU_STATUS_Z);
-			break;
-		case 0x03:
-			cc = (cpu_regs.SR & CPU_STATUS_C) || (cpu_regs.SR & CPU_STATUS_Z);
-			break;
-		case 0x04:
-			cc = !(cpu_regs.SR & CPU_STATUS_C);
-			break;
-		case 0x05:
-			cc = (cpu_regs.SR & CPU_STATUS_C);
-			break;
-		case 0x06:
-			cc = !(cpu_regs.SR & CPU_STATUS_Z);
-			break;
-		case 0x07:
-			cc = (cpu_regs.SR & CPU_STATUS_Z);
-			break;
-		case 0x08:
-			cc = !(cpu_regs.SR & CPU_STATUS_V);
-			break;
-		case 0x09:
-			cc = (cpu_regs.SR & CPU_STATUS_V);
-			break;
-		case 0x0A:
-			cc = !(cpu_regs.SR & CPU_STATUS_N);
-			break;
-		case 0x0B:
-			cc = (cpu_regs.SR & CPU_STATUS_N);
-			break;
-		case 0x0C:
-			cc = ((cpu_regs.SR & CPU_STATUS_N) && (cpu_regs.SR & CPU_STATUS_V)) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (!(cpu_regs.SR & CPU_STATUS_V)));
-			break;
-		case 0x0D:
-			cc = ((cpu_regs.SR & CPU_STATUS_N) && (!(cpu_regs.SR & CPU_STATUS_V))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (cpu_regs.SR & CPU_STATUS_V));
-			break;
-		case 0x0E:
-			cc = ((cpu_regs.SR & CPU_STATUS_N) && (cpu_regs.SR & CPU_STATUS_V) && (!(cpu_regs.SR & CPU_STATUS_Z))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (!(cpu_regs.SR & CPU_STATUS_V)) && (!(cpu_regs.SR & CPU_STATUS_Z)));
-			break;
-		case 0x0F:
-			cc = (cpu_regs.SR & CPU_STATUS_Z) || ((cpu_regs.SR & CPU_STATUS_N) && (!(cpu_regs.SR & CPU_STATUS_V))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (cpu_regs.SR & CPU_STATUS_V));
-			break;
-    }
-	
-	ead = cpu_regs.PC;
-    if (op2==0)
-	{
-		op2=MEM_getWord(cpu_regs.PC);
-		cpu_regs.PC+=2;
-	}
-	else
-	{
-		if (op2&0x80)
-		{
-			op2|=0xFF00;
-		}
-	}
-	
-	if (cc)
-	{
-		cpu_regs.PC=ead+(int16_t)op2;
-	}
 }
 
 void CPU_CMPA(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
@@ -6747,8 +6327,10 @@ void CPU_UNKNOWN(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16
 }
 #endif
 
-FILE *opsFile;
-FILE *disFile;
+FILE *opsFile=NULL;
+FILE *disFile=NULL;
+FILE *opshFile;
+FILE *dishFile;
 FILE *opsTabFile;
 FILE *disTabFile;
 
@@ -6759,7 +6341,6 @@ FILE *disTabFile;
 ///////// INSTRUCTION BUILDERS /////////
 
 #include "cpu_builder_opcode.h"
-
 
 typedef void (*CPU_Decode)(u_int32_t adr,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
 typedef void (*CPU_Function)(u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
@@ -6867,10 +6448,10 @@ CPU_Ins cpu_instructions[] =
 {"00001100zzaaaaaa","CMPI",CPU_CMPI,CPU_DIS_CMPI,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"1011rrr0mmaaaaaa","CMP",CPU_CMP,CPU_DIS_CMP,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,12},{{"rrr"},{"00","01","10"},{"000rrr","001!!!","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
 {"1011rrrm11aaaaaa","CMPA",CPU_CMPA,CPU_DIS_CMPA,3,{0x0E00,0x0100,0x003F},{9,8,0},{1,1,12},{{"rrr"},{"r"},{"000rrr","001rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
+*/
 {"0110ccccdddddddd","BCC",CPU_BCC,CPU_DIS_BCC,2,{0x0F00,0x00FF},{8,0},{3,1},{{"rr1r","r1rr","1rrr"},{"rrrrrrrr"}}},
 {"0101ddd1zzaaaaaa","SUBQ",CPU_SUBQ,CPU_DIS_SUBQ,3,{0x0E00,0x00C0,0x003F},{9,6,0},{1,3,9},{{"rrr"},{"00","01","10"},{"000rrr","001!!!","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"00zzaaaaaaAAAAAA","MOVE",CPU_MOVE,CPU_DIS_MOVE,3,{0x3000,0x0FC0,0x003F},{12,6,0},{3,8,12},{{"01","10","11"},{"rrr000","rrr010","rrr011","rrr100","rrr101","rrr110","000111","001111"},{"000rrr","001???","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001","111100","111010","111011"}}},
-*/
 {"0100rrr111aaaaaa","LEA",CPU_LEA,CPU_DIS_LEA,2,{0x0E00,0x003F},{9,0},{1,7},{{"rrr"},{"010rrr","101rrr","110rrr","111000","111001","111010","111011"}}},
 {0,0,0}
 };
@@ -6962,6 +6543,101 @@ u_int8_t ValidateOpcode(int insNum,u_int16_t opcode)
     return 1;
 }
 
+void WriteHeader(FILE *file,char *name)
+{
+	fprintf(file,"/*\n");
+	fprintf(file," *  %s\n",name);
+	fprintf(file," *  ami\n");
+	fprintf(file,"\n");
+	fprintf(file,"Copyright (c) 2009 Lee Hammerton\n");
+	fprintf(file,"\n");
+	fprintf(file,"Permission is hereby granted, free of charge, to any person obtaining a copy\n");
+	fprintf(file,"of this software and associated documentation files (the \"Software\"), to deal\n");
+	fprintf(file,"in the Software without restriction, including without limitation the rights\n");
+	fprintf(file,"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n");
+	fprintf(file,"copies of the Software, and to permit persons to whom the Software is\n");
+	fprintf(file,"furnished to do so, subject to the following conditions:\n");
+	fprintf(file,"\n");
+	fprintf(file,"The above copyright notice and this permission notice shall be included in\n");
+	fprintf(file,"all copies or substantial portions of the Software.\n");
+	fprintf(file,"\n");
+	fprintf(file,"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n");
+	fprintf(file,"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n");
+	fprintf(file,"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n");
+	fprintf(file,"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n");
+	fprintf(file,"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n");
+	fprintf(file,"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\n");
+	fprintf(file,"THE SOFTWARE.\n");
+	fprintf(file,"\n");
+	fprintf(file," */\n");
+	fprintf(file,"\n");
+	fprintf(file,"#include <stdlib.h>\n");
+	fprintf(file,"#include <stdio.h>\n");
+	fprintf(file,"#include <string.h>\n");
+	fprintf(file,"\n");
+	fprintf(file,"#include \"config.h\"\n");
+	fprintf(file,"\n");
+	fprintf(file,"#include \"ciachip.h\"\n");
+	fprintf(file,"#include \"cpu.h\"\n");
+	fprintf(file,"#include \"memory.h\"\n");
+	fprintf(file,"#include \"customchip.h\"\n");
+	fprintf(file,"\n");
+}
+
+void OpenNextOpsFile()
+{
+	static int opID=0;
+	static char opFileName[128];
+
+	if (opsFile)
+		fclose(opsFile);
+
+	sprintf(opFileName,"../../cpu_src/cpuOps%04X.c",opID);
+    opsFile = fopen(opFileName,"wb");		// needed when running in debugger
+    if (!opsFile)
+    {
+		sprintf(opFileName,"cpu_src/cpuOps%04X.c",opID);
+		opsFile = fopen(opFileName,"wb");
+		if (!opsFile)
+		{
+			printf("Failed to open file for writing, this is bad\n");
+			exit(-1);
+		}
+    }
+
+	sprintf(opFileName,"cpuOps%04X.c",opID);
+	WriteHeader(opsFile,opFileName);
+
+	opID++;
+}
+
+void OpenNextDisFile()
+{
+	static int disID=0;
+	static char disFileName[128];
+
+	if (disFile)
+		fclose(disFile);
+
+	sprintf(disFileName,"../../cpu_src/cpuDis%04X.c",disID);
+    disFile = fopen(disFileName,"wb");		// needed when running in debugger
+    if (!disFile)
+    {
+		sprintf(disFileName,"cpu_src/cpuDis%04X.c",disID);
+		disFile = fopen(disFileName,"wb");
+		if (!disFile)
+		{
+			printf("Failed to open file for writing, this is bad\n");
+			exit(-1);
+		}
+    }
+	
+	sprintf(disFileName,"cpuDis%04X.c",disID);
+	WriteHeader(disFile,disFileName);
+
+	disID++;
+}
+
 void CPU_BuildTable()
 {
 	int a,b,c,d,e;
@@ -6975,6 +6651,9 @@ void CPU_BuildTable()
 	while (cpu_instructions[a].opcode)
 	{
 	    int modifiableBitCount=0;
+
+		OpenNextOpsFile();
+		OpenNextDisFile();
 		
 	    // precount modifiable bits
 	    for (b=0;b<16;b++)
@@ -7074,51 +6753,73 @@ void CPU_BuildTable()
 
 int main(int argc,char **argv)
 {
-    opsFile = fopen("../../cpu_src/cpuOps.c","wb");		// needed when running in debugger
-    if (!opsFile)
+    opshFile = fopen("../../cpu_src/cpuOps.h","wb");		// needed when running in debugger
+    if (!opshFile)
     {
-		opsFile = fopen("cpu_src/cpuOps.c","wb");
-		if (!opsFile)
+		opshFile = fopen("cpu_src/cpuOps.h","wb");
+		if (!opshFile)
 		{
 			printf("Failed to open file for writing, this is bad\n");
 			return -1;
 		}
     }
-    disFile = fopen("../../cpu_src/cpuDis.c","wb");		// needed when running in debugger
-    if (!disFile)
+    dishFile = fopen("../../cpu_src/cpuDis.h","wb");		// needed when running in debugger
+    if (!dishFile)
     {
-		disFile = fopen("cpu_src/cpuDis.c","wb");
-		if (!disFile)
+		dishFile = fopen("cpu_src/cpuDis.h","wb");
+		if (!dishFile)
 		{
 			printf("Failed to open file for writing, this is bad\n");
 			return -1;
 		}
     }
-    opsTabFile = fopen("../../cpu_src/cpuOpsTable.c","wb");		// needed when running in debugger
+    opsTabFile = fopen("../../cpu_src/cpuOpsTable.h","wb");		// needed when running in debugger
     if (!opsTabFile)
     {
-		opsTabFile = fopen("cpu_src/cpuOpsTable.c","wb");
+		opsTabFile = fopen("cpu_src/cpuOpsTable.h","wb");
 		if (!opsTabFile)
 		{
 			printf("Failed to open file for writing, this is bad\n");
 			return -1;
 		}
     }
-    disTabFile = fopen("../../cpu_src/cpuDisTable.c","wb");		// needed when running in debugger
+    disTabFile = fopen("../../cpu_src/cpuDisTable.h","wb");		// needed when running in debugger
     if (!disTabFile)
     {
-		disTabFile = fopen("cpu_src/cpuDisTable.c","wb");
+		disTabFile = fopen("cpu_src/cpuDisTable.h","wb");
 		if (!disTabFile)
 		{
 			printf("Failed to open file for writing, this is bad\n");
 			return -1;
 		}
     }
+	
+	// Dump intial table setup
+	fprintf(opsTabFile,"typedef u_int32_t (*CPU_Opcode)(u_int32_t stage);\n");
+	fprintf(opsTabFile,"\nCPU_Opcode CPU_JumpTable[65536];\n");
+	fprintf(opsTabFile,"\nvoid CPU_BuildOpsTable()\n");
+	fprintf(opsTabFile,"{\n");
+	fprintf(opsTabFile,"\tu_int32_t\ta;\n");
+	fprintf(opsTabFile,"\n\tfor (a=0;a<65536;a++) CPU_JumpTable[a]=CPU_UNKNOWN;\n");
+	fprintf(opsTabFile,"\n");
 
+	fprintf(disTabFile,"typedef u_int32_t (*CPU_Decode)(u_int32_t adr);\n");
+	fprintf(disTabFile,"\nCPU_Decode CPU_DisTable[65536];\n");
+	fprintf(disTabFile,"\nvoid CPU_BuildDisTable()\n");
+	fprintf(disTabFile,"{\n");
+	fprintf(disTabFile,"\tu_int32_t\ta;\n");
+	fprintf(disTabFile,"\n\tfor (a=0;a<65536;a++) CPU_DisTable[a]=CPU_DIS_UNKNOWN;\n");
+	fprintf(disTabFile,"\n");
+	
 	CPU_BuildTable();
+	
+	fprintf(opsTabFile,"}\n");
+	fprintf(disTabFile,"}\n");
 	
     fclose(opsFile);
     fclose(disFile);
+    fclose(opshFile);
+    fclose(dishFile);
     fclose(opsTabFile);
     fclose(disTabFile);
 	

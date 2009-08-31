@@ -44,6 +44,8 @@ void CPU_Reset()
 {
 	int a;
 	
+	cpu_regs.stage=0;
+	
 	for (a=0;a<8;a++)
 	{
 		cpu_regs.D[a]=0;
@@ -81,9 +83,7 @@ const char *decodeLong(u_int32_t address)
 	return buffer;
 }
 
-static char mnemonicData[256];
-static char byteData[256];
-static char tempData[256];
+char mnemonicData[256];
 
 int startDebug=0;
 int cpuStopped=0;
@@ -124,24 +124,33 @@ void CPU_GENERATE_EXCEPTION(u_int32_t exceptionAddress)
 	cpu_regs.PC=MEM_getLong(exceptionAddress);
 }
 
-////////////////////////////////////////////////////////////////////////
-
-#include "cpu_src/cpuOps.c"
-#include "cpu_src/cpuDis.c"
-#include "cpu_src/cpuTable.c"
-
-////////////////////////////////////////////////////////////////////////
-
-void CPU_DIS_UNKNOWN(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+u_int32_t CPU_DIS_UNKNOWN(u_int32_t adr)
 {
-	printf("UNKNOWN INSTRUCTION\n");
+	strcpy(mnemonicData,"UNKNOWN INSTRUCTION\n");
+	return 0;
 }
 
-void CPU_UNKNOWN(u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+u_int32_t CPU_UNKNOWN(u_int32_t stage)
 {
 	printf("ILLEGAL INSTRUCTION %08x\n",cpu_regs.PC);
 	startDebug=1;
+	return stage;
 }
+
+////////////////////////////////////////////////////////////////////////
+
+#include "cpu_src/cpuOps.h"
+#include "cpu_src/cpuDis.h"
+#include "cpu_src/cpuOpsTable.h"
+#include "cpu_src/cpuDisTable.h"
+
+void CPU_BuildTables()
+{
+	CPU_BuildDisTable();
+	CPU_BuildOpsTable();
+}
+
+////////////////////////////////////////////////////////////////////////
 
 void DumpEmulatorState()
 {
@@ -292,7 +301,7 @@ void CPU_CheckForInterrupt()
 		}
 	}
 }
-
+/*
 u_int32_t lastPC;
 int readyToTrap=0;	
 
@@ -305,7 +314,7 @@ extern int doNewOpcodeDebug;
 
 u_int32_t	bpAddress=0x5c5e;
 
-void CPU_Step()
+void CPU_Step_OLD()
 {
     u_int16_t operands[8];
     u_int16_t opcode;
@@ -321,18 +330,18 @@ void CPU_Step()
 	}
 	else
 	{
-/*		for (a=0;a<PCCACHESIZE;a++)
-		{
-			printf("PC History : %08X\n",pcCache[a]);
-		}
-*/	
-		memmove(pcCache,pcCache+1,(PCCACHESIZE-1)*sizeof(u_int32_t));
-/*
 		for (a=0;a<PCCACHESIZE;a++)
 		{
 			printf("PC History : %08X\n",pcCache[a]);
 		}
-*/
+
+		memmove(pcCache,pcCache+1,(PCCACHESIZE-1)*sizeof(u_int32_t));
+
+		for (a=0;a<PCCACHESIZE;a++)
+		{
+			printf("PC History : %08X\n",pcCache[a]);
+		}
+
 		pcCache[PCCACHESIZE-1]=lastPC;
 	}
 	
@@ -349,13 +358,13 @@ void CPU_Step()
 	
     // DEBUGGER
 
-	if (cpu_regs.PC == bpAddress /*0x7013a*/ /*cpu_regs.PC > 0x1000000 && cpu_regs.PC < 0x2000000*//*== 0x107e068*/)			//FE961E  NOP
+	if (cpu_regs.PC == bpAddress)			//FE961E  NOP
 	{
-/*		static once=0;
+		static once=0;
 		if (once==0)
 			startDebug=1;
 		else
-			once++;*/
+			once++;
 	}
 
 	if ((!cpuUsedTable[opcode]) && doNewOpcodeDebug)
@@ -363,10 +372,10 @@ void CPU_Step()
 		
 	if (startDebug)
 	{
-/*		for (a=0;a<PCCACHESIZE;a++)
+		for (a=0;a<PCCACHESIZE;a++)
 		{
 			printf("PC History : %08X\n",pcCache[a]);
-		}*/
+		}
 
 		DumpEmulatorState();
 		
@@ -383,10 +392,10 @@ void CPU_Step()
 	{
 		cpuUsedTable[opcode]=1;
 		CPU_JumpTable[opcode](operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
-/*	if (cpuStopped)
+	if (cpuStopped)
 	{
 		printf("CPU STOPPED : %08x\n",cpu_regs.PC);
-	}*/
+	}
 	}
 
 	if (MEM_getLong(0x6c)==0)
@@ -400,6 +409,53 @@ void CPU_Step()
 	else
 	{
 		readyToTrap=1;
+	}
+}*/
+
+void CPU_Step()
+{
+	
+	if (cpuStopped)
+		return;
+
+	if (!cpu_regs.stage)
+	{
+		if (cpu_regs.PC == 0x00FC00E2)			//FE961E  NOP
+		{
+			startDebug=1;
+		}
+
+		CPU_CheckForInterrupt();
+
+		// Fetch next instruction
+		cpu_regs.opcode = MEM_getWord(cpu_regs.PC);
+		cpu_regs.PC+=2;
+
+		cpu_regs.stage=1;
+
+		if (startDebug)
+		{
+			u_int32_t	insCount,a;
+			
+			DumpEmulatorState();
+
+			insCount=CPU_DisTable[cpu_regs.opcode](cpu_regs.PC);
+
+			printf("%08X\t",cpu_regs.PC-2);
+			
+			for (a=0;a<(insCount+2)/2;a++)
+			{
+				printf("%s ",decodeWord(cpu_regs.PC-2+a*2));
+			}
+			
+			printf("\t%s\n",mnemonicData);
+
+			startDebug=1;	// just so i can break after disassembly.
+		}
+	}
+	else
+	{
+		cpu_regs.stage = CPU_JumpTable[cpu_regs.opcode](cpu_regs.stage);
 	}
 }
 

@@ -614,7 +614,7 @@ int main(int argc,char **argv)
 		}
     }
 	
-//    CPU_BuildTable();
+    CPU_BuildTables();
 	
     MEM_Initialise(romPtr);
 	

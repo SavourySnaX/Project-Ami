@@ -31,18 +31,23 @@ typedef struct
 	u_int32_t	D[8];
 	u_int32_t	A[8];
 	u_int32_t	PC;
-	u_int16_t	SR;		// T1 T0 S M 0 I2 I1 I0 0 0 0 X N Z V C		(bit 15-0) NB low 8 = CCR
-	
 	u_int32_t	USP,ISP;
+
+	u_int16_t	SR;		// T1 T0 S M 0 I2 I1 I0 0 0 0 X N Z V C		(bit 15-0) NB low 8 = CCR	
 	
 	// Hidden registers (basically emulation temporaries)
-	u_int32_t	ea;
-	u_int8_t	tmpB;
-	u_int16_t	tmpW;
+	u_int32_t	stage;
 	u_int32_t	tmpL;
+	u_int16_t	tmpW;
+    u_int16_t	opcode;
+	u_int8_t	tmpB;
+	
+	u_int32_t	eas,ead,ear,eat;
+	u_int32_t	nMask,zMask;
 	
 }CPU_Regs;
 
+extern char mnemonicData[256];
 
 #define	CPU_STATUS_T1		(1<<15)
 #define	CPU_STATUS_T0		(1<<14)
@@ -58,6 +63,8 @@ typedef struct
 #define	CPU_STATUS_C		(1<<0)
 
 extern CPU_Regs cpu_regs;
+
+void CPU_BuildTables();
 
 void CPU_Reset();
 

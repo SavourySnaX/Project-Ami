@@ -20,6 +20,14 @@
 		389C06C110249B600006CF6E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 389C06B610249B600006CF6E /* Info.plist */; };
 		389C06C210249B600006CF6E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B710249B600006CF6E /* main.c */; };
 		389C06C310249B600006CF6E /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06B810249B600006CF6E /* memory.c */; };
+		38ACFD01104BE11A00E67BAC /* cpuDis0000.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFCFB104BE11A00E67BAC /* cpuDis0000.c */; };
+		38ACFD02104BE11A00E67BAC /* cpuDis0001.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFCFC104BE11A00E67BAC /* cpuDis0001.c */; };
+		38ACFD03104BE11A00E67BAC /* cpuDis0002.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFCFD104BE11A00E67BAC /* cpuDis0002.c */; };
+		38ACFD04104BE11A00E67BAC /* cpuOps0000.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFCFE104BE11A00E67BAC /* cpuOps0000.c */; };
+		38ACFD05104BE11A00E67BAC /* cpuOps0001.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFCFF104BE11A00E67BAC /* cpuOps0001.c */; };
+		38ACFD06104BE11A00E67BAC /* cpuOps0002.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFD00104BE11A00E67BAC /* cpuOps0002.c */; };
+		38ACFD38104BF34A00E67BAC /* cpuDis0003.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFD36104BF34A00E67BAC /* cpuDis0003.c */; };
+		38ACFD39104BF34A00E67BAC /* cpuOps0003.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFD37104BF34A00E67BAC /* cpuOps0003.c */; };
 		38BA4BE81031C4A80039A042 /* keyboard.c in Sources */ = {isa = PBXBuildFile; fileRef = 38BA4BE71031C4A80039A042 /* keyboard.c */; };
 		38BDAC7810470BC3003FF5CD /* cpu_builder.c in Sources */ = {isa = PBXBuildFile; fileRef = 38BDAC7710470BC3003FF5CD /* cpu_builder.c */; };
 		38D5910D1027430B00752082 /* disk.c in Sources */ = {isa = PBXBuildFile; fileRef = 38D5910C1027430B00752082 /* disk.c */; };
@@ -74,6 +82,18 @@
 		389C06B810249B600006CF6E /* memory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
 		389C06B910249B600006CF6E /* memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
 		389C06BA10249B600006CF6E /* mytypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mytypes.h; sourceTree = "<group>"; };
+		38ACFCFB104BE11A00E67BAC /* cpuDis0000.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuDis0000.c; path = cpu_src/cpuDis0000.c; sourceTree = "<group>"; };
+		38ACFCFC104BE11A00E67BAC /* cpuDis0001.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuDis0001.c; path = cpu_src/cpuDis0001.c; sourceTree = "<group>"; };
+		38ACFCFD104BE11A00E67BAC /* cpuDis0002.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuDis0002.c; path = cpu_src/cpuDis0002.c; sourceTree = "<group>"; };
+		38ACFCFE104BE11A00E67BAC /* cpuOps0000.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuOps0000.c; path = cpu_src/cpuOps0000.c; sourceTree = "<group>"; };
+		38ACFCFF104BE11A00E67BAC /* cpuOps0001.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuOps0001.c; path = cpu_src/cpuOps0001.c; sourceTree = "<group>"; };
+		38ACFD00104BE11A00E67BAC /* cpuOps0002.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuOps0002.c; path = cpu_src/cpuOps0002.c; sourceTree = "<group>"; };
+		38ACFD36104BF34A00E67BAC /* cpuDis0003.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuDis0003.c; path = cpu_src/cpuDis0003.c; sourceTree = "<group>"; };
+		38ACFD37104BF34A00E67BAC /* cpuOps0003.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpuOps0003.c; path = cpu_src/cpuOps0003.c; sourceTree = "<group>"; };
+		38AE95C8104A79B500341576 /* cpuDis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpuDis.h; path = cpu_src/cpuDis.h; sourceTree = "<group>"; };
+		38AE95C9104A79B500341576 /* cpuDisTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpuDisTable.h; path = cpu_src/cpuDisTable.h; sourceTree = "<group>"; };
+		38AE95CA104A79B500341576 /* cpuOps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpuOps.h; path = cpu_src/cpuOps.h; sourceTree = "<group>"; };
+		38AE95CB104A79B500341576 /* cpuOpsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpuOpsTable.h; path = cpu_src/cpuOpsTable.h; sourceTree = "<group>"; };
 		38BA4BE61031C4A80039A042 /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = keyboard.h; sourceTree = "<group>"; };
 		38BA4BE71031C4A80039A042 /* keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = keyboard.c; sourceTree = "<group>"; };
 		38BDAC5510470A12003FF5CD /* cpu_builder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cpu_builder; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -124,6 +144,7 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				38AE95B9104A78CB00341576 /* generated_cpu */,
 				389C06A910249B600006CF6E /* blitter.c */,
 				389C06AA10249B600006CF6E /* blitter.h */,
 				389C06AB10249B600006CF6E /* ciachip.c */,
@@ -162,6 +183,25 @@
 				38BDAC5510470A12003FF5CD /* cpu_builder */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		38AE95B9104A78CB00341576 /* generated_cpu */ = {
+			isa = PBXGroup;
+			children = (
+				38ACFD36104BF34A00E67BAC /* cpuDis0003.c */,
+				38ACFD37104BF34A00E67BAC /* cpuOps0003.c */,
+				38ACFCFB104BE11A00E67BAC /* cpuDis0000.c */,
+				38ACFCFC104BE11A00E67BAC /* cpuDis0001.c */,
+				38ACFCFD104BE11A00E67BAC /* cpuDis0002.c */,
+				38ACFCFE104BE11A00E67BAC /* cpuOps0000.c */,
+				38ACFCFF104BE11A00E67BAC /* cpuOps0001.c */,
+				38ACFD00104BE11A00E67BAC /* cpuOps0002.c */,
+				38AE95C8104A79B500341576 /* cpuDis.h */,
+				38AE95C9104A79B500341576 /* cpuDisTable.h */,
+				38AE95CA104A79B500341576 /* cpuOps.h */,
+				38AE95CB104A79B500341576 /* cpuOpsTable.h */,
+			);
+			name = generated_cpu;
 			sourceTree = "<group>";
 		};
 		C6A0FF2B0290797F04C91782 /* Documentation */ = {
@@ -281,6 +321,14 @@
 				38D5910D1027430B00752082 /* disk.c in Sources */,
 				3834E95B102C856F00EBF10F /* sprite.c in Sources */,
 				38BA4BE81031C4A80039A042 /* keyboard.c in Sources */,
+				38ACFD01104BE11A00E67BAC /* cpuDis0000.c in Sources */,
+				38ACFD02104BE11A00E67BAC /* cpuDis0001.c in Sources */,
+				38ACFD03104BE11A00E67BAC /* cpuDis0002.c in Sources */,
+				38ACFD04104BE11A00E67BAC /* cpuOps0000.c in Sources */,
+				38ACFD05104BE11A00E67BAC /* cpuOps0001.c in Sources */,
+				38ACFD06104BE11A00E67BAC /* cpuOps0002.c in Sources */,
+				38ACFD38104BF34A00E67BAC /* cpuDis0003.c in Sources */,
+				38ACFD39104BF34A00E67BAC /* cpuOps0003.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

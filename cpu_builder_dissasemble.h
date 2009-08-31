@@ -28,13 +28,99 @@ THE SOFTWARE.
 
 ////// DISSASEMBLE HELPERS ////////
 
-void OUTPUT_DISSASEMBLE_START(const char *name,u_int16_t oode)
+void OUTPUT_DISSASEMBLE_START(const char *name,u_int16_t opcode,int size)
 {
-	fprintf(disFile,"\nint DIS_%s_%04X(u_int32_t adr)\n",name,oode);
+	fprintf(disTabFile,"\tCPU_DisTable[0x%04X]=DIS_%s_%04X;\n",opcode,name,opcode);
+	fprintf(dishFile,"\nu_int32_t DIS_%s_%04X(u_int32_t adr);\n",name,opcode);
+	fprintf(disFile,"\nu_int32_t DIS_%s_%04X(u_int32_t adr)\n",name,opcode);
 	fprintf(disFile,"{\n");
-	fprintf(disFile,"\tint\tinsLength=0;\n");
+	fprintf(disFile,"\tu_int32_t\tinsLength=0;\n");
 	fprintf(disFile,"\n");
-	fprintf(disFile,"\tstrcpy(mnemonicData,\"%s \");\n",name);
+	switch(size)
+	{
+		default:
+			printf("Unknown Size for Instruction %d\n",size);
+			exit(-1);
+		case 1:
+			fprintf(disFile,"\tstrcpy(mnemonicData,\"%s.B \");\n",name);
+			break;
+		case 2:
+			fprintf(disFile,"\tstrcpy(mnemonicData,\"%s.W \");\n",name);
+			break;
+		case 4:
+			fprintf(disFile,"\tstrcpy(mnemonicData,\"%s.L \");\n",name);
+			break;
+	}
+}
+
+void OUTPUT_DISSASEMBLE_START_CC(const char *name,u_int16_t opcode,int size, u_int16_t op,int tf)
+{
+	static char iName[8];
+	
+	strcpy(iName,name);
+	switch (op)
+    {
+		case 0x00:
+			if (!tf)
+			{
+				printf("Illegal CC %d\n",op);
+				exit(-1);
+			}
+			strcat(iName,"T");
+			break;
+		case 0x01:
+			if (!tf)
+			{
+				printf("Illegal CC %d\n",op);
+				exit(-1);
+			}
+			strcat(iName,"F");
+			break;
+		case 0x02:
+			strcat(iName,"HI");
+			break;
+		case 0x03:
+			strcat(iName,"LS");
+			break;
+		case 0x04:
+			strcat(iName,"CC");
+			break;
+		case 0x05:
+			strcat(iName,"CS");
+			break;
+		case 0x06:
+			strcat(iName,"NE");
+			break;
+		case 0x07:
+			strcat(iName,"EQ");
+			break;
+		case 0x08:
+			strcat(iName,"VC");
+			break;
+		case 0x09:
+			strcat(iName,"VS");
+			break;
+		case 0x0A:
+			strcat(iName,"PL");
+			break;
+		case 0x0B:
+			strcat(iName,"MI");
+			break;
+		case 0x0C:
+			strcat(iName,"GE");
+			break;
+		case 0x0D:
+			strcat(iName,"LT");
+			break;
+		case 0x0E:
+			strcat(iName,"GT");
+			break;
+		case 0x0F:
+			strcat(iName,"LE");
+			break;
+    }
+
+	OUTPUT_DISSASEMBLE_START(iName,opcode,size);
 }
 
 void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
@@ -134,7 +220,7 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 			fprintf(disFile,"\tadr+=4;\n\tinsLength+=4;\n");
 			break;
 		case 0x3A:		/// 111010
-			fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(,%%04X)\",MEM_getWord(adr));\n");
+			fprintf(disFile,"\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(%%04X,PC)\",MEM_getWord(adr));\n");
 			fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
 			break;
 		case 0x3B:		/// 111100
@@ -144,11 +230,11 @@ void OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(u_int16_t operand,int length)
 			fprintf(disFile,"\t\ttmp=MEM_getWord(adr);\n");
 			fprintf(disFile,"\t\tif (tmp&0x8000)\n");
 			fprintf(disFile,"\t\t{\n");
-			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
+			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,A%%d%%s,PC)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
 			fprintf(disFile,"\t\t}\n");
 			fprintf(disFile,"\t\telse\n");
 			fprintf(disFile,"\t\t{\n");
-			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
+			fprintf(disFile,"\t\t\tsprintf(&mnemonicData[strlen(mnemonicData)],\"(#%%02X,D%%d%%s,PC)\",tmp&0xFF,(tmp>>12)&0x7,(tmp&0x0800) ? \".L\" : \".W\");\n");
 			fprintf(disFile,"\t\t}\n");
 			fprintf(disFile,"\t}\n");
 			fprintf(disFile,"\tadr+=2;\n\tinsLength+=2;\n");
@@ -193,16 +279,117 @@ void OUTPUT_DISSASEMBLE_END()
 	fprintf(disFile,"}\n");
 }
 
+int OUTPUT_DISSASEMBLE_DECODE_LENGTHM(u_int16_t op)
+{
+    switch (op)
+    {
+		default:
+			printf("Unknown MOVE style length %d\n",op);
+			exit(-1);
+		case 0x01:
+			return 1;
+		case 0x03:
+			return 2;
+		case 0x02:
+			return 4;
+    }
+	return 0;
+}
+
+int OUTPUT_DISSASEMBLE_DECODE_LENGTH(u_int16_t op)
+{
+    switch (op)
+    {
+		default:
+			printf("Unknown length %d\n",op);
+			exit(-1);
+		case 0x00:
+			return 1;
+		case 0x01:
+			return 2;
+		case 0x02:
+			return 4;
+    }
+	return 0;
+}
+
+int OUTPUT_DISSASEMBLE_DECODE_LENGTHB(u_int16_t op)
+{
+	if (op==0)
+		return 2;
+	return 1;
+}
+
 ////// DISSASEMBLE HANDLERS ///////
 
 
-void CPU_DIS_LEA(u_int32_t ignored,u_int16_t oode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+void CPU_DIS_LEA(u_int32_t ignored,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	OUTPUT_DISSASEMBLE_START("LEA",oode);
+	OUTPUT_DISSASEMBLE_START("LEA",opcode,4);
 
 	OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(op2,4);
 	OUTPUT_DISSASEMBLE_OPERAND(",A%d",op1);
 
+	OUTPUT_DISSASEMBLE_END();
+}
+
+void CPU_DIS_MOVE(u_int32_t ignored,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+	u_int16_t t1,t2;
+
+	t1 = (op2 & 0x38)>>3;			// Operand codes reversed in move instruction
+	t2 = (op2 & 0x07)<<3;
+	op2 = t1|t2;
+
+	len = OUTPUT_DISSASEMBLE_DECODE_LENGTHM(op1);
+
+	OUTPUT_DISSASEMBLE_START("MOVE",opcode,len);
+
+	OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(op3,len);
+	OUTPUT_DISSASEMBLE_OPERAND(",",0);
+	OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(op2,len);
+	
+	OUTPUT_DISSASEMBLE_END();
+}
+
+void CPU_DIS_SUBQ(u_int32_t ignored,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+
+	len = OUTPUT_DISSASEMBLE_DECODE_LENGTH(op2);
+	
+	OUTPUT_DISSASEMBLE_START("SUBQ",opcode,len);
+	
+    if (op1==0)
+		op1=8;
+    OUTPUT_DISSASEMBLE_OPERAND("#%02X,",op1);
+	OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(op3,len);
+
+	OUTPUT_DISSASEMBLE_END();
+}
+
+void CPU_DIS_BCC(u_int32_t ignored,u_int16_t opcode,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	int len;
+	
+	len = OUTPUT_DISSASEMBLE_DECODE_LENGTHB(op2);
+	
+	OUTPUT_DISSASEMBLE_START_CC("B",opcode,len,op1,0);
+	
+    if (len==2)
+	{
+		OUTPUT_DISSASEMBLE_EFFECTIVE_ADDRESS(0x38,2);
+	}
+	else
+	{
+		if (op2&0x80)
+		{
+			op2|=0xFF00;
+		}
+		OUTPUT_DISSASEMBLE_OPERAND("%04X.B",op2);
+	}
+	
 	OUTPUT_DISSASEMBLE_END();
 }
 
