@@ -30,12 +30,9 @@ THE SOFTWARE.
 
 #include "config.h"
 
-#include "ciachip.h"
-#include "cpu.h"
-#include "memory.h"
-#include "customchip.h"
+#include "cpu_dis.h"
 
-static char mnemonicData[256];
+char mnemonicData[256];
 
 int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,int length)
 {
@@ -185,6 +182,7 @@ void decodeInstructionCC(char *baseName,u_int16_t op,int len)
 {
 	static char name[16];
 
+	strcpy(name,baseName);
     switch (op)
     {
 		case 0x00:
@@ -269,6 +267,18 @@ int decodeLength(u_int16_t op)
 	return 0;
 }
 
+int decodeLengthWL(u_int16_t op)
+{
+	switch (op)
+	{
+		case 0:
+			return 2;
+		case 1:
+			return 4;
+	}
+	return 0;
+}
+
 int decodeLengthCC(u_int16_t op)
 {
 	if (op==0)
@@ -278,6 +288,8 @@ int decodeLengthCC(u_int16_t op)
 
 int decodeDisp(u_int32_t adr,u_int16_t op)
 {
+	int length=0;
+	
     if (op==0)
 	{
 		op=MEM_getWord(adr);
@@ -292,6 +304,41 @@ int decodeDisp(u_int32_t adr,u_int16_t op)
 	}
 	
 	sprintf(&mnemonicData[strlen(mnemonicData)],"%08X",adr+(int16_t)op);
+	
+	return length;
+}
+
+void decodeIR(u_int16_t ir,u_int16_t i)
+{
+	if (ir==0)
+	{
+		if (i==0)
+			i=8;
+		sprintf(&mnemonicData[strlen(mnemonicData)],"#%02X",i);
+	}
+	else
+	{
+		sprintf(&mnemonicData[strlen(mnemonicData)],"D%d",i);
+	}
+}
+
+int decodeLengthReg(u_int16_t op)
+{
+	if (op<0x10)
+		return 4;
+	return 1;
+}
+
+int decodeLengthEXT(u_int16_t op)
+{
+    switch (op)
+    {
+		case 0x02:
+			return 2;
+		case 0x03:
+			return 4;
+    }
+	return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -300,7 +347,7 @@ u_int16_t CPU_DIS_LEA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_
 {
 	int length=0;	
 	decodeInstruction("LEA",4);
-    length+=decodeEffectiveAddress(adr,op2,4);
+    length+=decodeEffectiveAddress(adr+length,op2,4);
     sprintf(&mnemonicData[strlen(mnemonicData)],",A%d",op1);
 	return length;
 }
@@ -317,7 +364,7 @@ u_int16_t CPU_DIS_MOVE(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u
 	t2 = (op2 & 0x07)<<3;
 	op2 = t1|t2;
 	
-    length+=decodeEffectiveAddress(adr,op3,len);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
     strcat(mnemonicData,",");
     length+=decodeEffectiveAddress(adr+length,op2,len);
 	
@@ -331,7 +378,7 @@ u_int16_t CPU_DIS_SUBs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u
 	
 	decodeInstruction("SUB",len);
 	
-    length+=decodeEffectiveAddress(adr,op3,len);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
     sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
 
 	return length;
@@ -347,7 +394,7 @@ u_int16_t CPU_DIS_SUBQ(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u
     if (op1==0)
 		op1=8;
     sprintf(&mnemonicData[strlen(mnemonicData)],"#%02X,",op1);
-    length+=decodeEffectiveAddress(adr,op3,len);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
 	
 	return length;
 }
@@ -359,794 +406,349 @@ u_int16_t CPU_DIS_BCC(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_
 
 	decodeInstructionCC("B",op1,len);
 
-	length+=decodeDisp(adr,op2);
+	length+=decodeDisp(adr+length,op2);
 
 	return length;
 }
 
 u_int16_t CPU_DIS_CMPA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthWL(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"CMPA");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		case 0x00:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("CMPA",len);
 	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-    sprintf(tempData,",A%d",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+    sprintf(&mnemonicData[strlen(mnemonicData)],",A%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_CMP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"CMP");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-    sprintf(tempData,",D%d",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("CMP",len);
+
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+    sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_CMPI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"CMPI");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("CMP",len);
 	
-	strcat(mnemonicData,"#");
-	switch (len)
-	{
-		case 1:
-		case 2:
-			strcat(mnemonicData,decodeWord(adr));
-			strcat(byteData,decodeWord(adr));
-			adr+=2;
-			break;
-		case 4:
-			strcat(mnemonicData,decodeLong(adr));
-			strcat(byteData,decodeLong(adr));
-			adr+=4;
-			break;
-	}
-	
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    return length;
 }
 
 u_int16_t CPU_DIS_MOVEA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthM(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"MOVEA");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-		case 0x01:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x03:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("MOVEA",len);
 	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-	strcat(byteData," ");
-	sprintf(tempData,",A%d",op2);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+    sprintf(&mnemonicData[strlen(mnemonicData)],",A%d",op2);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_DBCC(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"DB");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,"T ");
-			break;
-		case 0x01:
-			strcat(mnemonicData,"F ");
-			break;
-		case 0x02:
-			strcat(mnemonicData,"HI ");
-			break;
-		case 0x03:
-			strcat(mnemonicData,"LS ");
-			break;
-		case 0x04:
-			strcat(mnemonicData,"CC ");
-			break;
-		case 0x05:
-			strcat(mnemonicData,"CS ");
-			break;
-		case 0x06:
-			strcat(mnemonicData,"NE ");
-			break;
-		case 0x07:
-			strcat(mnemonicData,"EQ ");
-			break;
-		case 0x08:
-			strcat(mnemonicData,"VC ");
-			break;
-		case 0x09:
-			strcat(mnemonicData,"VS ");
-			break;
-		case 0x0A:
-			strcat(mnemonicData,"PL ");
-			break;
-		case 0x0B:
-			strcat(mnemonicData,"MI ");
-			break;
-		case 0x0C:
-			strcat(mnemonicData,"GE ");
-			break;
-		case 0x0D:
-			strcat(mnemonicData,"LT ");
-			break;
-		case 0x0E:
-			strcat(mnemonicData,"GT ");
-			break;
-		case 0x0F:
-			strcat(mnemonicData,"LE ");
-			break;
-    }
+	int length=0;
+	int len=2;
 	
-	sprintf(tempData,"D%d,",op2);
-    strcat(mnemonicData,tempData);
-	
-	op3=MEM_getWord(adr);
-	strcat(byteData,decodeWord(adr));
-	
-	sprintf(tempData,"%08X",adr+(int16_t)op3);
-	strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstructionCC("DB",op1,len);
+
+    sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op2);
+	length+=decodeDisp(adr+length,0);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_BRA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"BRA ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=decodeLengthCC(op1);
 	
-    if (op1==0)
-	{
-		op1=MEM_getWord(adr);
-		strcat(byteData,decodeWord(adr));
-	}
-	else
-	{
-		if (op1&0x80)
-		{
-			op1|=0xFF00;
-		}
-	}
+	decodeInstruction("BRA",len);
 	
-	sprintf(tempData,"%08X",adr+(int16_t)op1);
-	strcat(mnemonicData,tempData);
+	length+=decodeDisp(adr+length,op1);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_BTSTI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BTST.L ");
-	strcpy(byteData,"");
-	len=1;
-	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	decodeInstruction("BTST",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,1);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op1,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ADDs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ADD");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ADD",len);
 	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-    sprintf(tempData,",D%d",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+    sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_NOT(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"NOT");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("NOT",len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    return length;
 }
 
 u_int16_t CPU_DIS_SUBA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthWL(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"SUBA");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		case 0x00:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("SUBA",len);
 	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-	strcat(byteData," ");
-	sprintf(tempData,",A%d",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+    sprintf(&mnemonicData[strlen(mnemonicData)],",A%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ADDA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthWL(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ADDA");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		case 0x00:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ADDA",len);
 	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-	strcat(byteData," ");
-	sprintf(tempData,",A%d",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+    sprintf(&mnemonicData[strlen(mnemonicData)],",A%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_TST(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"TST");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("TST",len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_JMP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"JMP ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=4;
 	
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,4);
+	decodeInstruction("JMP",len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op1,4);
+	
+	return length;
 }
 
 u_int16_t CPU_DIS_MOVEQ(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	adr+=2;
-    strcpy(mnemonicData,"MOVEQ ");
-    strcpy(byteData,"");
-
-	sprintf(tempData,"#%02X,",op2);
-    strcat(mnemonicData,tempData);
-	sprintf(tempData,"D%d",op1);
-    strcat(mnemonicData,tempData);
+	int length=0;
+	int len=4;
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("MOVEQ",len);
+	
+	sprintf(&mnemonicData[strlen(mnemonicData)],"#%02X,D%d",op2,op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_LSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"LSR");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("LSR",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_SWAP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	adr+=2;
-    strcpy(mnemonicData,"SWAP ");
-    strcpy(byteData,"");
-
-	sprintf(tempData,"D%d",op1);
-    strcat(mnemonicData,tempData);
+	int length=0;
+	int len=2;
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("SWAP",len);
+
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_MOVEMs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthWL(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"MOVEM");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	decodeInstruction("MOVEM",len);
+
+	// ToDo. Actually decode register mappings and put operands in right order
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_MOVEMd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthWL(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"MOVEM");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("MOVEM",len);
 	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	// ToDo. Actually decode register mappings and put operands in right order
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_SUBI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"SUBI");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	strcat(mnemonicData,"#");
-	switch (len)
-	{
-		case 1:
-		case 2:
-			strcat(mnemonicData,decodeWord(adr));
-			strcat(byteData,decodeWord(adr));
-			adr+=2;
-			break;
-		case 4:
-			strcat(mnemonicData,decodeLong(adr));
-			strcat(byteData,decodeLong(adr));
-			adr+=4;
-			break;
-	}
-	
+	decodeInstruction("SUBI",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_BSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"BSR ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=decodeLengthCC(op1);
 	
-    if (op1==0)
-	{
-		op1=MEM_getWord(adr);
-		strcat(byteData,decodeWord(adr));
-	}
-	else
-	{
-		if (op1&0x80)
-		{
-			op1|=0xFF00;
-		}
-	}
+	decodeInstruction("BSR",len);
 	
-	sprintf(tempData,"%08X",adr+(int16_t)op1);
-	strcat(mnemonicData,tempData);
+	length+=decodeDisp(adr+length,op1);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_RTS(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"RTS");
-    strcpy(byteData,"");
+	int length=0;
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    strcpy(mnemonicData,"RTS");
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ILLEGAL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"ILLEGAL");
-    strcpy(byteData,"");
+	int length=0;
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    strcpy(mnemonicData,"ILLEGAL");
+	
+	return length;
 }
 
 u_int16_t CPU_DIS_ORd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"OR");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("OR",len);
 	
-	sprintf(tempData,"D%d,",op1);
-    strcat(mnemonicData,tempData);
-
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ADDQ(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ADDQ");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("SUBQ",len);
 	
     if (op1==0)
 		op1=8;
-    sprintf(tempData,"#%02X,",op1);
-    strcat(mnemonicData,tempData);
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+    sprintf(&mnemonicData[strlen(mnemonicData)],"#%02X,",op1);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;	
 }
 
 u_int16_t CPU_DIS_CLR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
+
+	decodeInstruction("CLR",len);
 	
-    adr+=2;
-    strcpy(mnemonicData,"CLR");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ANDI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ANDI");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	strcat(mnemonicData,"#");
-	switch (len)
-	{
-		case 1:
-		case 2:
-			strcat(mnemonicData,decodeWord(adr));
-			strcat(byteData,decodeWord(adr));
-			adr+=2;
-			break;
-		case 4:
-			strcat(mnemonicData,decodeLong(adr));
-			strcat(byteData,decodeLong(adr));
-			adr+=4;
-			break;
-	}
-	
+	decodeInstruction("ANDI",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_EXG(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	adr+=2;
-    strcpy(mnemonicData,"EXG ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=4;
+	
+	decodeInstruction("EXG",len);
 
 	switch(op2)
 	{
@@ -1154,1396 +756,692 @@ u_int16_t CPU_DIS_EXG(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_
 			strcat(mnemonicData,"?,?");
 			break;
 		case 0x08:					// Data & Data
-			sprintf(tempData,"D%d,",op1);
-			strcat(mnemonicData,tempData);
-			sprintf(tempData,"D%d",op3);
-			strcat(mnemonicData,tempData);
+			sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,D%d",op1,op3);
 			break;
 		case 0x09:					// Address & Address
-			sprintf(tempData,"A%d,",op1);
-			strcat(mnemonicData,tempData);
-			sprintf(tempData,"A%d",op3);
-			strcat(mnemonicData,tempData);
+			sprintf(&mnemonicData[strlen(mnemonicData)],"A%d,A%d",op1,op3);
 			break;
 		case 0x11:					// Data & Address
-			sprintf(tempData,"D%d,",op1);
-			strcat(mnemonicData,tempData);
-			sprintf(tempData,"A%d",op3);
-			strcat(mnemonicData,tempData);
+			sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,A%d",op1,op3);
 			break;
 	}
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_JSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"JSR ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=4;
 	
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,4);
+	decodeInstruction("JSR",len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op1,len);
+	
+    return length;
 }
 
 u_int16_t CPU_DIS_BCLRI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BCLR.L ");
-	strcpy(byteData,"");
-	len=1;
-	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	decodeInstruction("BCLR",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,1);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op1,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ANDs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"AND");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("AND",len);
 	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-    sprintf(tempData,",D%d",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_SUBd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"SUB");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("SUB",len);
 	
-	sprintf(tempData,"D%d,",op1);
-    strcat(mnemonicData,tempData);
-
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    return length;
 }
 
 u_int16_t CPU_DIS_BSET(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BSET.");
-	strcpy(byteData,"");
-	len=1;
-	if (op2<8)
-		strcat(mnemonicData,"L ");
-	else
-		strcat(mnemonicData,"B ");
-	
-	sprintf(tempData,"D%d",op1);
-	strcat(mnemonicData,tempData);
-	
-	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("BSET",len);
+
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_BSETI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BSET.L ");
-	strcpy(byteData,"");
-	len=1;
-	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	decodeInstruction("BSET",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,1);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op1,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_MULU(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=2;
 	
-    adr+=2;
-    strcpy(mnemonicData,"MULU.W ");
-	strcpy(byteData,"");
-	len=2;
+	decodeInstruction("MULU",len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-	sprintf(tempData,",D%d",op1);
-	strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_LSL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"LSL");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("LSL",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ADDI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ADDI");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	strcat(mnemonicData,"#");
-	switch (len)
-	{
-		case 1:
-		case 2:
-			strcat(mnemonicData,decodeWord(adr));
-			strcat(byteData,decodeWord(adr));
-			adr+=2;
-			break;
-		case 4:
-			strcat(mnemonicData,decodeLong(adr));
-			strcat(byteData,decodeLong(adr));
-			adr+=4;
-			break;
-	}
-	
+	decodeInstruction("ADDI",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_EXT(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLengthEXT(op1);
 
-	adr+=2;
-    strcpy(mnemonicData,"EXT");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x03:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("EXT",len);
 
-	sprintf(tempData,"D%d",op2);
-	strcat(mnemonicData,tempData);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d",op2);
 
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;	
 }
 
 u_int16_t CPU_DIS_MULS(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=2;
 	
-    adr+=2;
-    strcpy(mnemonicData,"MULS.W ");
-	strcpy(byteData,"");
-	len=2;
+	decodeInstruction("MULS",len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-	sprintf(tempData,",D%d",op1);
-	strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_NEG(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"NEG");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("NEG",len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_MOVEUSP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=4;
 	
-    adr+=2;
-    strcpy(mnemonicData,"MOVEUSP ");
-	strcpy(byteData,"");
-	len=1;
+	decodeInstruction("MOVE",len);
 	
 	if (op1)
 	{
-		strcat(mnemonicData,"USP,");
-		sprintf(tempData,"A%d",op2);
-		strcat(mnemonicData,tempData);
+		sprintf(&mnemonicData[strlen(mnemonicData)],"USP,A%d",op2);
 	}
 	else
 	{
-		sprintf(tempData,"A%d",op2);
-		strcat(mnemonicData,tempData);
-		strcat(mnemonicData,",USP");
+		sprintf(&mnemonicData[strlen(mnemonicData)],"A%d,USP",op2);
 	}
-	
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_SCC(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"S");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,"T.B  ");
-			break;
-		case 0x01:
-			strcat(mnemonicData,"F.B  ");
-			break;
-		case 0x02:
-			strcat(mnemonicData,"HI.B ");
-			break;
-		case 0x03:
-			strcat(mnemonicData,"LS.B ");
-			break;
-		case 0x04:
-			strcat(mnemonicData,"CC.B ");
-			break;
-		case 0x05:
-			strcat(mnemonicData,"CS.B ");
-			break;
-		case 0x06:
-			strcat(mnemonicData,"NE.B ");
-			break;
-		case 0x07:
-			strcat(mnemonicData,"EQ.B ");
-			break;
-		case 0x08:
-			strcat(mnemonicData,"VC.B ");
-			break;
-		case 0x09:
-			strcat(mnemonicData,"VS.B ");
-			break;
-		case 0x0A:
-			strcat(mnemonicData,"PL.B ");
-			break;
-		case 0x0B:
-			strcat(mnemonicData,"MI.B ");
-			break;
-		case 0x0C:
-			strcat(mnemonicData,"GE.B ");
-			break;
-		case 0x0D:
-			strcat(mnemonicData,"LT.B ");
-			break;
-		case 0x0E:
-			strcat(mnemonicData,"GT.B ");
-			break;
-		case 0x0F:
-			strcat(mnemonicData,"LE.B ");
-			break;
-    }
-	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,1);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	int length=0;
+    int len=1;
+
+	decodeInstructionCC("B",op1,len);
+
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ORSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"ORSR.W ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=2;
 	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
+	decodeInstruction("OR",len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
+	strcat(mnemonicData,",SR");
+
+	return length;
 }
 
 u_int16_t CPU_DIS_PEA(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"PEA.L ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=4;
 	
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,4);
+	decodeInstruction("PEA",len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op1,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_MOVEFROMSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"MOVE.W SR,");
-    strcpy(byteData,"");
+	int length=0;
+	int len=2;
 	
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,2);
+	decodeInstruction("MOVE",len);
+    strcat(mnemonicData,"SR,");
+    length+=decodeEffectiveAddress(adr,op1,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_RTE(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"RTE");
-    strcpy(byteData,"");
+	int length=0;
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    strcpy(mnemonicData,"RTE");
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ANDSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"ANDSR.W ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=2;
 	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
+	decodeInstruction("AND",len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
+	strcat(mnemonicData,",SR");
+
+	return length;
 }
 
 u_int16_t CPU_DIS_MOVETOSR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"MOVE.W ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=2;
 	
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,2);
-	strcat(mnemonicData,",SR");
+	decodeInstruction("MOVE",len);
+    length+=decodeEffectiveAddress(adr,op1,len);
+    strcat(mnemonicData,",SR");
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_LINK(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=2;
 	
-    adr+=2;
-    strcpy(mnemonicData,"LINK.W ");
-	strcpy(byteData,"");
-	len=2;
+	decodeInstruction("LINK",len);
 	
-	sprintf(tempData,"A%d,",op1);
-	strcat(mnemonicData,tempData);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"A%d,",op1);
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_CMPM(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"CMPM");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			break;
-    }
+	int length=0;
+	int len=decodeLength(op2);
 	
-    sprintf(tempData,"(A%d)+,",op3);
-    strcat(mnemonicData,tempData);
+	decodeInstruction("CMPM",len);
+	
+	sprintf(&mnemonicData[strlen(mnemonicData)],"(A%d)+,(A%d)+",op3,op1);
 
-    sprintf(tempData,"(A%d)+",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ADDd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ADD");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ADD",len);
 	
-	sprintf(tempData,"D%d,",op1);
-    strcat(mnemonicData,tempData);
-
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_UNLK(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=2;
 	
-    adr+=2;
-    strcpy(mnemonicData,"UNLK.L ");
-	strcpy(byteData,"");
-	len=2;
+	decodeInstruction("UNLK",len);
 	
-	sprintf(tempData,"A%d",op1);
-	strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"A%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ORs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"OR");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("OR",len);
 	
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-    sprintf(tempData,",D%d",op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ANDd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
-	
-    adr+=2;
-    strcpy(mnemonicData,"AND");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	sprintf(tempData,"D%d,",op1);
-    strcat(mnemonicData,tempData);
+	int length=0;
+    int len=decodeLength(op2);
 
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
+	decodeInstruction("AND",len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
+	
+	return length;
 }
 
 u_int16_t CPU_DIS_ORI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ORI");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	strcat(mnemonicData,"#");
-	switch (len)
-	{
-		case 1:
-		case 2:
-			strcat(mnemonicData,decodeWord(adr));
-			strcat(byteData,decodeWord(adr));
-			adr+=2;
-			break;
-		case 4:
-			strcat(mnemonicData,decodeLong(adr));
-			strcat(byteData,decodeLong(adr));
-			adr+=4;
-			break;
-	}
-	
+	decodeInstruction("ORI",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ASL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"ASL");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ASL",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ASR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"ASR");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ASR",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_DIVU(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=2;
 	
-    adr+=2;
-    strcpy(mnemonicData,"DIVU.W ");
-	strcpy(byteData,"");
-	len=2;
+	decodeInstruction("DIVU",len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-	sprintf(tempData,",D%d",op1);
-	strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_BCLR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BCLR.");
-	strcpy(byteData,"");
-	len=1;
-	if (op2<8)
-		strcat(mnemonicData,"L ");
-	else
-		strcat(mnemonicData,"B ");
-	
-	sprintf(tempData,"D%d",op1);
-	strcat(mnemonicData,tempData);
-	
-	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("BCLR",len);
+
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_EORd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
+
+	decodeInstruction("EOR",len);
 	
-    adr+=2;
-    strcpy(mnemonicData,"EOR");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op3,len);
 	
-    sprintf(tempData,"D%d,",op1);
-    strcat(mnemonicData,tempData);
-    adr+=decodeEffectiveAddress(adr,op3,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_BTST(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BTST.L ");
-	strcpy(byteData,"");
-	len=1;
-	
-    sprintf(tempData,"D%d,",op1);
-    strcat(mnemonicData,tempData);
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("BTST",len);
+
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_STOP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"STOP ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=2;
 	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("STOP",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ROL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"ROL");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ROL",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ROR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"ROR");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ROR",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_NOP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	adr+=2;
-    strcpy(mnemonicData,"NOP");
-    strcpy(byteData,"");
+	int length=0;
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    strcpy(mnemonicData,"NOP");
+
+	return length;
 }
 
 u_int16_t CPU_DIS_BCHG(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BCHG.");
-	strcpy(byteData,"");
-	len=1;
-	if (op2<8)
-		strcat(mnemonicData,"L ");
-	else
-		strcat(mnemonicData,"B ");
-	
-	sprintf(tempData,"D%d",op1);
-	strcat(mnemonicData,tempData);
-	
-	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("BCHG",len);
+
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,",op1);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_BCHGI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLengthReg(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"BCHG.L ");
-	strcpy(byteData,"");
-	len=1;
-	
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	decodeInstruction("BCHG",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,1);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,len);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op1,len);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_LSRm(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=2;
 
-	adr+=2;
-    strcpy(mnemonicData,"LSR.W");
-    strcpy(byteData,"");
-	len=2;
+	decodeInstruction("LSR",len);
 
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr,op1,len);
 
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_EORI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op1);
 	
-    adr+=2;
-    strcpy(mnemonicData,"EORI");
-    strcpy(byteData,"");
-    switch (op1)
-    {
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-	strcat(mnemonicData,"#");
-	switch (len)
-	{
-		case 1:
-		case 2:
-			strcat(mnemonicData,decodeWord(adr));
-			strcat(byteData,decodeWord(adr));
-			adr+=2;
-			break;
-		case 4:
-			strcat(mnemonicData,decodeLong(adr));
-			strcat(byteData,decodeLong(adr));
-			adr+=4;
-			break;
-	}
-	
+	decodeInstruction("EORI",len);
+
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_EORICCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"EORI");
-    strcpy(byteData,"");
+	int length=0;
+	int len=1;
+	
+	decodeInstruction("EORI",len);
 
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",CCR");
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ROXL(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"ROXL");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ROXL",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ROXR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=decodeLength(op2);
 
-	adr+=2;
-    strcpy(mnemonicData,"ROXR");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
+	decodeInstruction("ROXR",len);
 
-	if (op3==0)
-	{
-		if (op1==0)
-			op1=8;
-		sprintf(tempData,"#%02X,",op1);
-		strcat(mnemonicData,tempData);
-	}
-	else
-	{
-		sprintf(tempData,"D%d,",op1);
-		strcat(mnemonicData,tempData);
-	}
+	decodeIR(op3,op1);	
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op4);
 	
-	sprintf(tempData,"D%d",op4);
-	strcat(mnemonicData,tempData);
-
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_MOVETOCCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"MOVE.W ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=2;
 	
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,2);
+	decodeInstruction("MOVE",len);
+	
+    length+=decodeEffectiveAddress(adr+length,op1,len);
 	strcat(mnemonicData,",CCR");
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_TRAP(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"TRAP ");
-    strcpy(byteData,"");
+	int length=0;
+	int len=4;
 	
-	sprintf(tempData,"%02X",op1);
-	strcat(mnemonicData,tempData);
+	decodeInstruction("TRAP",len);
 
-    printf("%s\t%s\n",byteData,mnemonicData);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"%02X",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ADDX(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
 	
-    adr+=2;
-    strcpy(mnemonicData,"ADDX");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-    sprintf(tempData,"D%d,D%d",op3,op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	decodeInstruction("ADDX",len);
+
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,D%d",op3,op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_DIVS(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=2;
 	
-    adr+=2;
-    strcpy(mnemonicData,"DIVS.W ");
-	strcpy(byteData,"");
-	len=2;
+	decodeInstruction("DIVS",len);
 	
-    adr+=decodeEffectiveAddress(adr,op2,mnemonicData,byteData,len);
-	
-	sprintf(tempData,",D%d",op1);
-	strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
+	sprintf(&mnemonicData[strlen(mnemonicData)],",D%d",op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_SUBX(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
+	int length=0;
+    int len=decodeLength(op2);
+	
+	decodeInstruction("SUBX",len);
 
-    adr+=2;
-    strcpy(mnemonicData,"SUBX");
-    strcpy(byteData,"");
-    switch (op2)
-    {
-		default:
-			strcat(mnemonicData,".? ");
-			len=0;
-			break;
-		case 0x00:
-			strcat(mnemonicData,".B ");
-			len=1;
-			break;
-		case 0x01:
-			strcat(mnemonicData,".W ");
-			len=2;
-			break;
-		case 0x02:
-			strcat(mnemonicData,".L ");
-			len=4;
-			break;
-    }
-	
-    sprintf(tempData,"D%d,D%d",op3,op1);
-    strcat(mnemonicData,tempData);
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+	sprintf(&mnemonicData[strlen(mnemonicData)],"D%d,D%d",op3,op1);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ASRm(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=2;
 
-	adr+=2;
-    strcpy(mnemonicData,"ASR");
-    strcpy(byteData,"");
-	strcat(mnemonicData,".W ");
-	len=2;
+	decodeInstruction("ASR",len);
 
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr,op1,len);
 
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ASLm(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-	int len;
+	int length=0;
+	int len=2;
 
-	adr+=2;
-    strcpy(mnemonicData,"ASL");
-    strcpy(byteData,"");
-	strcat(mnemonicData,".W ");
-	len=2;
+	decodeInstruction("ASL",len);
 
-    adr+=decodeEffectiveAddress(adr,op1,mnemonicData,byteData,len);
+    length+=decodeEffectiveAddress(adr,op1,len);
 
-    printf("%s\t%s\n",byteData,mnemonicData);
+	return length;
 }
 
 u_int16_t CPU_DIS_ANDICCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"ANDI");
-    strcpy(byteData,"");
+	int length=0;
+	int len=1;
+	
+	decodeInstruction("ANDI",len);
 
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",CCR");
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+
+	return length;
 }
 
 u_int16_t CPU_DIS_ORICCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    adr+=2;
-    strcpy(mnemonicData,"ORI");
-    strcpy(byteData,"");
+	int length=0;
+	int len=1;
+	
+	decodeInstruction("ORI",len);
 
-	strcat(mnemonicData,"#");
-	strcat(mnemonicData,decodeWord(adr));
-	strcat(byteData,decodeWord(adr));
-	adr+=2;
-	
+	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",CCR");
-	
-    printf("%s\t%s\n",byteData,mnemonicData);
+
+	return length;
 }
