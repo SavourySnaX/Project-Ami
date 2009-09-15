@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "config.h"
 
 #include "cpu_dis.h"
+#include "memory.h"
 
 char mnemonicData[256];
 
@@ -122,7 +123,7 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,int length)
 			sprintf(&mnemonicData[strlen(mnemonicData)],"(%04X).W",MEM_getWord(adr));
 			return 2;
 		case 0x39:		/// 111001
-			sprintf(&mnemonicData[strlen(mnemonicData)],"(%08X).L",MEM_getWord(adr));
+			sprintf(&mnemonicData[strlen(mnemonicData)],"(%08X).L",MEM_getLong(adr));
 			return 4;
 		case 0x3A:		/// 111010
 			sprintf(&mnemonicData[strlen(mnemonicData)],"(#%04X,PC)",MEM_getWord(adr));
@@ -156,6 +157,93 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,int length)
 			break;
     }
     return 0;
+}
+
+int decodeRegsDst(u_int32_t adr)
+{
+	u_int16_t tmp=MEM_getWord(adr);
+	int doneOne=0;
+
+	for (int a=0;a<16;a++)
+	{
+		if (tmp&1)
+		{
+			if (a<8)
+			{
+				if (doneOne)
+					strcat(mnemonicData,"/");
+				sprintf(&mnemonicData[strlen(mnemonicData)],"D%d",a);
+				doneOne=1;
+			}
+			else 
+			{
+				if (doneOne)
+					strcat(mnemonicData,"/");
+				sprintf(&mnemonicData[strlen(mnemonicData)],"A%d",a-8);
+				doneOne=1;
+			}
+		}
+		tmp>>=1;
+	}
+
+	return 2;
+}
+
+int decodeRegsSrc(u_int32_t adr,u_int16_t op)
+{
+	u_int16_t tmp=MEM_getWord(adr);
+	int doneOne=0;
+
+	if ((op & 0x38)==0x20)
+	{
+		for (int a=15;a>=0;a--)
+		{
+			if (tmp&1)
+			{
+				if (a<8)
+				{
+					if (doneOne)
+						strcat(mnemonicData,"/");
+					sprintf(&mnemonicData[strlen(mnemonicData)],"D%d",a);
+					doneOne=1;
+				}
+				else 
+				{
+					if (doneOne)
+						strcat(mnemonicData,"/");
+					sprintf(&mnemonicData[strlen(mnemonicData)],"A%d",a-8);
+					doneOne=1;
+				}
+			}
+			tmp>>=1;
+		}
+	}
+	else 
+	{
+		for (int a=0;a<16;a++)
+		{
+			if (tmp&1)
+			{
+				if (a<8)
+				{
+					if (doneOne)
+						strcat(mnemonicData,"/");
+					sprintf(&mnemonicData[strlen(mnemonicData)],"D%d",a);
+					doneOne=1;
+				}
+				else 
+				{
+					if (doneOne)
+						strcat(mnemonicData,"/");
+					sprintf(&mnemonicData[strlen(mnemonicData)],"A%d",a-8);
+					doneOne=1;
+				}
+			}
+			tmp>>=1;
+		}
+	}
+		
+	return 2;
 }
 
 void decodeInstruction(char *name,int len)
@@ -442,7 +530,7 @@ u_int16_t CPU_DIS_CMPI(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u
 	int length=0;
     int len=decodeLength(op1);
 	
-	decodeInstruction("CMP",len);
+	decodeInstruction("CMPI",len);
 	
 	length+=decodeEffectiveAddress(adr+length,0x3C,len);
 	strcat(mnemonicData,",");
@@ -623,9 +711,9 @@ u_int16_t CPU_DIS_MOVEMs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3
 	decodeInstruction("MOVEM",len);
 
 	// ToDo. Actually decode register mappings and put operands in right order
-	length+=decodeEffectiveAddress(adr+length,0x3C,len);
-	strcat(mnemonicData,",");
     length+=decodeEffectiveAddress(adr+length,op2,len);
+	strcat(mnemonicData,",");
+	length+=decodeRegsDst(adr+length);
 	
 	return length;
 }
@@ -638,7 +726,7 @@ u_int16_t CPU_DIS_MOVEMd(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3
 	decodeInstruction("MOVEM",len);
 	
 	// ToDo. Actually decode register mappings and put operands in right order
-	length+=decodeEffectiveAddress(adr+length,0x3C,len);
+	length+=decodeRegsSrc(adr+length,op2);
 	strcat(mnemonicData,",");
     length+=decodeEffectiveAddress(adr+length,op2,len);
 	
@@ -707,7 +795,7 @@ u_int16_t CPU_DIS_ADDQ(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u
 	int length=0;
     int len=decodeLength(op2);
 	
-	decodeInstruction("SUBQ",len);
+	decodeInstruction("ADDQ",len);
 	
     if (op1==0)
 		op1=8;
@@ -949,7 +1037,7 @@ u_int16_t CPU_DIS_SCC(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_
 	int length=0;
     int len=1;
 
-	decodeInstructionCC("B",op1,len);
+	decodeInstructionCC("S",op1,len);
 
     length+=decodeEffectiveAddress(adr+length,op2,len);
 

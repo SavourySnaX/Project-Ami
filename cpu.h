@@ -42,6 +42,20 @@ typedef struct
 	u_int32_t	stage;
 	
 	u_int32_t	stopped;
+	
+	u_int32_t	eas;
+	u_int32_t	ead;
+	u_int32_t	ear;
+	u_int32_t	eat;
+	
+	u_int32_t	len;
+	u_int32_t	iMask;
+	u_int32_t	nMask;
+	u_int32_t	zMask;
+	
+	u_int32_t	tmpL;
+	u_int16_t	tmpW;
+
 }CPU_Regs;
 
 

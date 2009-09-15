@@ -199,7 +199,12 @@ void LoadDisk(char *disk,int drive)
     dskSize = ftell(inDisk);
 	fseek(inDisk,0,SEEK_SET);
     dskData = (unsigned char *)malloc(dskSize);
-    dskSize = fread(dskData,1,dskSize,inDisk);
+    if (dskSize != fread(dskData,1,dskSize,inDisk))
+	{
+		fclose(inDisk);
+		diskDrive[drive].diskInDrive=0;
+		return;
+	}
     fclose(inDisk);
 
 	ConvertDiscImageToMFM(dskData,drive);
@@ -232,8 +237,8 @@ void DSK_InitialiseDisk()
 //		LoadDisk("../../wbe.adf",1);
 	}
 
-	diskDrive[1].diskInDrive=1;		// Adds a completely unformatted disk to drive 1
-	diskDrive[1].dskIdCode=0xFFFFFFFF;
+//	diskDrive[1].diskInDrive=1;		// Adds a completely unformatted disk to drive 1
+//	diskDrive[1].dskIdCode=0xFFFFFFFF;
 
 	dskSync=0;
 	dskSyncDma=0;

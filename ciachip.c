@@ -850,12 +850,12 @@ CIA_Regs ciaChipRegisters[] =
 
 u_int8_t CIA_getByteUnmapped(u_int16_t reg)
 {
+#if ENABLE_CIA_WARNINGS
 	const char *name="";
 	
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
 	
-#if ENABLE_CIA_WARNINGS
 	printf("[WRN] Read from Unmapped Hardware Register %s %08x\n",name,reg);
 #endif
 	return 0;
@@ -863,12 +863,12 @@ u_int8_t CIA_getByteUnmapped(u_int16_t reg)
 
 u_int8_t CIA_getByteCustom(u_int16_t reg)
 {
+#if ENABLE_CIA_WARNINGS
 	const char *name="";
 	
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
 	
-#if ENABLE_CIA_WARNINGS
 	printf("[MSG] Read from Unsupported Hardware Register %s %08x\n",name,reg);
 #endif
 	return ciaMemory[reg];
@@ -881,24 +881,24 @@ u_int8_t CIA_getByteCustomSupported(u_int16_t reg)
 
 void CIA_setByteUnmapped(u_int16_t reg,u_int8_t byte)
 {
+#if ENABLE_CIA_WARNINGS
 	const char *name="";
 	
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
 		
-#if ENABLE_CIA_WARNINGS
 	printf("[WRN] Write to Unmapped Hardware Register %s %02X -> %08x\n",name,byte,reg);
 #endif
 }
 
 void CIA_setByteCustom(u_int16_t reg,u_int8_t byte)
 {
+#if ENABLE_CIA_WARNINGS
 	const char *name="";
 	
 	if (reg < sizeof(ciaChipRegisters))
 		name = ciaChipRegisters[reg].name;
 	
-#if ENABLE_CIA_WARNINGS
 	printf("[MSG] Write to Unsupported Hardware Register %s %02X -> %08x\n",name,byte,reg);
 #endif
 	ciaMemory[reg]=byte;

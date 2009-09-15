@@ -123,7 +123,11 @@ unsigned char *load_rom(char *romName)
     romSize = ftell(inRom);
 	fseek(inRom,0,SEEK_SET);
     romData = (unsigned char *)malloc(romSize);
-    romSize = fread(romData,1,romSize,inRom);
+    if (romSize != fread(romData,1,romSize,inRom))
+	{
+		fclose(inRom);
+		return 0;
+	}
     fclose(inRom);
 	
 	return romData;

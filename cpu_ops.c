@@ -1,10 +1,27 @@
 /*
  *  cpu_ops.c
  *  ami
- *
- *  Created by Lee Hammerton on 31/08/2009.
- *  Copyright 2009 __MyCompanyName__. All rights reserved.
- *
+
+Copyright (c) 2009 Lee Hammerton
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
  */
 
 #include <stdio.h>
@@ -14,10 +31,548 @@
 #include "cpu.h"
 #include "memory.h"
 
+///////////////////// New support functionality for cpu with stage and bus arbitration
+
+u_int32_t BUS_Available(u_int32_t ea)			// TODO - Need to implement bus arbitration
+{
+	return 1;
+}
+
+/*
+
+ endCase signifies value when no need to re-enter EA calculation (calc uses upto 4 stages)
+ offs is amount subtracted from stage to get 0 base (it is added to all return values (except endCase!)
+ stage should be 0-4 on input
+
+*/
+
+u_int32_t COMPUTE_EFFECTIVE_ADDRESS(u_int32_t endCase,u_int32_t offs,u_int32_t stage,u_int32_t *ea,u_int16_t operand,int length,int asSrc)
+{
+    switch (operand)
+    {
+		case 0x00:		// Dx
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+			*ea = cpu_regs.D[operand];
+			return endCase;
+		case 0x08:		// Ax
+		case 0x09:
+		case 0x0A:
+		case 0x0B:
+		case 0x0C:
+		case 0x0D:
+		case 0x0E:
+		case 0x0F:
+			*ea = cpu_regs.A[operand-0x08];
+			return endCase;
+		case 0x10:		// (Ax)
+		case 0x11:
+		case 0x12:
+		case 0x13:
+		case 0x14:
+		case 0x15:
+		case 0x16:
+		case 0x17:
+			*ea = cpu_regs.A[operand-0x10];
+			return endCase;
+		case 0x18:		// (Ax)+
+		case 0x19:
+		case 0x1A:
+		case 0x1B:
+		case 0x1C:
+		case 0x1D:
+		case 0x1E:
+		case 0x1F:
+			if ((operand==0x1F) && (length==1))
+			{
+				length=2;
+			}
+			*ea = cpu_regs.A[operand-0x18];
+			cpu_regs.A[operand-0x18]+=length;
+			return endCase;
+		case 0x20:		// -(Ax)
+		case 0x21:
+		case 0x22:
+		case 0x23:
+		case 0x24:
+		case 0x25:
+		case 0x26:
+		case 0x27:
+			switch (stage)
+			{
+				case 0:
+					if ((operand==0x27) && (length==1))
+					{
+						length=2;
+					}
+					cpu_regs.A[operand-0x20]-=length;
+					if (asSrc)								// When used as src this costs 1 more cycle
+						return 1+offs;
+					break;
+				case 1:
+					break;
+			}
+			*ea=cpu_regs.A[operand-0x20];
+			return endCase;
+		case 0x28:		// (XXXX,Ax)
+		case 0x29:
+		case 0x2A:
+		case 0x2B:
+		case 0x2C:
+		case 0x2D:
+		case 0x2E:
+		case 0x2F:
+			switch (stage)
+			{
+				case 0:
+					*ea = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return 1+offs;
+				case 1:
+					if (!BUS_Available(*ea))
+						return 1+offs;
+					*ea = cpu_regs.A[operand-0x28] + (int16_t)MEM_getWord(*ea);
+					return 2+offs;
+				case 2:
+					break;
+			}
+			return endCase;
+		case 0x30:		// (XX,Ax,Xx)
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			switch (stage)
+			{
+				case 0:
+					*ea = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return 1+offs;
+				case 1:
+					if (!BUS_Available(*ea))
+						return 1+offs;
+					cpu_regs.tmpW=MEM_getWord(*ea);
+					return 2+offs;
+				case 2:
+					if (cpu_regs.tmpW&0x8000)
+					{
+						*ea = cpu_regs.A[(cpu_regs.tmpW>>12)&0x07];
+					}
+					else 
+					{
+						*ea = cpu_regs.D[(cpu_regs.tmpW>>12)&0x07];
+					}
+					return 3+offs;
+				case 3:
+					if (!(cpu_regs.tmpW&0x0800))
+						*ea = (int16_t)*ea;
+					*ea+=(int8_t)(cpu_regs.tmpW&0xFF);
+					*ea+=cpu_regs.A[operand-0x30];
+					break;
+			}
+			return endCase;
+		case 0x38:		// (XXXX).W
+			switch (stage)
+			{
+				case 0:
+					*ea = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return 1+offs;
+				case 1:
+					if (!BUS_Available(*ea))
+						return 1+offs;
+					*ea = (int16_t)MEM_getWord(*ea);
+					return 2+offs;
+				case 2:
+					break;
+			}
+			return endCase;
+		case 0x39:		// (XXXXXXXX).L
+			switch (stage)
+			{
+				case 0:
+					cpu_regs.tmpL = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return 1+offs;
+				case 1:
+					if (!BUS_Available(cpu_regs.tmpL))
+						return 1+offs;
+					*ea = MEM_getWord(cpu_regs.tmpL)<<16;
+					return 2+offs;
+				case 2:
+					cpu_regs.tmpL = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return 3+offs;
+				case 3:
+					if (!BUS_Available(cpu_regs.tmpL))
+						return 3+offs;
+					*ea|=MEM_getWord(cpu_regs.tmpL);
+					return 4+offs;
+				case 4:
+					break;
+			}
+			return endCase;
+		case 0x3A:		// (XXXX,PC)
+			switch (stage)
+			{
+				case 0:
+					*ea = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return 1+offs;
+				case 1:
+					if (!BUS_Available(*ea))
+						return 1+offs;
+					*ea+=(int16_t)MEM_getWord(*ea);
+					return 2+offs;
+				case 2:
+					break;
+			}
+			return endCase;
+		case 0x3B:		/// (XX,PC,Xx)
+			switch (stage)
+			{
+				case 0:
+					cpu_regs.tmpL = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return 1+offs;
+				case 1:
+					if (!BUS_Available(cpu_regs.tmpL))
+						return 1+offs;
+					cpu_regs.tmpW=MEM_getWord(cpu_regs.tmpL);
+					return 2+offs;
+				case 2:
+					if (cpu_regs.tmpW&0x8000)
+					{
+						*ea = cpu_regs.A[(cpu_regs.tmpW>>12)&0x07];
+					}
+					else 
+					{
+						*ea = cpu_regs.D[(cpu_regs.tmpW>>12)&0x07];
+					}
+					return 3+offs;
+				case 3:
+					if (!(cpu_regs.tmpW&0x0800))
+						*ea = (int16_t)*ea;
+					*ea+=(int8_t)(cpu_regs.tmpW&0xFF);
+					*ea+=cpu_regs.tmpL;
+					break;
+			}
+			return endCase;
+		case 0x3C:		/// #XX.B #XXXX.W #XXXXXXXX.L
+			switch (length)
+			{
+				case 1:
+					*ea = cpu_regs.PC+1;
+					cpu_regs.PC+=2;
+					return endCase;
+				case 2:
+					*ea = cpu_regs.PC;
+					cpu_regs.PC+=2;
+					return endCase;
+				case 4:
+					*ea = cpu_regs.PC;
+					cpu_regs.PC+=4;
+					break;
+			}
+			break;
+    }
+	
+	return endCase;
+}
+
+int COMPUTE_CONDITION(u_int16_t op)
+{
+    switch (op)
+    {
+		case 0x00:
+			return 1;
+		case 0x01:
+			return 0;
+		case 0x02:
+			return ((~cpu_regs.SR)&CPU_STATUS_C) && ((~cpu_regs.SR)&CPU_STATUS_Z);
+		case 0x03:
+			return (cpu_regs.SR & CPU_STATUS_C) || (cpu_regs.SR & CPU_STATUS_Z);
+		case 0x04:
+			return !(cpu_regs.SR & CPU_STATUS_C);
+		case 0x05:
+			return (cpu_regs.SR & CPU_STATUS_C);
+		case 0x06:
+			return !(cpu_regs.SR & CPU_STATUS_Z);
+		case 0x07:
+			return (cpu_regs.SR & CPU_STATUS_Z);
+		case 0x08:
+			return !(cpu_regs.SR & CPU_STATUS_V);
+		case 0x09:
+			return (cpu_regs.SR & CPU_STATUS_V);
+		case 0x0A:
+			return !(cpu_regs.SR & CPU_STATUS_N);
+		case 0x0B:
+			return (cpu_regs.SR & CPU_STATUS_N);
+		case 0x0C:
+			return ((cpu_regs.SR & CPU_STATUS_N) && (cpu_regs.SR & CPU_STATUS_V)) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (!(cpu_regs.SR & CPU_STATUS_V)));
+		case 0x0D:
+			return ((cpu_regs.SR & CPU_STATUS_N) && (!(cpu_regs.SR & CPU_STATUS_V))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (cpu_regs.SR & CPU_STATUS_V));
+		case 0x0E:
+			return ((cpu_regs.SR & CPU_STATUS_N) && (cpu_regs.SR & CPU_STATUS_V) && (!(cpu_regs.SR & CPU_STATUS_Z))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (!(cpu_regs.SR & CPU_STATUS_V)) && (!(cpu_regs.SR & CPU_STATUS_Z)));
+		case 0x0F:
+			return (cpu_regs.SR & CPU_STATUS_Z) || ((cpu_regs.SR & CPU_STATUS_N) && (!(cpu_regs.SR & CPU_STATUS_V))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (cpu_regs.SR & CPU_STATUS_V));
+    }
+	return 0;
+}
+
+u_int32_t LOAD_EFFECTIVE_VALUE(u_int32_t endCase,u_int32_t offs,u_int32_t stage,u_int16_t op,u_int32_t *ead,u_int32_t *eas)
+{
+	if (op<0x10)
+	{
+		*ead=*eas;
+		return endCase;
+	}
+	
+	switch (cpu_regs.len)
+	{
+		case 1:
+			switch (stage)
+			{
+				case 0:
+					if (!BUS_Available(*eas))
+						return 0+offs;
+					*ead = MEM_getByte(*eas);
+					return 1+offs;
+				case 1:
+					return 2+offs;
+				case 2:
+					break;
+			}
+			break;
+		case 2:
+			switch (stage)
+			{
+				case 0:
+					if (!BUS_Available(*eas))
+						return 0+offs;
+					*ead = MEM_getWord(*eas);
+					return 1+offs;
+				case 1:
+					return 2+offs;
+				case 2:
+					break;
+			}
+			break;
+		case 4:
+			switch (stage)
+			{
+				case 0:
+					cpu_regs.tmpL = *eas;
+					if (!BUS_Available(cpu_regs.tmpL))
+						return 0+offs;
+					*ead = MEM_getWord(cpu_regs.tmpL)<<16;
+					return 1+offs;
+				case 1:
+					cpu_regs.tmpL+=2;
+					return 2+offs;
+				case 2:
+					if (!BUS_Available(cpu_regs.tmpL))
+						return 2+offs;
+					*ead|=MEM_getWord(cpu_regs.tmpL);
+					return 3+offs;
+				case 3:
+					return 4+offs;
+				case 4:
+					break;
+			}
+			break;
+	}
+	return endCase;
+}
+
+u_int32_t STORE_EFFECTIVE_VALUE(u_int32_t endCase,u_int32_t offs,u_int32_t stage,u_int16_t op,u_int32_t *ead,u_int32_t *eas)
+{
+	if (op<0x08)
+	{
+		cpu_regs.D[op]&=cpu_regs.iMask;
+		cpu_regs.D[op]|=(*eas)&cpu_regs.zMask;
+		return endCase;
+	}
+	if (op<0x10)
+	{
+		cpu_regs.A[op-0x08]&=cpu_regs.iMask;
+		cpu_regs.A[op-0x08]|=(*eas)&cpu_regs.zMask;
+		return endCase;
+	}
+	switch (cpu_regs.len)
+	{
+		case 1:
+			switch (stage)
+			{
+				case 0:
+					if (!BUS_Available(*ead))
+						return 0+offs;
+					MEM_setByte(*ead,(*eas)&cpu_regs.zMask);
+					return 1+offs;
+				case 1:
+					return 2+offs;
+				case 2:
+					break;
+			}
+			break;
+		case 2:
+			switch (stage)
+			{
+				case 0:
+					if (!BUS_Available(*ead))
+						return 0+offs;
+					MEM_setWord(*ead,(*eas)&cpu_regs.zMask);
+					return 1+offs;
+				case 1:
+					return 2+offs;
+				case 2:
+					break;
+			}
+			break;
+		case 4:
+			switch (stage)
+			{
+				case 0:
+					cpu_regs.tmpL=*ead;
+					if (!BUS_Available(cpu_regs.tmpL))
+						return 0+offs;
+					MEM_setWord(cpu_regs.tmpL,((*eas)&cpu_regs.zMask)>>16);
+					return 1+offs;
+				case 1:
+					cpu_regs.tmpL+=2;
+					return 2+offs;
+				case 2:
+					if (!BUS_Available(cpu_regs.tmpL))
+						return 2+offs;
+					MEM_setWord(cpu_regs.tmpL,(*eas)&cpu_regs.zMask);
+					return 3+offs;
+				case 3:
+					return 4+offs;
+				case 4:
+					break;
+			}
+			break;
+	}
+	return endCase;
+}
+
+void OPCODE_SETUP_LENGTHM(u_int16_t op,u_int16_t *swizOp)
+{
+	u_int16_t t1,t2;
+	
+	t1 = ((*swizOp) & 0x38)>>3;			// needed to swizzle operand for correct later handling (move has inverted bit meanings for dest)
+	t2 = ((*swizOp) & 0x07)<<3;
+	*swizOp = t1|t2;
+
+    switch(op)
+    {
+		case 0x01:
+			cpu_regs.iMask=0xFFFFFF00;
+			cpu_regs.nMask=0x80;
+			cpu_regs.zMask=0xFF;
+			cpu_regs.len=1;
+			break;
+		case 0x03:
+			cpu_regs.iMask=0xFFFF0000;
+			cpu_regs.nMask=0x8000;
+			cpu_regs.zMask=0xFFFF;
+			cpu_regs.len=2;
+			break;
+		case 0x02:
+			cpu_regs.iMask=0x00000000;
+			cpu_regs.nMask=0x80000000;
+			cpu_regs.zMask=0xFFFFFFFF;
+			cpu_regs.len=4;
+			break;
+	}
+}
+
+void OPCODE_SETUP_LENGTH(u_int16_t op)
+{
+    switch(op)
+    {
+		case 0x00:
+			cpu_regs.iMask=0xFFFFFF00;
+			cpu_regs.nMask=0x80;
+			cpu_regs.zMask=0xFF;
+			cpu_regs.len=1;
+			break;
+		case 0x01:
+			cpu_regs.iMask=0xFFFF0000;
+			cpu_regs.nMask=0x8000;
+			cpu_regs.zMask=0xFFFF;
+			cpu_regs.len=2;
+			break;
+		case 0x02:
+			cpu_regs.iMask=0x00000000;
+			cpu_regs.nMask=0x80000000;
+			cpu_regs.zMask=0xFFFFFFFF;
+			cpu_regs.len=4;
+			break;
+    }
+}
+
+void OPCODE_SETUP_LENGTHLW(u_int16_t op)
+{
+    switch(op)
+    {
+		case 0x00:
+			cpu_regs.iMask=0xFFFF0000;
+			cpu_regs.nMask=0x8000;
+			cpu_regs.zMask=0xFFFF;
+			cpu_regs.len=2;
+			break;
+		case 0x01:
+			cpu_regs.iMask=0x00000000;
+			cpu_regs.nMask=0x80000000;
+			cpu_regs.zMask=0xFFFFFFFF;
+			cpu_regs.len=4;
+			break;
+    }
+}
+
+void COMPUTE_ZN_TESTS(u_int32_t ea)
+{
+	if (ea & cpu_regs.nMask)
+		cpu_regs.SR|=CPU_STATUS_N;
+	else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	if (ea & cpu_regs.zMask)
+		cpu_regs.SR&=~CPU_STATUS_Z;
+	else
+		cpu_regs.SR|=CPU_STATUS_Z;
+}
+
+void COMPUTE_SUB_XCV_TESTS(u_int32_t eas,u_int32_t ead,u_int32_t ear)
+{
+	ear&=cpu_regs.nMask;
+	eas&=cpu_regs.nMask;
+	ead&=cpu_regs.nMask;
+	
+	if ((eas & (~ead)) | (ear & (~ead)) | (eas & ear))
+		cpu_regs.SR|=(CPU_STATUS_C|CPU_STATUS_X);
+	else
+		cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
+	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
+}
+
+/////////// OLD SUPPORT TO BE REMOVED WHEN ALL INSTRUCTIONS WORKING
+
 u_int32_t getEffectiveAddress(u_int16_t operand,int length)
 {
 	u_int16_t tmp;
-    u_int32_t ea;
+    u_int32_t ea=0;
     switch (operand)
     {
 		case 0x00:
@@ -245,99 +800,238 @@ void CPU_GENERATE_EXCEPTION(u_int32_t exceptionAddress)
 
 u_int32_t CPU_LEA(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    u_int32_t ea;
+	u_int32_t ret;
 	
-    ea = getEffectiveAddress(op2,4);
-    cpu_regs.A[op1] = ea;
+	switch (stage)
+	{
+		case 0:
+			return 1;
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(6,1,stage-1,&cpu_regs.eas,op2,4,1);
+			if (ret!=6)
+				return ret;
+			break;
+	}
 	
+	cpu_regs.A[op1]=cpu_regs.eas;
 	return 0;
 }
 
 u_int32_t CPU_MOVE(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
-    int len;
-	u_int16_t t1,t2;
-    u_int32_t ead,eas;
-	
-    switch(op1)
-    {
-		case 0x01:
-			len=1;
-			break;
-		case 0x03:
-			len=2;
-			break;
-		case 0x02:
-			len=4;
-			break;
-    }
-	
-	t1 = (op2 & 0x38)>>3;
-	t2 = (op2 & 0x07)<<3;
-	op2 = t1|t2;
-	
-    if ((op2 & 0x38)==0)	// destination is D register
-    {
-		eas = getSourceEffectiveAddress(op3,len);
-		switch (len)
-		{
-			case 1:
-				cpu_regs.D[op2]&=0xFFFFFF00;
-				cpu_regs.D[op2]|=eas&0xFF;
-				break;
-			case 2:
-				cpu_regs.D[op2]&=0xFFFF0000;
-				cpu_regs.D[op2]|=eas&0xFFFF;
-				break;
-			case 4:
-				cpu_regs.D[op2]=eas;
-				break;
-		}
-    }
-    else
-    {
-		eas = getSourceEffectiveAddress(op3,len);
-		ead = getEffectiveAddress(op2,len);
-		switch (len)
-		{
-			case 1:
-				MEM_setByte(ead,eas&0xFF);
-				break;
-			case 2:
-				MEM_setWord(ead,eas&0xFFFF);
-				break;
-			case 4:
-				MEM_setLong(ead,eas);
-				break;
-		}
-    }
-	
-    cpu_regs.SR&=~(CPU_STATUS_V|CPU_STATUS_C);
-    u_int32_t nMask,zMask;
-    switch (len)
-    {
+	u_int32_t ret;
+	switch (stage)
+	{
+		case 0:
+			OPCODE_SETUP_LENGTHM(op1,&cpu_regs.operands[1]);
+			return 1;
 		case 1:
-			nMask=0x80;
-			zMask=0xFF;
-			break;
 		case 2:
-			nMask=0x8000;
-			zMask=0xFFFF;
-			break;
+		case 3:
 		case 4:
-			nMask=0x80000000;
-			zMask=0xFFFFFFFF;
+		case 5:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(6,1,stage-1,&cpu_regs.eas,op3,cpu_regs.len,1);
+			if (ret!=6)
+				return ret;
+
+			stage=6;			// Fall through
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+			ret=LOAD_EFFECTIVE_VALUE(11, 6, stage-6, op3,&cpu_regs.eas, &cpu_regs.eas);
+			if (ret!=11)
+				return ret;
+			
+			stage=11;			// Fall through
+		case 11:
+		case 12:
+		case 13:
+		case 14:
+		case 15:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(16,11,stage-11,&cpu_regs.ead,op2,cpu_regs.len,0);
+			
+			if (ret!=16)
+				return ret;
+			
+			stage=16;			// Fall through
+		case 16:
+		case 17:
+		case 18:
+		case 19:
+		case 20:
+			ret = STORE_EFFECTIVE_VALUE(21,16,stage-16,op2,&cpu_regs.ead,&cpu_regs.eas);
+			if (ret!=21)
+				return ret;
+			
 			break;
-    }
-    if (eas & nMask)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-    if (eas & zMask)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
-		
+	}
+	cpu_regs.SR&=~(CPU_STATUS_V|CPU_STATUS_C);
+	COMPUTE_ZN_TESTS(cpu_regs.eas);
+	return 0;
+}
+
+u_int32_t CPU_SUBQ(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int32_t ret;
+	switch (stage)
+	{
+		case 0:
+			OPCODE_SETUP_LENGTH(op2);
+			if (op1==0)
+				cpu_regs.operands[0]=8;			// 0 means 8
+			return 1;
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(6,1,stage-1,&cpu_regs.ead,op3,cpu_regs.len,0);
+			
+			if (ret!=6)
+				return ret;
+			
+			cpu_regs.eas=op1&cpu_regs.zMask;
+			stage=6;			// Fall through
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+			ret = LOAD_EFFECTIVE_VALUE(11,6,stage-6,op3,&cpu_regs.eat,&cpu_regs.ead);
+			if (ret!=11)
+				return ret;
+			
+			cpu_regs.ear = (cpu_regs.eat - cpu_regs.eas)&cpu_regs.zMask;
+			stage=11;
+		case 11:
+		case 12:
+		case 13:
+		case 14:
+		case 15:
+			ret = STORE_EFFECTIVE_VALUE(16,11,stage-11,op3,&cpu_regs.ead,&cpu_regs.ear);
+			if (ret!=16)
+				return ret;
+			
+			cpu_regs.ead = cpu_regs.eat;
+			stage=16;
+		case 16:
+			if ((op3 & 0x38)==0x00 && cpu_regs.len==4)	
+				return 19;						// Data register direct long costs 2 cycles more
+			if ((op3 & 0x38)==0x08)				// Address register direct does not affect flags
+				return 17;						// also adds 2 cycles (but not worked out reason why yet)
+			break;
+		case 17:
+			return 18;
+		case 18:
+			return 0;
+		case 19:
+			return 20;
+		case 20:
+			break;
+			
+	}
+
+	COMPUTE_ZN_TESTS(cpu_regs.ear);
+	COMPUTE_SUB_XCV_TESTS(cpu_regs.eas,cpu_regs.ead,cpu_regs.ear);
+	
+	return 0;
+}
+
+u_int32_t CPU_BCC(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int32_t ret;
+	switch (stage)
+	{
+		case 0:
+			return 1;
+		case 1:
+			cpu_regs.ead=cpu_regs.PC;
+			return 2;
+		case 2:
+			if (op2==0)
+				return 3;
+			cpu_regs.eas=op2;
+			if (op2&0x80)
+			{
+				cpu_regs.eas+=0xFF00;
+			}
+			return 8;
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(8,3,stage-3,&cpu_regs.eas,0x38,2,0);
+			
+			if (ret!=8)
+				return ret;
+			
+			stage=8;			// Fall through
+		case 8:
+			if (COMPUTE_CONDITION(op1))
+			{
+				cpu_regs.PC=cpu_regs.ead+(int16_t)cpu_regs.eas;
+				break;
+			}
+			return 9;
+		case 9:					// costs 1 extra cycle if branch not taken
+			break;
+	}
+
+	return 0;
+}
+
+u_int32_t CPU_CMPA(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	u_int32_t ret;
+	switch (stage)
+	{
+		case 0:
+			OPCODE_SETUP_LENGTHLW(op2);
+			return 1;
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(6,1,stage-1,&cpu_regs.eas,op3,cpu_regs.len,1);
+			
+			if (ret!=6)
+				return ret;
+			
+			stage=6;			// Fall through
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+			ret = LOAD_EFFECTIVE_VALUE(11,6,stage-6,op3,&cpu_regs.eas,&cpu_regs.eas);
+			if (ret!=11)
+				return ret;
+			
+			stage=11;
+		case 11:
+			cpu_regs.ead = cpu_regs.A[op1];
+			if (cpu_regs.len==2)
+			{
+				cpu_regs.eas = (int16_t)cpu_regs.eas;
+				OPCODE_SETUP_LENGTHLW(1);				// Rest of operation works as long
+			}
+			return 12;
+		case 12:
+			cpu_regs.ear = (cpu_regs.ead - cpu_regs.eas)&cpu_regs.zMask;
+			break;
+	}
+
+	COMPUTE_ZN_TESTS(cpu_regs.ear);
+	COMPUTE_SUB_XCV_TESTS(cpu_regs.eas,cpu_regs.ead,cpu_regs.ear);
+	
 	return 0;
 }
 
@@ -391,236 +1085,6 @@ u_int32_t CPU_SUBs(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 		cpu_regs.SR|=(CPU_STATUS_C|CPU_STATUS_X);
 	else
 		cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
-	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
-		cpu_regs.SR|=CPU_STATUS_V;
-	else
-		cpu_regs.SR&=~CPU_STATUS_V;
-		
-	return 0;
-}
-
-u_int32_t CPU_SUBQ(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-    int len;
-    u_int32_t nMask,zMask;
-    u_int32_t ead,eas,ear,eat;
-	
-	if (op1==0)
-		op1=8;
-	
-    switch(op2)
-    {
-		case 0x00:
-			len=1;
-			nMask=0x80;
-			zMask=0xFF;
-			break;
-		case 0x01:
-			len=2;
-			nMask=0x8000;
-			zMask=0xFFFF;
-			break;
-		case 0x02:
-			len=4;
-			nMask=0x80000000;
-			zMask=0xFFFFFFFF;
-			break;
-    }
-	
-	eas=op1&zMask;
-    if ((op3 & 0x38)==0)	// destination is D register
-    {
-		ead=cpu_regs.D[op3]&zMask;
-		ear=(ead - eas)&zMask;
-		cpu_regs.D[op3]&=~zMask;
-		cpu_regs.D[op3]|=ear;
-    }
-    else
-    {
-		if ((op3 & 0x38)==0x08)
-		{
-			if (zMask==0xFF)
-			{
-				SOFT_BREAK;
-			}
-			ead=cpu_regs.A[op3&0x07]&zMask;
-			ear=(ead - eas)&zMask;
-			cpu_regs.A[op3&0x07]&=~zMask;
-			cpu_regs.A[op3&0x07]|=ear;
-		}
-		else
-		{
-			ead=getEffectiveAddress(op3,len);
-			switch (len)
-			{
-				case 1:
-					eat=MEM_getByte(ead);
-					ear=(eat - eas)&zMask;
-					MEM_setByte(ead,ear);
-					ead=eat;
-					break;
-				case 2:
-					eat=MEM_getWord(ead);
-					ear=(eat - eas)&zMask;
-					MEM_setWord(ead,ear);
-					ead=eat;
-					break;
-				case 4:
-					eat=MEM_getLong(ead);
-					ear=(eat - eas)&zMask;
-					MEM_setLong(ead,ear);
-					ead=eat;
-					break;
-			}
-		}
-    }
-	
-	if ((op3 & 0x38)==0x08)
-		return 0;
-	
-    if (ear)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
-	
-	ear&=nMask;
-	eas&=nMask;
-	ead&=nMask;
-	
-    if (ear)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-	
-	if ((eas & (~ead)) | (ear & (~ead)) | (eas & ear))
-		cpu_regs.SR|=(CPU_STATUS_C|CPU_STATUS_X);
-	else
-		cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
-	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
-		cpu_regs.SR|=CPU_STATUS_V;
-	else
-		cpu_regs.SR&=~CPU_STATUS_V;
-		
-	return 0;
-}
-
-u_int32_t CPU_BCC(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-	int cc=0;
-	u_int32_t ead;
-	
-    switch (op1)
-    {
-		default:
-			SOFT_BREAK;
-			break;
-		case 0x02:
-			cc = ((~cpu_regs.SR)&CPU_STATUS_C) && ((~cpu_regs.SR)&CPU_STATUS_Z);
-			break;
-		case 0x03:
-			cc = (cpu_regs.SR & CPU_STATUS_C) || (cpu_regs.SR & CPU_STATUS_Z);
-			break;
-		case 0x04:
-			cc = !(cpu_regs.SR & CPU_STATUS_C);
-			break;
-		case 0x05:
-			cc = (cpu_regs.SR & CPU_STATUS_C);
-			break;
-		case 0x06:
-			cc = !(cpu_regs.SR & CPU_STATUS_Z);
-			break;
-		case 0x07:
-			cc = (cpu_regs.SR & CPU_STATUS_Z);
-			break;
-		case 0x08:
-			cc = !(cpu_regs.SR & CPU_STATUS_V);
-			break;
-		case 0x09:
-			cc = (cpu_regs.SR & CPU_STATUS_V);
-			break;
-		case 0x0A:
-			cc = !(cpu_regs.SR & CPU_STATUS_N);
-			break;
-		case 0x0B:
-			cc = (cpu_regs.SR & CPU_STATUS_N);
-			break;
-		case 0x0C:
-			cc = ((cpu_regs.SR & CPU_STATUS_N) && (cpu_regs.SR & CPU_STATUS_V)) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (!(cpu_regs.SR & CPU_STATUS_V)));
-			break;
-		case 0x0D:
-			cc = ((cpu_regs.SR & CPU_STATUS_N) && (!(cpu_regs.SR & CPU_STATUS_V))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (cpu_regs.SR & CPU_STATUS_V));
-			break;
-		case 0x0E:
-			cc = ((cpu_regs.SR & CPU_STATUS_N) && (cpu_regs.SR & CPU_STATUS_V) && (!(cpu_regs.SR & CPU_STATUS_Z))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (!(cpu_regs.SR & CPU_STATUS_V)) && (!(cpu_regs.SR & CPU_STATUS_Z)));
-			break;
-		case 0x0F:
-			cc = (cpu_regs.SR & CPU_STATUS_Z) || ((cpu_regs.SR & CPU_STATUS_N) && (!(cpu_regs.SR & CPU_STATUS_V))) || ((!(cpu_regs.SR & CPU_STATUS_N)) && (cpu_regs.SR & CPU_STATUS_V));
-			break;
-    }
-	
-	ead = cpu_regs.PC;
-    if (op2==0)
-	{
-		op2=MEM_getWord(cpu_regs.PC);
-		cpu_regs.PC+=2;
-	}
-	else
-	{
-		if (op2&0x80)
-		{
-			op2|=0xFF00;
-		}
-	}
-	
-	if (cc)
-	{
-		cpu_regs.PC=ead+(int16_t)op2;
-	}
-	
-	return 0;
-}
-
-u_int32_t CPU_CMPA(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-    int len;
-    u_int32_t ead,eas,ear;
-	
-    switch(op2)
-    {
-		case 0x00:
-			len=2;
-			break;
-		case 0x01:
-			len=4;
-			break;
-    }
-	
-	eas = getSourceEffectiveAddress(op3,len);
-	if (len == 2)
-	{
-		eas = (int16_t)eas;
-	}
-	ead=cpu_regs.A[op1];
-	ear=(ead - eas);
-	
-    if (ear)
-		cpu_regs.SR&=~CPU_STATUS_Z;
-    else
-		cpu_regs.SR|=CPU_STATUS_Z;
-	
-	ear&=0x80000000;
-	eas&=0x80000000;
-	ead&=0x80000000;
-	
-    if (ear)
-		cpu_regs.SR|=CPU_STATUS_N;
-    else
-		cpu_regs.SR&=~CPU_STATUS_N;
-	
-	if ((eas & (~ead)) | (ear & (~ead)) | (eas & ear))
-		cpu_regs.SR|=CPU_STATUS_C;
-	else
-		cpu_regs.SR&=~CPU_STATUS_C;
 	if (((~eas) & ead & (~ear)) | (eas & (~ead) & ear))
 		cpu_regs.SR|=CPU_STATUS_V;
 	else

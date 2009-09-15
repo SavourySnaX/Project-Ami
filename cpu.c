@@ -55,10 +55,8 @@ void CPU_Reset()
 	cpu_regs.A[7] = MEM_getLong(/*0xFC0000*/0);
 	cpu_regs.PC = MEM_getLong(/*0xFC0004*/4);
 
-	if (MEM_getLong(0xFC0000)!=cpu_regs.A[7])
-		printf("%08x : %08x\n",MEM_getLong(0xFC0000),cpu_regs.A[7]);
-	if (MEM_getLong(0xFC0004)!=cpu_regs.PC)
-		printf("%08x : %08x\n",MEM_getLong(0xFC0004),cpu_regs.PC);
+	printf("A7 Reset %08x : %08x\n",MEM_getLong(0xFC0000),cpu_regs.A[7]);
+	printf("PC Reset %08x : %08x\n",MEM_getLong(0xFC0004),cpu_regs.PC);
 
 	for (a=0;a<65536;a++)
 		cpuUsedTable[a]=0;
@@ -226,7 +224,7 @@ u_int32_t CPU_UNKNOWN(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,
 {
 	printf("ILLEGAL INSTRUCTION %08x\n",cpu_regs.PC);
 	startDebug=1;
-	return 1;
+	return 0;
 }
 
 const char *byte_to_binary(u_int32_t x)
@@ -245,7 +243,7 @@ const char *byte_to_binary(u_int32_t x)
 
 u_int8_t ValidateOpcode(int insNum,u_int16_t opcode)
 {
-    u_int8_t invalidMask;
+    u_int8_t invalidMask=0;
     int a,b,c;
     char *mask;
     int operandNum=0;
@@ -561,28 +559,6 @@ void CPU_Step()
 
     CPU_CheckForInterrupt();
 
-	lastPC=cpu_regs.PC;
-	
-	if (cachePos<PCCACHESIZE)
-	{
-		pcCache[cachePos++]=lastPC;
-	}
-	else
-	{
-//		for (a=0;a<PCCACHESIZE;a++)
-//		{
-//			printf("PC History : %08X\n",pcCache[a]);
-//		}
-	
-		memmove(pcCache,pcCache+1,(PCCACHESIZE-1)*sizeof(u_int32_t));
-
-//		for (a=0;a<PCCACHESIZE;a++)
-//		{
-//			printf("PC History : %08X\n",pcCache[a]);
-//		}
-
-		pcCache[PCCACHESIZE-1]=lastPC;
-	}
 	
     opcode = MEM_getWord(cpu_regs.PC);
     
@@ -663,18 +639,32 @@ void CPU_Step()
 
 void CPU_Step()
 {
+	static int cycles=0;
     int a;
 
 	if (!cpu_regs.stage)
 	{
-		if (cpu_regs.PC==0xFC05fc)
-			startDebug=1;
-
 		CPU_CheckForInterrupt();
 
 		if (cpu_regs.stopped)
 			return;
 
+		lastPC=cpu_regs.PC;
+		
+		if (cachePos<PCCACHESIZE)
+		{
+			pcCache[cachePos++]=lastPC;
+		}
+		else
+		{
+			memmove(pcCache,pcCache+1,(PCCACHESIZE-1)*sizeof(u_int32_t));
+			
+			pcCache[PCCACHESIZE-1]=lastPC;
+		}
+		
+//		if (cpu_regs.PC==0xFC00e2)
+//			startDebug=1;
+			
 		// Fetch next instruction
 		cpu_regs.opcode = MEM_getWord(cpu_regs.PC);
 		cpu_regs.PC+=2;
@@ -684,16 +674,19 @@ void CPU_Step()
 			for (a=0;a<CPU_Information[cpu_regs.opcode]->numOperands;a++)
 			{
 				cpu_regs.operands[a] = (cpu_regs.opcode & CPU_Information[cpu_regs.opcode]->operandMask[a]) >> 
-				CPU_Information[cpu_regs.opcode]->operandShift[a];
+										CPU_Information[cpu_regs.opcode]->operandShift[a];
 			}
 		}
 		
-		cpu_regs.stage=1;
-
 		if (startDebug)
 		{
 			u_int32_t	insCount;
 			
+//			for (a=0;a<PCCACHESIZE;a++)
+//			{
+//				printf("PC History : %08X\n",pcCache[a]);
+//			}
+			printf("Cycles %d\n",cycles);
 			DumpEmulatorState();
 			
 			insCount=CPU_DisTable[cpu_regs.opcode](cpu_regs.PC,cpu_regs.operands[0],cpu_regs.operands[1],cpu_regs.operands[2],
@@ -710,12 +703,13 @@ void CPU_Step()
 			
 			startDebug=1;	// just so i can break after disassembly.
 		}
+		cycles=0;
 		
 	}
-	else
-	{
-		cpu_regs.stage = CPU_JumpTable[cpu_regs.opcode](cpu_regs.stage,cpu_regs.operands[0],cpu_regs.operands[1],cpu_regs.operands[2],
+
+	cpu_regs.stage = CPU_JumpTable[cpu_regs.opcode](cpu_regs.stage,cpu_regs.operands[0],cpu_regs.operands[1],cpu_regs.operands[2],
 				cpu_regs.operands[3],cpu_regs.operands[4],cpu_regs.operands[5],cpu_regs.operands[6],cpu_regs.operands[7]);
-	}
+				
+	cycles++;
 }
 
