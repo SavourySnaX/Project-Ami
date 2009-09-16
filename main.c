@@ -132,7 +132,7 @@ unsigned char *load_rom(char *romName)
 	
 	return romData;
 }
-/*
+
 extern int startDebug;
 
 void CPU_runTests()
@@ -180,7 +180,7 @@ void CPU_runTests()
 	{
 		if (chpPtr[0x20000+a]!=chpPtr[0x31fb0+a])
 		{
-			printf("CPU mismatch at : %08x %02x!=%02x\n",0x31fb0+a,chpPtr[0x20000+a],chpPtr[0x31fb0+a]);
+			printf("CPU mismatch at : %08x %02x!=%02x\n",(u_int32_t)(0x31fb0+a),chpPtr[0x20000+a],chpPtr[0x31fb0+a]);
 			misCount++;
 		}
 	}
@@ -188,7 +188,7 @@ void CPU_runTests()
 	printf("And we are done with %d faults\n",misCount);
 	printf("oh well\n");
 }
-*/
+
 u_int8_t videoMemory[AMI_LINE_LENGTH*HEIGHT*sizeof(u_int32_t)];
 
 int g_newScreenNotify = 0;
@@ -633,13 +633,13 @@ int main(int argc,char **argv)
 	
     CPU_Reset();
 	
-/*//////////
+//////////
 	
-	CPU_runTests();
+//	CPU_runTests();
 	
-	return;
+//	return 0;
 	
-//////////*/
+//////////
 	
 	glfwSetKeyCallback(kbHandler);
     

@@ -710,10 +710,9 @@ u_int16_t CPU_DIS_MOVEMs(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3
 	
 	decodeInstruction("MOVEM",len);
 
-	// ToDo. Actually decode register mappings and put operands in right order
-    length+=decodeEffectiveAddress(adr+length,op2,len);
+	length+=decodeRegsDst(adr+length);			// note displayed in wrong order at present
 	strcat(mnemonicData,",");
-	length+=decodeRegsDst(adr+length);
+    length+=decodeEffectiveAddress(adr+length,op2,len);
 	
 	return length;
 }

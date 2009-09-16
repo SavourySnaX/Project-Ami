@@ -315,7 +315,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>cpu_ops.c</string>
+								<string>cpu.c</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -323,11 +323,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>cpu_ops.c</string>
+										<string>cpu.c</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>38FE2253105FCB71001F30E7</string>
+										<string>38FE258E1061691E001F30E7</string>
 										<key>history</key>
 										<array>
 											<string>389C06CE10249C550006CF6E</string>
@@ -344,22 +344,22 @@
 											<string>3860A74A10432A9A00650807</string>
 											<string>3860A74B10432A9A00650807</string>
 											<string>38ACFDD6104D716900E67BAC</string>
-											<string>38AD4ED3105D29A2006DCDFA</string>
 											<string>38AD4ED5105D29A2006DCDFA</string>
 											<string>38AD4F86105E569F006DCDFA</string>
 											<string>38FE206C105E752B001F30E7</string>
 											<string>38FE2140105EA418001F30E7</string>
-											<string>38FE217A105F82EA001F30E7</string>
-											<string>38FE21C7105FA6AE001F30E7</string>
-											<string>38FE21C8105FA6AE001F30E7</string>
 											<string>38FE2237105FC2DA001F30E7</string>
-											<string>38FE2238105FC2DA001F30E7</string>
-											<string>38FE2239105FC2DA001F30E7</string>
-											<string>38FE2249105FCA4D001F30E7</string>
-											<string>38FE224A105FCA4D001F30E7</string>
-											<string>38FE224B105FCA4D001F30E7</string>
-											<string>38FE224C105FCA4D001F30E7</string>
-											<string>38FE2252105FCB71001F30E7</string>
+											<string>38FE22C3105FF886001F30E7</string>
+											<string>38FE23DA106111B0001F30E7</string>
+											<string>38FE245310612A16001F30E7</string>
+											<string>38FE24AB10613CB4001F30E7</string>
+											<string>38FE257610616555001F30E7</string>
+											<string>38FE257D10616585001F30E7</string>
+											<string>38FE257E10616585001F30E7</string>
+											<string>38FE257F10616585001F30E7</string>
+											<string>38FE258A1061691A001F30E7</string>
+											<string>38FE258B1061691A001F30E7</string>
+											<string>38FE258C1061691A001F30E7</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -584,7 +584,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>cpu_ops.c</string>
+								<string>main.c</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>

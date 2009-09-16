@@ -662,8 +662,10 @@ void CPU_Step()
 			pcCache[PCCACHESIZE-1]=lastPC;
 		}
 		
-//		if (cpu_regs.PC==0xFC00e2)
+//		if (cpu_regs.PC==0xFC14e0)
 //			startDebug=1;
+		if (cpu_regs.PC==44102)
+			startDebug=1;
 			
 		// Fetch next instruction
 		cpu_regs.opcode = MEM_getWord(cpu_regs.PC);
