@@ -50,6 +50,11 @@ u_int8_t MEM_getByteChip(u_int32_t upper24,u_int32_t lower16)
 	return chpPtr[ ((upper24 - 0x00)<<16) | lower16];
 }
 
+u_int8_t MEM_getByteChipMirror(u_int32_t upper24,u_int32_t lower16)
+{
+	return chpPtr[ ((upper24 & ((CHIP_MEM_SIZE/65536)-1))<<16) | lower16];
+}
+
 u_int8_t MEM_getByteKick(u_int32_t upper24,u_int32_t lower16)
 {
 //	return romPtr[ ((upper24 - 0xF8)<<16) | lower16];
@@ -114,6 +119,11 @@ void MEM_setByteChip(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
 	chpPtr[ ((upper24 - 0x00)<<16) | lower16]=byte;
 }
 
+void MEM_setByteChipMirror(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
+{
+	chpPtr[ ((upper24 & ((CHIP_MEM_SIZE/65536)-1))<<16) | lower16]=byte;
+}
+
 void MEM_setByteKick(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
 {
 	printf("[WRN] : Unmapped Write to ROM %02X -> %08X\n",byte,(upper24<<16)|lower16);
@@ -176,6 +186,11 @@ void MEM_Initialise(unsigned char *_romPtr)
 	{
 		mem_read[a] = MEM_getByteChip;
 		mem_write[a]= MEM_setByteChip;
+	}
+	for (a=(CHIP_MEM_SIZE/65536);a<0x20;a++)
+	{
+		mem_read[a] = MEM_getByteChipMirror;
+		mem_write[a]= MEM_setByteChipMirror;
 	}
 
 	mem_read[0xBF] = MEM_getByteCia;
