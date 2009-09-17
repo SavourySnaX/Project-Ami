@@ -664,8 +664,8 @@ void CPU_Step()
 		
 //		if (cpu_regs.PC==0xFC14e0)
 //			startDebug=1;
-		if (cpu_regs.PC==44102)
-			startDebug=1;
+//		if (cpu_regs.PC==0x3a8)
+//			startDebug=1;
 			
 		// Fetch next instruction
 		cpu_regs.opcode = MEM_getWord(cpu_regs.PC);
@@ -684,10 +684,10 @@ void CPU_Step()
 		{
 			u_int32_t	insCount;
 			
-//			for (a=0;a<PCCACHESIZE;a++)
-//			{
-//				printf("PC History : %08X\n",pcCache[a]);
-//			}
+			for (a=0;a<PCCACHESIZE;a++)
+			{
+				printf("PC History : %08X\n",pcCache[a]);
+			}
 			printf("Cycles %d\n",cycles);
 			DumpEmulatorState();
 			

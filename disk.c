@@ -293,7 +293,7 @@ void DSK_Update()
 	if ((trackBuffer[tbBufferPos]==(syncWord>>8)) && (trackBuffer[tbBufferPos+1]==(syncWord&0xFF)))
 	{
 		dskSync=1;
-		CST_ORWRD(CST_INTREQR,0x1000);		// signal interrupt request (it does this regardless of mask?)
+		CST_ORWRD(CST_INTREQR,0x1000);		// signal interrupt request
 	}
 	else
 	{

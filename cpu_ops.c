@@ -2738,6 +2738,78 @@ u_int32_t CPU_JSR(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_in
 
 u_int32_t CPU_BCLRI(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
+/*  I AM HERE - NEED TO TIME INSTRUCTION ON REAL AMIGA FOR CASE OF VARIOUS BIT VALUES FOR REGISTER DIRECT MODE
+	u_int32_t ret;
+	switch (stage)
+	{
+		case 0:
+			if (op1<0x08)
+				OPCODE_SETUP_LENGTH(2);			// Register direct uses long
+			else
+				OPCODE_SETUP_LENGTH(0);			// memory uses byte
+			return 1;
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(6,1,stage-1,&cpu_regs.eas,0x3C,1,1);
+			if (ret!=6)
+				return ret;
+
+			stage=6;			// Fall through
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+			ret=LOAD_EFFECTIVE_VALUE(11, 6, stage-6, 0x3C,&cpu_regs.eas, &cpu_regs.eas,1);
+			if (ret!=11)
+				return ret;
+			
+			stage=11;			// Fall through
+		case 11:
+		case 12:
+		case 13:
+		case 14:
+		case 15:
+			ret=COMPUTE_EFFECTIVE_ADDRESS(16,11,stage-11,&cpu_regs.ead,op1,cpu_regs.len,0);
+			
+			if (ret!=16)
+				return ret;
+			
+			stage=16;			// Fall through
+		case 16:
+		case 17:
+		case 18:
+		case 19:
+		case 20:
+			ret = LOAD_EFFECTIVE_VALUE(21,16,stage-16,op1,&cpu_regs.eat,&cpu_regs.ead,cpu_regs.len);
+			if (ret!=21)
+				return ret;
+			
+			stage=21;			// Fall through
+		case 21:
+		case 22:
+		case 23:
+		case 24:
+		case 25:
+			ret = STORE_EFFECTIVE_VALUE(26,21,stage-21,op1,&cpu_regs.ead,&cpu_regs.eat);
+			if (ret!=26)
+				return ret;
+			
+			stage=26;			// Fall through
+		case 21:
+			if (op1<0x08)
+				cpu_regs.eas&=0x1F;
+			else
+				cpu_regs.eas&=0x07;
+			cpu_regs.eas=1<<cpu_regs.eas;
+			break;
+	}
+
+	COMPUTE_Z_BIT(cpu_regs.eas,cpu_regs.ead);
+	return 0;*/
     int len;
     u_int32_t ead,eas,eat;
 	

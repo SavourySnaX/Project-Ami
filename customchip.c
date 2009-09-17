@@ -95,10 +95,7 @@ void CST_Update()
 
 			// I`m going to need to clean this all up really (need a proper bus arbitration too)
 
-			if (CST_GETWRDU(CST_INTENAR,0x4020))
-			{
-				CST_ORWRD(CST_INTREQR,0x0020);				// Have processor poll INTREQR for jobs
-			}
+			CST_ORWRD(CST_INTREQR,0x0020);				// Have processor poll INTREQR for jobs
 
 			cLineLength=LINE_LENGTH-1;
  
