@@ -86,21 +86,6 @@ int startDebug=0;
 
 ////////////////////////////////////////////////////////////////////////
 
-typedef u_int16_t (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
-typedef u_int32_t (*CPU_Function)(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
-
-typedef struct
-	{
-		char baseTable[17];
-		char opcodeName[32];
-		CPU_Function opcode;
-		CPU_Decode   decode;
-		int numOperands;
-		u_int16_t   operandMask[8];
-		u_int16_t   operandShift[8];
-		int numValidMasks[8];
-		char validEffectiveAddress[8][64][10];
-	} CPU_Ins;
 
 CPU_Ins cpu_instructions[] = 
 {
@@ -548,9 +533,10 @@ u_int32_t	cachePos=0;
 
 extern int doNewOpcodeDebug;
 
+/*
 u_int32_t	bpAddress=0x5c5e;
 
-/*
+
 void CPU_Step()
 {
     u_int16_t operands[8];
@@ -649,6 +635,8 @@ void CPU_Step()
 		if (cpu_regs.stopped)
 			return;
 
+		cpu_regs.lastInstruction = cpu_regs.PC;
+		
 		lastPC=cpu_regs.PC;
 		
 		if (cachePos<PCCACHESIZE)

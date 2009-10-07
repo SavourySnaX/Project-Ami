@@ -50,6 +50,7 @@ THE SOFTWARE.
 #include "disk.h"
 #include "sprite.h"
 #include "keyboard.h"
+#include "debugger.h"
 
 int decrpyt_rom()
 {
@@ -269,12 +270,26 @@ void setupGL(int w, int h)
 	glDisable(GL_DEPTH_TEST);
 }
 
-u_int8_t keyUpArray[256];
+u_int8_t keyArray[512*3];
+
+int CheckKey(int key)
+{
+	return keyArray[key*3+2];
+}
+
+void ClearKey(int key)
+{
+	keyArray[key*3+2]=0;
+}
 
 int doNewOpcodeDebug=0;
 
 void GLFWCALL kbHandler( int key, int action )
 {
+	keyArray[key*3 + 0]=keyArray[key*3+1];
+	keyArray[key*3 + 1]=action;
+	keyArray[key*3 + 2]|=(keyArray[key*3+0]==GLFW_RELEASE)&&(keyArray[key*3+1]==GLFW_PRESS);
+
 	if (action==GLFW_PRESS)
 		action=0;
 	else
@@ -282,10 +297,6 @@ void GLFWCALL kbHandler( int key, int action )
 
 	switch (key)
 	{
-		case GLFW_KEY_KP_0:
-			if (!action)
-				doNewOpcodeDebug=1;
-			break;
 //		case GLFW_KEY_KP_MULTIPLY:					NOTE NUMPAD ON PC KB IS VERY DIFFERENT TO AMIGA : TODO
 //			KBD_AddKeyEvent(0xB6 + action);
 //			break;
@@ -583,9 +594,9 @@ int main(int argc,char **argv)
 	int running=1;
 	int a;
 	
-	for (a=0;a<256;a++)
+	for (a=0;a<512*3;a++)
 	{
-		keyUpArray[a]=1;
+		keyArray[a]=0;
 	}
     
 //	Debugger();			 - My xcode is playing up at moment and without this it often doesn't stop on breakpoints
@@ -645,21 +656,25 @@ int main(int argc,char **argv)
     
 	while (running)
 	{
-		KBD_Update();
-		SPR_Update();
-		DSP_Update();			// Note need to priority order these ultimately
-		CST_Update();
-		DSK_Update();
-		CPR_Update();
-		CIA_Update();
-		BLT_Update();
-		CPU_Step();
-		
+		if (!UpdateDebugger())
+		{
+			KBD_Update();
+			SPR_Update();
+			DSP_Update();			// Note need to priority order these ultimately
+			CST_Update();
+			DSK_Update();
+			CPR_Update();
+			CIA_Update();
+			BLT_Update();
+			CPU_Step();
+		}
+		DisplayDebugger();
+
 		if (g_newScreenNotify)
 		{
 			static int lmx=0,lmy=0;
 			int mx,my;
-		
+
 			DrawScreen();
 			
 			glfwSwapBuffers();

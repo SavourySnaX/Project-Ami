@@ -36,7 +36,6 @@ THE SOFTWARE.
 #include "sprite.h"
 
 int pixelMask;
-int applyMod;
 
 int fetchSize=0;
 int lFetchSize=0;
@@ -44,15 +43,32 @@ int lFetchSize=0;
 void DSP_InitialiseDisplay()
 {
 	pixelMask=0x8000;
-	applyMod=0;
 }
 
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo);
 
 void DSP_NotifyLineEnd(int ver)
 {
+	u_int32_t test;
+	
 	pixelMask=0x8000;
-//	applyMod=1;
+
+	test=CST_GETLNGU(CST_BPL1PTH,0x0007FFFE);
+	test+=CST_GETWRDS(CST_BPL1MOD,0xFFFF);
+	CST_SETLNG(CST_BPL1PTH,test,0x0007FFFE);
+	test=CST_GETLNGU(CST_BPL2PTH,0x0007FFFE);
+	test+=CST_GETWRDS(CST_BPL1MOD,0xFFFF);
+	CST_SETLNG(CST_BPL2PTH,test,0x0007FFFE);
+	test=CST_GETLNGU(CST_BPL3PTH,0x0007FFFE);
+	test+=CST_GETWRDS(CST_BPL1MOD,0xFFFF);
+	CST_SETLNG(CST_BPL3PTH,test,0x0007FFFE);
+	test=CST_GETLNGU(CST_BPL4PTH,0x0007FFFE);
+	test+=CST_GETWRDS(CST_BPL1MOD,0xFFFF);
+	CST_SETLNG(CST_BPL4PTH,test,0x0007FFFE);
+	test=CST_GETLNGU(CST_BPL5PTH,0x0007FFFE);
+	test+=CST_GETWRDS(CST_BPL1MOD,0xFFFF);
+	CST_SETLNG(CST_BPL5PTH,test,0x0007FFFE);
+	
 #if ENABLE_DISPLAY_WARNINGS
 	if (fetchSize!=lFetchSize)
 	{
@@ -135,96 +151,96 @@ void DSP_HiRes()
 	u_int8_t pixel1C = 0,pixel2C = 0,pixel3C = 0,pixel4C = 0,ch,cl;
 	u_int8_t spr1C=0,spr2C=0;
 	
-	if (horizontalClock>=(CST_GETWRDU(CST_DDFSTRT,0x00FC)) && horizontalClock<=(CST_GETWRDU(CST_DDFSTOP,0x00FC)+11))
+	if (horizontalClock>=(CST_GETWRDU(CST_DDFSTRT,0x00FC)) && horizontalClock<=(CST_GETWRDU(CST_DDFSTOP,0x00FC)+7))
 	{
-    switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
-    {
-	case 7:		// should never happen
-	case 6:
-//		pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD) << ;		// NOTE PROBABLY USING HAM
-	case 5:
-		pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;
-	case 4:
-		pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;
-	case 3:
-		pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;
-	case 2:
-		pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;
-	case 1:
-		pixel1C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;
-	case 0:
-	    break;
-    }
+		switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
+		{
+			case 7:		// should never happen
+			case 6:
+				//		pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD) << ;		// NOTE PROBABLY USING HAM
+			case 5:
+				pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;
+			case 4:
+				pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;
+			case 3:
+				pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;
+			case 2:
+				pixel1C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;
+			case 1:
+				pixel1C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;
+			case 0:
+				break;
+		}
 		pixelMask>>=1;
-	if (!pixelMask)
-		pixelMask=0x8000;
-			
-    switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
-    {
-	case 7:		// should never happen
-	case 6:
-//		pixel2C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD);
-	case 5:
-		pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;	
-	case 4:
-		pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;	
-	case 3:
-		pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;	
-	case 2:
-		pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;	
-	case 1:
-		pixel2C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2+1,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;	
-	case 0:
-	    break;
-    }
-	pixelMask>>=1;
-	if (!pixelMask)
-		pixelMask=0x8000;
-
-    switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
-    {
-	case 7:		// should never happen
-	case 6:
-//		pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD) << ;		// NOTE PROBABLY USING HAM
-	case 5:
-		pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;
-	case 4:
-		pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;
-	case 3:
-		pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;
-	case 2:
-		pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;
-	case 1:
-		pixel3C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;
-	case 0:
-	    break;
-    }
+		if (!pixelMask)
+			pixelMask=0x8000;
+		
+		switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
+		{
+			case 7:		// should never happen
+			case 6:
+				//		pixel2C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD);
+			case 5:
+				pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;	
+			case 4:
+				pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;	
+			case 3:
+				pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;	
+			case 2:
+				pixel2C |= DecodePixel(horizontalClock*2+1,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;	
+			case 1:
+				pixel2C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2+1,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;	
+			case 0:
+				break;
+		}
 		pixelMask>>=1;
-	if (!pixelMask)
-		pixelMask=0x8000;
-			
-    switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
-    {
-	case 7:		// should never happen
-	case 6:
-//		pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD) << ;		// NOTE PROBABLY USING HAM
-	case 5:
-		pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;
-	case 4:
-		pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;
-	case 3:
-		pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;
-	case 2:
-		pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;
-	case 1:
-		pixel4C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;
-	case 0:
-	    break;
-    }
+		if (!pixelMask)
+			pixelMask=0x8000;
+		
+		switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
+		{
+			case 7:		// should never happen
+			case 6:
+				//		pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD) << ;		// NOTE PROBABLY USING HAM
+			case 5:
+				pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;
+			case 4:
+				pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;
+			case 3:
+				pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;
+			case 2:
+				pixel3C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;
+			case 1:
+				pixel3C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;
+			case 0:
+				break;
+		}
 		pixelMask>>=1;
-	if (!pixelMask)
-		pixelMask=0x8000;
-			
+		if (!pixelMask)
+			pixelMask=0x8000;
+		
+		switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
+		{
+			case 7:		// should never happen
+			case 6:
+				//		pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL6PTH,CST_BPL2MOD) << ;		// NOTE PROBABLY USING HAM
+			case 5:
+				pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL5PTH,CST_BPL1MOD,CST_BPL5DAT) << 5;
+			case 4:
+				pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL4PTH,CST_BPL2MOD,CST_BPL4DAT) << 4;
+			case 3:
+				pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL3PTH,CST_BPL1MOD,CST_BPL3DAT) << 3;
+			case 2:
+				pixel4C |= DecodePixel(horizontalClock*2,verticalClock,CST_BPL2PTH,CST_BPL2MOD,CST_BPL2DAT) << 2;
+			case 1:
+				pixel4C |= DecodePixel((horizontalClock-CST_GETWRDU(CST_DDFSTRT,0x00FC))*2,verticalClock,CST_BPL1PTH,CST_BPL1MOD,CST_BPL1DAT) << 1;
+			case 0:
+				break;
+		}
+		pixelMask>>=1;
+		if (!pixelMask)
+			pixelMask=0x8000;
+		
 	}
 	
 	spr1C = DSP_DoSpriteCol(horizontalClock*2,verticalClock);
@@ -243,25 +259,25 @@ void DSP_HiRes()
 	
 	ch=CST_GETWRDU(CST_COLOR00 + pixel1C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel1C,0x00FF);
-
+	
 	doPixel(horizontalClock*4,verticalClock*2,ch,cl);
 	doPixel(horizontalClock*4,verticalClock*2+1,ch,cl);
-
+	
 	ch=CST_GETWRDU(CST_COLOR00 + pixel2C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel2C,0x00FF);
-
+	
 	doPixel(horizontalClock*4+1,verticalClock*2,ch,cl);
 	doPixel(horizontalClock*4+1,verticalClock*2+1,ch,cl);
-
+	
 	ch=CST_GETWRDU(CST_COLOR00 + pixel3C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel3C,0x00FF);
-
+	
 	doPixel(horizontalClock*4+2,verticalClock*2,ch,cl);
 	doPixel(horizontalClock*4+2,verticalClock*2+1,ch,cl);
-
+	
 	ch=CST_GETWRDU(CST_COLOR00 + pixel4C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel4C,0x00FF);
-
+	
 	doPixel(horizontalClock*4+3,verticalClock*2,ch,cl);
 	doPixel(horizontalClock*4+3,verticalClock*2+1,ch,cl);
 }

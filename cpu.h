@@ -56,8 +56,29 @@ typedef struct
 	u_int32_t	tmpL;
 	u_int16_t	tmpW;
 
+	u_int32_t	lastInstruction;		// Used by debugger (since sub stage instruction emulation shifts PC as it goes)
 }CPU_Regs;
 
+typedef u_int16_t (*CPU_Decode)(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
+typedef u_int32_t (*CPU_Function)(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8);
+
+typedef struct
+{
+	char baseTable[17];
+	char opcodeName[32];
+	CPU_Function opcode;
+	CPU_Decode   decode;
+	int numOperands;
+	u_int16_t   operandMask[8];
+	u_int16_t   operandShift[8];
+	int numValidMasks[8];
+	char validEffectiveAddress[8][64][10];
+} CPU_Ins;
+
+extern CPU_Ins		cpu_instructions[];
+extern CPU_Function	CPU_JumpTable[65536];
+extern CPU_Decode	CPU_DisTable[65536];
+extern CPU_Ins		*CPU_Information[65536];
 
 #define	CPU_STATUS_T1		(1<<15)
 #define	CPU_STATUS_T0		(1<<14)

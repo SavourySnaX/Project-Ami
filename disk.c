@@ -234,7 +234,7 @@ void DSK_InitialiseDisk()
 	if (!diskDrive[0].diskInDrive)
 	{
 		LoadDisk("../../wb.adf",0);
-//		LoadDisk("../../wbe.adf",1);
+		LoadDisk("../../wbe.adf",1);
 	}
 
 //	diskDrive[1].diskInDrive=1;		// Adds a completely unformatted disk to drive 1

@@ -26,6 +26,7 @@ THE SOFTWARE.
  
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "config.h"
 
@@ -89,7 +90,7 @@ void CST_Update()
 		if (todBStart)
 			todBCnt++;
 		verticalClock++;
-		if (verticalClock>=262)
+		if (verticalClock>=313)
 		{
 			verticalClock=0;
 
@@ -529,6 +530,38 @@ CST_Regs customChipRegisters[] =
 {"COLOR29",CST_WRITEABLE|CST_SUPPORTED},
 {"COLOR30",CST_WRITEABLE|CST_SUPPORTED},
 {"COLOR31",CST_WRITEABLE|CST_SUPPORTED},
+{"1C0(ECS)",0},
+{"1C2(ECS)",0},
+{"1C4(ECS)",0},
+{"1C6(ECS)",0},
+{"1C8(ECS)",0},
+{"1CA(ECS)",0},
+{"1CC(ECS)",0},
+{"1CE(ECS)",0},
+{"1D0",0},
+{"1D2",0},
+{"1D4",0},
+{"1D6",0},
+{"1D8",0},
+{"1DA",0},
+{"1DC(ECS)",0},
+{"1DE(ECS)",0},
+{"1E0(ECS)",0},
+{"1E2(ECS)",0},
+{"1E4(ECS)",0},
+{"1E6",0},
+{"1E8",0},
+{"1EA",0},
+{"1EC",0},
+{"1EE",0},
+{"1F0",0},
+{"1F2",0},
+{"1F4",0},
+{"1F6",0},
+{"1F8",0},
+{"1FA",0},
+{"1FC",0},
+{"NO-OP",0},
 {"",CST_END},
 };
 
@@ -701,4 +734,16 @@ void MEM_setByteCustom(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
 {
 	lower16&=0xFFF;
 	cst_write[lower16](lower16,byte);
+}
+
+void MEM_GetHardwareDebug(u_int16_t regNum, char *buffer)
+{
+	int a;
+	static char spaces[8];
+
+	strcpy(spaces," ");
+	for (a=0;a<8-strlen(customChipRegisters[regNum].name);a++)
+		strcat(spaces," ");
+		
+	sprintf(buffer,"%s%s%04X",customChipRegisters[regNum].name,spaces, CST_GETWRDU(regNum*2,0xFFFF));
 }
