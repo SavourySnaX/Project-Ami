@@ -491,9 +491,6 @@ void CPU_CheckForInterrupt()
 		//
 		if (CST_GETWRDU(CST_INTREQR,0x0008)&CST_GETWRDU(CST_INTENAR,0x0008))
 		{
-			if (ciaMemory[0x0D]&0x08)
-				printf("Responding to interrupt\n");
-
 			CPU_GENERATE_EXCEPTION(0x68);
 			cpu_regs.SR&=0xF8FF;
 			cpu_regs.SR|=0x0200;

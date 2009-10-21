@@ -151,7 +151,7 @@ void DSP_HiRes()
 	u_int8_t pixel1C = 0,pixel2C = 0,pixel3C = 0,pixel4C = 0,ch,cl;
 	u_int8_t spr1C=0,spr2C=0;
 	
-	if (horizontalClock>=(CST_GETWRDU(CST_DDFSTRT,0x00FC)) && horizontalClock<=(CST_GETWRDU(CST_DDFSTOP,0x00FC)+7))
+	if (horizontalClock>=(CST_GETWRDU(CST_DDFSTRT,0x00FC)) && horizontalClock<=(CST_GETWRDU(CST_DDFSTOP,0x00FC)+11))
 	{
 		switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
 		{
@@ -243,6 +243,7 @@ void DSP_HiRes()
 		
 	}
 	
+#if ENABLE_SPRITES
 	spr1C = DSP_DoSpriteCol(horizontalClock*2,verticalClock);
 	spr2C = DSP_DoSpriteCol(horizontalClock*2+1,verticalClock);
 	
@@ -256,7 +257,8 @@ void DSP_HiRes()
 		pixel3C = spr2C;
 		pixel4C = spr2C;
 	}
-	
+#endif
+
 	ch=CST_GETWRDU(CST_COLOR00 + pixel1C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel1C,0x00FF);
 	
@@ -335,6 +337,7 @@ void DSP_LoRes()
 
 	}
 
+#if ENABLE_SPRITES
 	spr1C = DSP_DoSpriteCol(horizontalClock*2,verticalClock);
 	spr2C = DSP_DoSpriteCol(horizontalClock*2+1,verticalClock);
 	
@@ -346,6 +349,7 @@ void DSP_LoRes()
 	{
 		pixel2C = spr2C;
 	}
+#endif
 
 	ch=CST_GETWRDU(CST_COLOR00 + pixel1C,0xFF00)>>8;
 	cl=CST_GETWRDU(CST_COLOR00 + pixel1C,0x00FF);

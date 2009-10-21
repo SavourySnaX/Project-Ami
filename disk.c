@@ -34,10 +34,10 @@ THE SOFTWARE.
 #include "customchip.h"
 #include "disk.h"
 
-#define TRACKGAP_SIZEWRD	((350))
+#define TRACKGAP_SIZEWRD	(350)			// FIXME _ I really need to alloc this based on disk format (350+250) works for long tracks
 #define TRACKGAP_SIZE		(TRACKGAP_SIZEWRD*2)
 #define TRACKBUFFER_SIZE	(TRACKGAP_SIZE + (4 + 2 + 2 + 4 + 4 + 16 + 16 + 4 + 4 + 4 + 4 + 512 + 512)*11)
-
+//12668
 typedef struct
 {
 	u_int8_t	mfmDiscBuffer[TRACKBUFFER_SIZE * 80 * 2];			// Represents complete disc image in MFM encoding
@@ -109,18 +109,11 @@ void DSK_Status()
 #endif
 }
 
-void ConvertDiskTrack(int side, int track,u_int8_t *dskData,int drive)
+void ConvertDiskTrackExtended(int side, int track,u_int8_t *firstBlock,int drive)
 {
 	int s=0;
-	u_int8_t *firstBlock;
 	u_int8_t *writeTrack;
 	
-	if (side)
-		side=0;
-	else
-		side=1;
-	
-	firstBlock = &dskData[track * 512 * 22 + side * 512 * 11];
 	writeTrack=&diskDrive[drive].mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
 	
 	for (s=0;s<TRACKGAP_SIZEWRD;s++)
@@ -167,7 +160,72 @@ void ConvertDiskTrack(int side, int track,u_int8_t *dskData,int drive)
 		DSK_MFM_Enc(writeTrack,writeTrack+4,temp,4);	// Data checksum
 		writeTrack+=8+512*2;
 	}
+}
+
+void CopyDiskTrack(int side, int track,u_int8_t *firstBlock,int drive,u_int16_t length)
+{
+	u_int8_t *writeTrack;
 	
+	writeTrack=&diskDrive[drive].mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
+	
+	memcpy(writeTrack,firstBlock,length);
+}
+
+void ConvertDiskTrack(int side, int track,u_int8_t *dskData,int drive)
+{
+	u_int8_t *firstBlock;
+	
+	firstBlock = &dskData[track * 512 * 22 + side * 512 * 11];
+	
+	ConvertDiskTrackExtended(side,track,firstBlock,drive);
+}
+
+void ConvertExtendedADF2(dskData,drive)
+{
+	// Version 2 of extended adf format
+	
+	printf("Extended ADF format 2 is currently not supported\n");
+}
+
+void ConvertExtendedADF(u_int8_t *dskData,int drive)
+{
+	u_int8_t *data = &dskData[8 + 160 * 4];
+	
+	int t,s;
+	for (t=0;t<80;t++)
+	{
+		for (s=0;s<2;s++)
+		{
+			u_int16_t sync,length;
+			
+			sync = dskData[8+(t*2+s)*4+0];
+			sync<<=8;
+			sync+= dskData[8+(t*2+s)*4+1];
+			
+			length=dskData[8+(t*2+s)*4+2];
+			length<<=8;
+			length+=dskData[8+(t*2+s)*4+3];
+			
+			if (sync==0)
+			{
+				// Standard dos track
+				printf("DOS TRACK\n");
+				ConvertDiskTrackExtended(s,t,data,drive);
+				data+=length;
+			}
+			else
+			{
+				data-=2;
+				data[0]=dskData[8+(t*2+s)*4+0];
+				data[1]=dskData[8+(t*2+s)*4+1];
+				printf("MFM TRACK : Length %04X  SYNC %04X\n",length+2,sync);
+				CopyDiskTrack(s,t,data,drive,length);
+				data+=length+2;
+			}
+		}
+	}
+	
+//	exit(-1);
 
 }
 
@@ -207,7 +265,19 @@ void LoadDisk(char *disk,int drive)
 	}
     fclose(inDisk);
 
-	ConvertDiscImageToMFM(dskData,drive);
+	if (strncmp("UAE--ADF",(char *)dskData,8)==0)
+	{
+		ConvertExtendedADF(dskData,drive);
+	}
+	else
+	if (strncmp("UAE-1ADF",(char *)dskData,8)==0)
+	{
+		ConvertExtendedADF2(dskData,drive);
+	}
+	else
+	{
+		ConvertDiscImageToMFM(dskData,drive);
+	}
 
 	free(dskData);
 
@@ -257,6 +327,7 @@ void DSK_NotifyDSKLEN(u_int16_t dskLen)
 {
 	if ((dskLen&0x8000) && (prevDskLen&0x8000))
 	{
+#if ENABLE_DISK_WARNINGS
 		if (dskLen&0x4000)
 		{
 			printf("Warning : Attempting to write to floppy - this may corrupt disk image in ram\n",dskLen&0x3FFF);
@@ -266,6 +337,7 @@ void DSK_NotifyDSKLEN(u_int16_t dskLen)
 		{
 			printf("NOTE : Trackbuffer is %d && read size is %d\n",TRACKBUFFER_SIZE,(	dskLen&0x3FFF)*2);
 		}
+#endif
 		if (CST_GETWRDU(CST_ADKCONR,0x0400))
 		{
 			dskSyncDma=1;
@@ -288,6 +360,9 @@ void DSK_Update()
 	//with interrupts and direct reading of disk data via DSKBYTR)
 	
 	u_int16_t syncWord;
+	
+	if (horizontalClock == 0x07)
+	{
 	
 	syncWord = CST_GETWRDU(CST_DSKSYNC,0xFFFF);
 	if ((trackBuffer[tbBufferPos]==(syncWord>>8)) && (trackBuffer[tbBufferPos+1]==(syncWord&0xFF)))
@@ -350,7 +425,7 @@ void DSK_Update()
 			}
 		}
 	}
-	
+	}
 /*	if (CST_GETWRDU(CST_DMACONR,0x0210)==0x0210 && dskMotorOn)
 	{
 		slow--;
