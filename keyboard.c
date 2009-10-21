@@ -66,7 +66,6 @@ u_int8_t KBD_GetNextKey()
 	
 	kbBufferPos--;
 	memcpy(&kbBuffer[0],&kbBuffer[1],kbBufferPos);
-	printf("Sending Key to amiga : %02X\n",nextKey);
 	return nextKey;
 }
 
@@ -99,7 +98,6 @@ void KBD_Update()
 			{
 				ciaMemory[0x0D]|=0x80;		// set IR bit
 				CST_ORWRD(CST_INTREQR,0x0008);
-				printf("signalled interrupt\n");
 			}
 
 		}
