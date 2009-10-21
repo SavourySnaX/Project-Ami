@@ -1,5 +1,5 @@
 /*
- * config.h
+ *  audio.h
  *  ami
 
 Copyright (c) 2009 Lee Hammerton
@@ -24,17 +24,8 @@ THE SOFTWARE.
 
  */
 
-#ifndef __AMI_CONFIG
-#define __AMI_CONFIG
 
-#define ENABLE_DISK_WARNINGS	1
-#define ENABLE_CHIP_WARNINGS	0
-#define ENABLE_CIA_WARNINGS		0
-#define ENABLE_COPPER_WARNINGS	0
-#define ENABLE_DISPLAY_WARNINGS	0
+#include "mytypes.h"
 
-#define ENABLE_SPRITES		1
-#define ENABLE_AUDIO_OUT	0			// Disabled because framerate is not good enough for this just yet
-
-#endif//__AMI_CONFIG
-
+void AUD_InitialiseAudio();
+void AUD_Update();

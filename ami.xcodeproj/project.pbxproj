@@ -11,6 +11,7 @@
 		384CFC8210247AF700CEB158 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFC8110247AF700CEB158 /* OpenGL.framework */; };
 		384CFCBA1024854400CEB158 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCB91024854400CEB158 /* Carbon.framework */; };
 		384CFCC01024855400CEB158 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384CFCBF1024855400CEB158 /* AGL.framework */; };
+		388554621084EC51004513E4 /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = 388554611084EC51004513E4 /* audio.c */; };
 		388BE8A5106638C600B017CF /* debugger.c in Sources */ = {isa = PBXBuildFile; fileRef = 388BE8A4106638C600B017CF /* debugger.c */; };
 		389C06BB10249B600006CF6E /* blitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06A910249B600006CF6E /* blitter.c */; };
 		389C06BC10249B600006CF6E /* ciachip.c in Sources */ = {isa = PBXBuildFile; fileRef = 389C06AB10249B600006CF6E /* ciachip.c */; };
@@ -24,6 +25,7 @@
 		38ACFDA9104C0ECC00E67BAC /* cpu_dis.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFDA8104C0ECC00E67BAC /* cpu_dis.c */; };
 		38ACFDBC104C0EDB00E67BAC /* cpu_ops.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFDBB104C0EDB00E67BAC /* cpu_ops.c */; };
 		38BA4BE81031C4A80039A042 /* keyboard.c in Sources */ = {isa = PBXBuildFile; fileRef = 38BA4BE71031C4A80039A042 /* keyboard.c */; };
+		38BF71E11087DE8B001A3EE2 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 38BF71E01087DE8B001A3EE2 /* AudioUnit.framework */; };
 		38D5910D1027430B00752082 /* disk.c in Sources */ = {isa = PBXBuildFile; fileRef = 38D5910C1027430B00752082 /* disk.c */; };
 		8DD76FB00486AB0100D96B5E /* ami.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* ami.1 */; };
 /* End PBXBuildFile section */
@@ -48,6 +50,8 @@
 		384CFCB91024854400CEB158 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		384CFCBF1024855400CEB158 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
 		384CFCCA10248A4300CEB158 /* info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = info.plist; sourceTree = "<group>"; };
+		388554601084EC51004513E4 /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audio.h; sourceTree = "<group>"; };
+		388554611084EC51004513E4 /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = audio.c; sourceTree = "<group>"; };
 		388BE8A21065498400B017CF /* font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = font.h; path = gui/font.h; sourceTree = "<group>"; };
 		388BE8A3106638C600B017CF /* debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = debugger.h; path = gui/debugger.h; sourceTree = "<group>"; };
 		388BE8A4106638C600B017CF /* debugger.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = debugger.c; path = gui/debugger.c; sourceTree = "<group>"; };
@@ -75,6 +79,7 @@
 		38ACFDBB104C0EDB00E67BAC /* cpu_ops.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cpu_ops.c; sourceTree = "<group>"; };
 		38BA4BE61031C4A80039A042 /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = keyboard.h; sourceTree = "<group>"; };
 		38BA4BE71031C4A80039A042 /* keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = keyboard.c; sourceTree = "<group>"; };
+		38BF71E01087DE8B001A3EE2 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = /System/Library/Frameworks/AudioUnit.framework; sourceTree = "<absolute>"; };
 		38D5910B1027430B00752082 /* disk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = disk.h; sourceTree = "<group>"; };
 		38D5910C1027430B00752082 /* disk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = disk.c; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* ami */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ami; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,6 +94,7 @@
 				384CFC8210247AF700CEB158 /* OpenGL.framework in Frameworks */,
 				384CFCBA1024854400CEB158 /* Carbon.framework in Frameworks */,
 				384CFCC01024855400CEB158 /* AGL.framework in Frameworks */,
+				38BF71E11087DE8B001A3EE2 /* AudioUnit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +111,7 @@
 				C6A0FF2B0290797F04C91782 /* Documentation */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 				384CFCCA10248A4300CEB158 /* info.plist */,
+				38BF71E01087DE8B001A3EE2 /* AudioUnit.framework */,
 			);
 			name = ami;
 			sourceTree = "<group>";
@@ -141,6 +148,8 @@
 				38ACFDA8104C0ECC00E67BAC /* cpu_dis.c */,
 				38ACFDBA104C0EDB00E67BAC /* cpu_ops.h */,
 				38ACFDBB104C0EDB00E67BAC /* cpu_ops.c */,
+				388554601084EC51004513E4 /* audio.h */,
+				388554611084EC51004513E4 /* audio.c */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -240,6 +249,7 @@
 				38ACFDA9104C0ECC00E67BAC /* cpu_dis.c in Sources */,
 				38ACFDBC104C0EDB00E67BAC /* cpu_ops.c in Sources */,
 				388BE8A5106638C600B017CF /* debugger.c in Sources */,
+				388554621084EC51004513E4 /* audio.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

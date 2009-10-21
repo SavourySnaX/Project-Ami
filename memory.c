@@ -37,7 +37,7 @@ THE SOFTWARE.
 unsigned char *romPtr;
 unsigned char *chpPtr;
 
-#define CHIP_MEM_SIZE		(512*1024)
+#define CHIP_MEM_SIZE		(512*1024*2)
 
 typedef u_int8_t (*MEM_ReadMap)(u_int32_t upper24,u_int32_t lower16);
 typedef void (*MEM_WriteMap)(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);

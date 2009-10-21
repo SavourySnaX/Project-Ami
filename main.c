@@ -51,6 +51,7 @@ THE SOFTWARE.
 #include "sprite.h"
 #include "keyboard.h"
 #include "debugger.h"
+#include "audio.h"
 
 int decrpyt_rom()
 {
@@ -118,7 +119,7 @@ unsigned char *load_rom(char *romName)
     inRom = fopen(romName,"rb");
     if (!inRom)
     {
-	return 0;
+		return 0;
     }
     fseek(inRom,0,SEEK_END);
     romSize = ftell(inRom);
@@ -149,7 +150,7 @@ void CPU_runTests()
 	fseek(inBin,0,SEEK_SET);
     fread(&chpPtr[0x22c18],1,inSize,inBin);
     fclose(inBin);
-
+	
     inBin = fopen("../../test2_25cb0.bin","rb");
     fseek(inBin,0,SEEK_END);
     inSize = ftell(inBin)-1;
@@ -158,9 +159,9 @@ void CPU_runTests()
     fclose(inBin);
 	
 	MEM_MapKickstartLow(0);
-
-//	startDebug=1;
-
+	
+	//	startDebug=1;
+	
 	cpu_regs.SR=0x0000;
 	cpu_regs.PC=0x22c18;
 	cpu_regs.A[7]=0x10000;
@@ -169,7 +170,7 @@ void CPU_runTests()
 	{
 		CPU_Step();
 	}
-
+	
     inBin = fopen("../../test3_31fb0.bin","rb");
     fseek(inBin,0,SEEK_END);
     inSize = ftell(inBin)-1;
@@ -201,10 +202,10 @@ void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo)
 	u_int8_t r = (colHi&0x0F)<<4;
 	u_int8_t g = (colLo&0xF0);
 	u_int8_t b = (colLo&0x0F)<<4;
-
+	
 	if (y>=HEIGHT || x>=AMI_LINE_LENGTH)
 		return;
-
+	
 	colour = (r<<16) | (g<<8) | (b<<0);
 	pixmem32 = &((u_int32_t*)videoMemory)[y*AMI_LINE_LENGTH + x];
 	*pixmem32 = colour;
@@ -289,17 +290,17 @@ void GLFWCALL kbHandler( int key, int action )
 	keyArray[key*3 + 0]=keyArray[key*3+1];
 	keyArray[key*3 + 1]=action;
 	keyArray[key*3 + 2]|=(keyArray[key*3+0]==GLFW_RELEASE)&&(keyArray[key*3+1]==GLFW_PRESS);
-
+	
 	if (action==GLFW_PRESS)
 		action=0;
 	else
 		action=1;
-
+	
 	switch (key)
 	{
-//		case GLFW_KEY_KP_MULTIPLY:					NOTE NUMPAD ON PC KB IS VERY DIFFERENT TO AMIGA : TODO
-//			KBD_AddKeyEvent(0xB6 + action);
-//			break;
+			//		case GLFW_KEY_KP_MULTIPLY:					NOTE NUMPAD ON PC KB IS VERY DIFFERENT TO AMIGA : TODO
+			//			KBD_AddKeyEvent(0xB6 + action);
+			//			break;
 		case GLFW_KEY_TAB:
 			KBD_AddKeyEvent(0x84 + action);
 			break;
@@ -309,9 +310,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_ESC:
 			KBD_AddKeyEvent(0x8A + action);
 			break;
-//		case GLFW_KEY_KP_ADD:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_ADD:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case 'Z':
 			KBD_AddKeyEvent(0x62 + action);
 			break;
@@ -324,12 +325,12 @@ void GLFWCALL kbHandler( int key, int action )
 		case '1':
 			KBD_AddKeyEvent(0x02 + action);
 			break;
-//		case KP_OPENBRACK:
-//			KBD_AddKeyEvent(0xB4 + action);
-//			break;
-//		case GLFW_KEY_KP_9:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case KP_OPENBRACK:
+			//			KBD_AddKeyEvent(0xB4 + action);
+			//			break;
+			//		case GLFW_KEY_KP_9:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case 'X':
 			KBD_AddKeyEvent(0x64 + action);
 			break;
@@ -345,9 +346,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F1:
 			KBD_AddKeyEvent(0xA0 + action);
 			break;
-//		case GLFW_KEY_KP_6:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_6:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case 'C':
 			KBD_AddKeyEvent(0x66 + action);
 			break;
@@ -363,9 +364,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F2:
 			KBD_AddKeyEvent(0xA2 + action);
 			break;
-//		case GLFW_KEY_KP_3:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_3:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case 'V':
 			KBD_AddKeyEvent(0x68 + action);
 			break;
@@ -381,9 +382,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F3:
 			KBD_AddKeyEvent(0xA4 + action);
 			break;
-//		case GLFW_KEY_KP_.:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_.:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case 'B':
 			KBD_AddKeyEvent(0x6A + action);
 			break;
@@ -399,9 +400,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F4:
 			KBD_AddKeyEvent(0xA6 + action);
 			break;
-//		case GLFW_KEY_KP_8:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_8:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case 'N':
 			KBD_AddKeyEvent(0x6C + action);
 			break;
@@ -417,9 +418,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F5:
 			KBD_AddKeyEvent(0xA8 + action);
 			break;
-//		case GLFW_KEY_KP_5:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_5:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case 'M':
 			KBD_AddKeyEvent(0x6E + action);
 			break;
@@ -432,12 +433,12 @@ void GLFWCALL kbHandler( int key, int action )
 		case '7':
 			KBD_AddKeyEvent(0x0E + action);
 			break;
-//		case GLFW_KEY_KP_CLOSEBRACK:
-//			KBD_AddKeyEvent(0xA0 + action);
-//			break;
-//		case GLFW_KEY_KP_2:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_CLOSEBRACK:
+			//			KBD_AddKeyEvent(0xA0 + action);
+			//			break;
+			//		case GLFW_KEY_KP_2:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case ',':
 			KBD_AddKeyEvent(0x70 + action);
 			break;
@@ -453,9 +454,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F6:
 			KBD_AddKeyEvent(0xAA + action);
 			break;
-//		case GLFW_KEY_KP_ENTER:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_ENTER:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case '.':
 			KBD_AddKeyEvent(0x72 + action);
 			break;
@@ -468,12 +469,12 @@ void GLFWCALL kbHandler( int key, int action )
 		case '9':
 			KBD_AddKeyEvent(0x12 + action);
 			break;
-//		case GLFW_KEY_KP_/:
-//			KBD_AddKeyEvent(0xA0 + action);
-//			break;
-//		case GLFW_KEY_KP_7:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_/:
+			//			KBD_AddKeyEvent(0xA0 + action);
+			//			break;
+			//		case GLFW_KEY_KP_7:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case '/':
 			KBD_AddKeyEvent(0x74 + action);
 			break;
@@ -489,12 +490,12 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F7:
 			KBD_AddKeyEvent(0xAC + action);
 			break;
-//		case GLFW_KEY_KP_4:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
-//		case 'X': (spare)
-//			KBD_AddKeyEvent(0x64 + action);
-//			break;
+			//		case GLFW_KEY_KP_4:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
+			//		case 'X': (spare)
+			//			KBD_AddKeyEvent(0x64 + action);
+			//			break;
 		case '\'':
 			KBD_AddKeyEvent(0x54 + action);
 			break;
@@ -507,15 +508,15 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F8:
 			KBD_AddKeyEvent(0xAE + action);
 			break;
-//		case GLFW_KEY_KP_1:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_1:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case GLFW_KEY_SPACE:
 			KBD_AddKeyEvent(0x80 + action);
 			break;
-//		case GLFW_KEY_ret:
-//			KBD_AddKeyEvent(0x42 + action);
-//			break;
+			//		case GLFW_KEY_ret:
+			//			KBD_AddKeyEvent(0x42 + action);
+			//			break;
 		case ']':
 			KBD_AddKeyEvent(0x36 + action);
 			break;
@@ -525,9 +526,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F9:
 			KBD_AddKeyEvent(0xB0 + action);
 			break;
-//		case GLFW_KEY_KP_0:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_0:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case GLFW_KEY_BACKSPACE:
 			KBD_AddKeyEvent(0x82 + action);
 			break;
@@ -543,9 +544,9 @@ void GLFWCALL kbHandler( int key, int action )
 		case GLFW_KEY_F10:
 			KBD_AddKeyEvent(0xB2 + action);
 			break;
-//		case GLFW_KEY_KP_-:
-//			KBD_AddKeyEvent(0xBC + action);
-//			break;
+			//		case GLFW_KEY_KP_-:
+			//			KBD_AddKeyEvent(0xBC + action);
+			//			break;
 		case GLFW_KEY_DOWN:
 			KBD_AddKeyEvent(0x9A + action);
 			break;
@@ -588,6 +589,11 @@ void GLFWCALL kbHandler( int key, int action )
 
 int captureMouse=0;
 
+#if ENABLE_AUDIO_OUT
+void AudioKill();
+void AudioInitialise();
+#endif
+
 int main(int argc,char **argv)
 {
     unsigned char *romPtr;
@@ -598,10 +604,13 @@ int main(int argc,char **argv)
 	{
 		keyArray[a]=0;
 	}
-    
-//	Debugger();			 - My xcode is playing up at moment and without this it often doesn't stop on breakpoints
 	
-//	decrpyt_rom();
+#if ENABLE_AUDIO_OUT
+    
+	AudioInitialise();
+	
+#endif
+	//	decrpyt_rom();
 	
 	// Initialize GLFW 
 	glfwInit(); 
@@ -641,16 +650,17 @@ int main(int argc,char **argv)
 	DSK_InitialiseDisk();
 	SPR_InitialiseSprites();
 	KBD_InitialiseKeyboard();
+	AUD_InitialiseAudio();
 	
     CPU_Reset();
 	
-//////////
+	//////////
 	
-//	CPU_runTests();
+	//	CPU_runTests();
 	
-//	return 0;
+	//	return 0;
 	
-//////////
+	//////////
 	
 	glfwSetKeyCallback(kbHandler);
     
@@ -663,18 +673,19 @@ int main(int argc,char **argv)
 			DSP_Update();			// Note need to priority order these ultimately
 			CST_Update();
 			DSK_Update();
+			AUD_Update();
 			CPR_Update();
 			CIA_Update();
 			BLT_Update();
 			CPU_Step();
 		}
 		DisplayDebugger();
-
+		
 		if (g_newScreenNotify)
 		{
 			static int lmx=0,lmy=0;
 			int mx,my;
-
+			
 			DrawScreen();
 			
 			glfwSwapBuffers();
@@ -741,8 +752,190 @@ int main(int argc,char **argv)
 	}
 	
 	// Close window and terminate GLFW 
-	glfwTerminate(); 
+	glfwTerminate();
+
+#if ENABLE_AUDIO_OUT
+	AudioKill(); 
+#endif
+
 	// Exit program 
 	return 0; 
 }
 
+#if ENABLE_AUDIO_OUT
+
+#include <AudioUnit/AudioUnit.h>
+
+#define AUDIO_BUFFER_SIZE		 0x8000
+#define AUDIO_BUFFER_LENGTH_MASK 0x7FFF
+
+int shunted=0;
+int16_t	test[4][AUDIO_BUFFER_SIZE];
+int toAudio=0;
+int fromAmiga=0;
+
+void _AudioAddData(u_int16_t chn1,u_int16_t chn2,u_int16_t chn3,u_int16_t chn4)
+{
+	test[0][fromAmiga]=chn1;
+	test[1][fromAmiga]=chn2;
+	test[2][fromAmiga]=chn3;
+	test[3][fromAmiga]=chn4;
+	
+	fromAmiga++;
+	fromAmiga&=AUDIO_BUFFER_LENGTH_MASK;
+}
+
+
+
+static OSStatus playbackCallback(void *inRefCon, 
+								 AudioUnitRenderActionFlags *ioActionFlags, 
+								 const AudioTimeStamp *inTimeStamp, 
+								 UInt32 inBusNumber, 
+								 UInt32 inNumberFrames, 
+								 AudioBufferList *ioData) 
+{    
+	int a;
+	
+	u_int16_t *data=ioData->mBuffers[0].mData;
+	for (a=0;a<ioData->mBuffers[0].mDataByteSize/2;a++)
+	{
+		int16_t temp;
+		temp=test[0][toAudio];
+		temp+=test[1][toAudio];
+		temp+=test[2][toAudio];
+		temp+=test[3][toAudio];
+		
+		data[a]=temp;
+		
+		if (toAudio!=fromAmiga)
+		{
+			toAudio++;
+			toAudio&=AUDIO_BUFFER_LENGTH_MASK;
+		}
+//		else 
+//		{
+//			printf("Audio Catchup\n");
+//			break;
+//		}
+		
+	}
+	
+    return noErr;
+}
+
+AudioUnit gOutputUnit;
+
+void AudioKill()
+{
+	OSStatus err = noErr;
+
+	AudioOutputUnitStop (gOutputUnit);
+	
+    err = AudioUnitUninitialize (gOutputUnit);
+	if (err) { printf ("AudioUnitUninitialize=%ld\n", err); return; }
+}
+
+void AudioInitialise()
+{
+	OSStatus err = noErr;
+	int a;
+	
+	for (a=0;a<AUDIO_BUFFER_SIZE;a++)
+	{
+		test[0][a]=0;
+		test[1][a]=0;
+		test[2][a]=0;
+		test[3][a]=0;
+	}
+	
+	// Open the default output unit
+	ComponentDescription desc;
+	desc.componentType = kAudioUnitType_Output;
+	desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+	desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+	desc.componentFlags = 0;
+	desc.componentFlagsMask = 0;
+	
+	Component comp = FindNextComponent(NULL, &desc);
+	if (comp == NULL) 
+	{ 
+		printf ("FindNextComponent\n"); 
+		return; 
+	}
+	
+	err = OpenAComponent(comp, &gOutputUnit);
+	if (err) 
+	{ 
+		printf ("OpenAComponent=%ld\n", err); 
+		return; 
+	}
+	
+	// Set up a callback function to generate output to the output unit
+    AURenderCallbackStruct input;
+	input.inputProc = playbackCallback;
+	input.inputProcRefCon = NULL;
+	
+	err = AudioUnitSetProperty (gOutputUnit, 
+								kAudioUnitProperty_SetRenderCallback, 
+								kAudioUnitScope_Input,
+								0, 
+								&input, 
+								sizeof(input));
+	if (err) 
+	{ 
+		printf ("AudioUnitSetProperty-CB=%ld\n", err); 
+		return;
+	}
+    
+	AudioStreamBasicDescription streamFormat;
+	streamFormat.mSampleRate = 22050;		//	the sample rate of the audio stream
+	streamFormat.mFormatID = kAudioFormatLinearPCM;			//	the specific encoding type of audio stream
+	streamFormat.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian	| kLinearPCMFormatFlagIsPacked | kAudioFormatFlagIsNonInterleaved;
+	streamFormat.mBytesPerPacket = 2;	
+	streamFormat.mFramesPerPacket = 1;	
+	streamFormat.mBytesPerFrame = 2;		
+	streamFormat.mChannelsPerFrame = 1;	
+	streamFormat.mBitsPerChannel = 16;	
+	
+	err = AudioUnitSetProperty (gOutputUnit,
+								kAudioUnitProperty_StreamFormat,
+								kAudioUnitScope_Input,
+								0,
+								&streamFormat,
+								sizeof(AudioStreamBasicDescription));
+	if (err) 
+	{ 
+		printf ("AudioUnitSetProperty-SF=%4.4s, %ld\n", (char*)&err, err);
+		return; 
+	}
+	
+	err = AudioUnitInitialize(gOutputUnit);
+	if (err)
+	{ 
+		printf ("AudioUnitInitialize=%ld\n", err);
+		return; 
+	}
+    
+	Float64 outSampleRate;
+	UInt32 size = sizeof(Float64);
+	err = AudioUnitGetProperty (gOutputUnit,
+								kAudioUnitProperty_SampleRate,
+								kAudioUnitScope_Output,
+								0,
+								&outSampleRate,
+								&size);
+	if (err) 
+	{ 
+		printf ("AudioUnitSetProperty-GF=%4.4s, %ld\n", (char*)&err, err); 
+		return; 
+	}
+	
+	err = AudioOutputUnitStart (gOutputUnit);
+	if (err) 
+	{ 
+		printf ("AudioOutputUnitStart=%ld\n", err); 
+		return; 
+	}
+}
+
+#endif
