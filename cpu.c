@@ -97,7 +97,7 @@ CPU_Ins cpu_instructions[] =
 {"0000000001111100","ORSR",CPU_ORSR,CPU_DIS_ORSR,0},
 {"010011100110mrrr","MOVEUSP",CPU_MOVEUSP,CPU_DIS_MOVEUSP,2,{0x0008,0x0007},{3,0},{1,1},{{"r"},{"rrr"}}},
 // Illegal instructions - that programs use
-{"0100001011aaaaaa","010+MOVEfromCCR",CPU_ILLEGAL,CPU_DIS_ILLEGAL,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},	// ODYSSEY demo uses this
+{"0100001011aaaaaa","MOVEfromCCR",CPU_ILLEGAL,CPU_DIS_ILLEGAL,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},	// ODYSSEY demo uses this
 {"0100111001111011","ILLEGAL",CPU_ILLEGAL,CPU_DIS_ILLEGAL,0},		// KS does this one
 // User instructions
 {"0000000000111100","ORCCR",CPU_ORICCR,CPU_DIS_ORICCR,0},
@@ -214,10 +214,10 @@ u_int32_t CPU_UNKNOWN(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,
 
 const char *byte_to_binary(u_int32_t x)
 {
+    u_int32_t z;
     static char b[17] = {0};
 	
     b[0]=0;
-    u_int32_t z;
     for (z = 32768; z > 0; z >>= 1)
     {
         strcat(b, ((x & z) == z) ? "1" : "0");
@@ -238,9 +238,8 @@ u_int8_t ValidateOpcode(int insNum,u_int16_t opcode)
     {
 		if (cpu_instructions[insNum].baseTable[a]!=lastBase && cpu_instructions[insNum].baseTable[a]!='0' && cpu_instructions[insNum].baseTable[a]!='1')
 		{
-			lastBase = cpu_instructions[insNum].baseTable[a];
-			
 			u_int16_t operand = (opcode & cpu_instructions[insNum].operandMask[operandNum]) >> cpu_instructions[insNum].operandShift[operandNum];
+			lastBase = cpu_instructions[insNum].baseTable[a];
 			
 			for (b=0;b<cpu_instructions[insNum].numValidMasks[operandNum];b++)
 			{
@@ -520,106 +519,6 @@ void CPU_CheckForInterrupt()
 	}
 }
 
-u_int32_t lastPC;
-int readyToTrap=0;	
-
-#define PCCACHESIZE	1000
-
-u_int32_t	pcCache[PCCACHESIZE];
-u_int32_t	cachePos=0;
-
-extern int doNewOpcodeDebug;
-
-/*
-u_int32_t	bpAddress=0x5c5e;
-
-
-void CPU_Step()
-{
-    u_int16_t operands[8];
-    u_int16_t opcode;
-    int a;
-
-    CPU_CheckForInterrupt();
-
-	
-    opcode = MEM_getWord(cpu_regs.PC);
-    
-    if (CPU_Information[opcode])
-    {
-		for (a=0;a<CPU_Information[opcode]->numOperands;a++)
-		{
-			operands[a] = (opcode & CPU_Information[opcode]->operandMask[a]) >> CPU_Information[opcode]->operandShift[a];
-//						printf("Operand %d = %08x\n", a,operands[a]);	
-		}
-    }
-	
-    // DEBUGGER
-
-	if (cpu_regs.PC == bpAddress)			//FE961E  NOP
-	{
-//		static once=0;
-//		if (once==0)
-//			startDebug=1;
-//		else
-//			once++;
-	}
-
-	if ((!cpuUsedTable[opcode]) && doNewOpcodeDebug)
-		startDebug=1;
-		
-	if (startDebug)
-	{
-		u_int32_t	insCount,a;
-
-//		for (a=0;a<PCCACHESIZE;a++)
-//		{
-//			printf("PC History : %08X\n",pcCache[a]);
-//		}
-			
-		DumpEmulatorState();
-
-		insCount=CPU_DisTable[opcode](cpu_regs.PC,operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
-
-		printf("%08X\t",cpu_regs.PC-2);
-			
-		for (a=0;a<(insCount+2)/2;a++)
-		{
-			printf("%s ",decodeWord(cpu_regs.PC-2+a*2));
-		}
-			
-		printf("\t%s\n",mnemonicData);
-				
-		startDebug=1;	// just so i can break after disassembly.
-	}
-	
-    // END DEBUGGER
-	
-	if (!cpuStopped)			// Don't process instruction cpu halted waiting for interrupt
-	{
-		cpuUsedTable[opcode]=1;
-		CPU_JumpTable[opcode](operands[0],operands[1],operands[2],operands[3],operands[4],operands[5],operands[6],operands[7]);
-//	if (cpuStopped)
-//	{
-//		printf("CPU STOPPED : %08x\n",cpu_regs.PC);
-//	}
-	}
-
-	if (MEM_getLong(0x6c)==0)
-	{
-		if (readyToTrap)
-		{
-//			startDebug=1;
-			printf("Last PC %08X\n",lastPC);
-		}
-	}
-	else
-	{
-		readyToTrap=1;
-	}
-}
-*/
-
 void CPU_Step()
 {
 	static int cycles=0;
@@ -634,24 +533,6 @@ void CPU_Step()
 
 		cpu_regs.lastInstruction = cpu_regs.PC;
 		
-		lastPC=cpu_regs.PC;
-		
-		if (cachePos<PCCACHESIZE)
-		{
-			pcCache[cachePos++]=lastPC;
-		}
-		else
-		{
-			memmove(pcCache,pcCache+1,(PCCACHESIZE-1)*sizeof(u_int32_t));
-			
-			pcCache[PCCACHESIZE-1]=lastPC;
-		}
-		
-//		if (cpu_regs.PC==0xFC14e0)
-//			startDebug=1;
-//		if (cpu_regs.PC==0x3a8)
-//			startDebug=1;
-			
 		// Fetch next instruction
 		cpu_regs.opcode = MEM_getWord(cpu_regs.PC);
 		cpu_regs.PC+=2;
@@ -668,11 +549,8 @@ void CPU_Step()
 		if (startDebug)
 		{
 			u_int32_t	insCount;
+			u_int32_t b;
 			
-			for (a=0;a<PCCACHESIZE;a++)
-			{
-				printf("PC History : %08X\n",pcCache[a]);
-			}
 			printf("Cycles %d\n",cycles);
 			DumpEmulatorState();
 			
@@ -681,9 +559,9 @@ void CPU_Step()
 			
 			printf("%08X\t",cpu_regs.PC-2);
 			
-			for (a=0;a<(insCount+2)/2;a++)
+			for (b=0;b<(insCount+2)/2;b++)
 			{
-				printf("%s ",decodeWord(cpu_regs.PC-2+a*2));
+				printf("%s ",decodeWord(cpu_regs.PC-2+b*2));
 			}
 			
 			printf("\t%s\n",mnemonicData);

@@ -161,10 +161,11 @@ int decodeEffectiveAddress(u_int32_t adr, u_int16_t operand,int length)
 
 int decodeRegsDst(u_int32_t adr)
 {
+	int a;
 	u_int16_t tmp=MEM_getWord(adr);
 	int doneOne=0;
 
-	for (int a=0;a<16;a++)
+	for (a=0;a<16;a++)
 	{
 		if (tmp&1)
 		{
@@ -191,12 +192,13 @@ int decodeRegsDst(u_int32_t adr)
 
 int decodeRegsSrc(u_int32_t adr,u_int16_t op)
 {
+	int a;
 	u_int16_t tmp=MEM_getWord(adr);
 	int doneOne=0;
 
 	if ((op & 0x38)==0x20)
 	{
-		for (int a=15;a>=0;a--)
+		for (a=15;a>=0;a--)
 		{
 			if (tmp&1)
 			{
@@ -220,7 +222,7 @@ int decodeRegsSrc(u_int32_t adr,u_int16_t op)
 	}
 	else 
 	{
-		for (int a=0;a<16;a++)
+		for (a=0;a<16;a++)
 		{
 			if (tmp&1)
 			{

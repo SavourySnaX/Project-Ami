@@ -4180,7 +4180,7 @@ u_int32_t CPU_DIVU(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 	
 	if (!eas)
 	{
-		SOFT_BREAK;		// NEED TO DO A TRAP HERE
+		DEB_PauseEmulation("Divide by Zero - Exception not implemented");
 	}
 	
 	eaq=ead / eas;
@@ -5012,7 +5012,7 @@ u_int32_t CPU_DIVS(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 	
 	if (!eas)
 	{
-		SOFT_BREAK;		// NEED TO DO A TRAP HERE
+		DEB_PauseEmulation("Divide by Zero - Exception not implemented");
 	}
 	
 	eaq=ead / eas;

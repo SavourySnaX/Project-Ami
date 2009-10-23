@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "config.h"
 
@@ -45,9 +46,13 @@ THE SOFTWARE.
 
 #include "font.h"
 
+#define MAX_BPS	20
+u_int32_t bpAddresses[MAX_BPS]={0x3CFA};//0xFFFFFFFF;//0x00087dc8;
+int numBps=0;
+
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo);
 
-void DrawChar(u_int32_t x,u_int32_t y, char c)
+void DrawChar(u_int32_t x,u_int32_t y, char c,int cMask1,int cMask2)
 {
 	int a,b;
 	unsigned char *fontChar=&FontData[c*6*8];
@@ -59,13 +64,13 @@ void DrawChar(u_int32_t x,u_int32_t y, char c)
 	{
 		for (b=0;b<6;b++)
 		{
-			doPixel(x+b+1,y+a,(*fontChar) * 0x0F,(*fontChar) * 0xFF);
+			doPixel(x+b+1,y+a,(*fontChar) * cMask1,(*fontChar) * cMask2);
 			fontChar++;
 		}
 	}
 }
 
-void PrintAt(u_int32_t x,u_int32_t y,const char *msg,...)
+void PrintAt(int cMask1,int cMask2,u_int32_t x,u_int32_t y,const char *msg,...)
 {
 	static char tStringBuffer[32768];
 	char *pMsg=tStringBuffer;
@@ -77,7 +82,7 @@ void PrintAt(u_int32_t x,u_int32_t y,const char *msg,...)
 
 	while (*pMsg)
 	{
-		DrawChar(x,y,*pMsg);
+		DrawChar(x,y,*pMsg,cMask1,cMask2);
 		x++;
 		pMsg++;
 	}
@@ -104,13 +109,13 @@ void DisplayWindow(u_int32_t x,u_int32_t y, u_int32_t w, u_int32_t h)
 void ShowCPUState()
 {
 	DisplayWindow(0,0,66,10);
-    PrintAt(1,1," D0=%08X  D1=%08X  D2=%08x  D3=%08x",cpu_regs.D[0],cpu_regs.D[1],cpu_regs.D[2],cpu_regs.D[3]);
-    PrintAt(1,2," D4=%08X  D5=%08X  D6=%08x  D7=%08x",cpu_regs.D[4],cpu_regs.D[5],cpu_regs.D[6],cpu_regs.D[7]);
-    PrintAt(1,3," A0=%08X  A1=%08X  A2=%08x  A3=%08x",cpu_regs.A[0],cpu_regs.A[1],cpu_regs.A[2],cpu_regs.A[3]);
-    PrintAt(1,4," A4=%08X  A5=%08X  A6=%08x  A7=%08x",cpu_regs.A[4],cpu_regs.A[5],cpu_regs.A[6],cpu_regs.A[7]);
-    PrintAt(1,5,"USP=%08X ISP=%08x\n",cpu_regs.USP,cpu_regs.ISP);
-    PrintAt(1,7,"          [ T1:T0: S: M:  :I2:I1:I0:  :  :  : X: N: Z: V: C ]");
-    PrintAt(1,8," SR=%04X  [ %s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s ]", cpu_regs.SR, 
+    PrintAt(0x0F,0xFF,1,1," D0=%08X  D1=%08X  D2=%08x  D3=%08x",cpu_regs.D[0],cpu_regs.D[1],cpu_regs.D[2],cpu_regs.D[3]);
+    PrintAt(0x0F,0xFF,1,2," D4=%08X  D5=%08X  D6=%08x  D7=%08x",cpu_regs.D[4],cpu_regs.D[5],cpu_regs.D[6],cpu_regs.D[7]);
+    PrintAt(0x0F,0xFF,1,3," A0=%08X  A1=%08X  A2=%08x  A3=%08x",cpu_regs.A[0],cpu_regs.A[1],cpu_regs.A[2],cpu_regs.A[3]);
+    PrintAt(0x0F,0xFF,1,4," A4=%08X  A5=%08X  A6=%08x  A7=%08x",cpu_regs.A[4],cpu_regs.A[5],cpu_regs.A[6],cpu_regs.A[7]);
+    PrintAt(0x0F,0xFF,1,5,"USP=%08X ISP=%08x\n",cpu_regs.USP,cpu_regs.ISP);
+    PrintAt(0x0F,0xFF,1,7,"          [ T1:T0: S: M:  :I2:I1:I0:  :  :  : X: N: Z: V: C ]");
+    PrintAt(0x0F,0xFF,1,8," SR=%04X  [ %s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s ]", cpu_regs.SR, 
 		   cpu_regs.SR & 0x8000 ? " 1" : " 0",
 		   cpu_regs.SR & 0x4000 ? " 1" : " 0",
 		   cpu_regs.SR & 0x2000 ? " 1" : " 0",
@@ -134,7 +139,7 @@ u_int32_t GetOpcodeLength(u_int32_t address)
 	u_int16_t	opcode;
 	u_int16_t	operands[8];
 	u_int32_t	insCount;
-	u_int32_t	a;
+	int32_t	a;
 
 	opcode = MEM_getWord(address);
 
@@ -153,21 +158,40 @@ u_int32_t GetOpcodeLength(u_int32_t address)
 	return insCount;
 }
 
-u_int32_t DissasembleAddress(u_int32_t x,u_int32_t y,u_int32_t address)
+u_int32_t DissasembleAddress(u_int32_t x,u_int32_t y,u_int32_t address,int cursor)
 {
 	u_int32_t	insCount;
-	u_int32_t	a;
+	int32_t	a;
+	u_int32_t b;
+	int cMask1=0x0F,cMask2=0xFF;
 	
 	insCount=GetOpcodeLength(address);		// note this also does the dissasemble
-		
-	PrintAt(x,y,"%08X ",address);
-	
-	for (a=0;a<(insCount+2)/2;a++)
+
+	for (a=0;a<numBps;a++)
 	{
-		PrintAt(x+10+a*5,y,"%02X%02X ",MEM_getByte(address+a*2+0),MEM_getByte(address+a*2+1));
+		if (address == bpAddresses[a])
+		{
+			cMask1=0x0F;
+			cMask2=0x00;
+			break;
+		}
+	}
+
+	if (cursor)
+	{
+	PrintAt(cMask1,cMask2,x,y,"%08X >",address);
+	}
+	else
+	{
+	PrintAt(cMask1,cMask2,x,y,"%08X ",address);
+	}
+	
+	for (b=0;b<(insCount+2)/2;b++)
+	{
+		PrintAt(cMask1,cMask2,x+10+b*5,y,"%02X%02X ",MEM_getByte(address+b*2+0),MEM_getByte(address+b*2+1));
 	}
 			
-	PrintAt(x+30,y,"%s",mnemonicData);
+	PrintAt(cMask1,cMask2,x+30,y,"%s",mnemonicData);
 	
 	return insCount+2;
 }
@@ -185,9 +209,14 @@ void DisplayHelp()
 {
 	DisplayWindow(84,0,30,20);
 
-	PrintAt(85,1,"T - Step Instruction");
-	PrintAt(85,2,"H - Step hardware cycle");
-	PrintAt(85,3,"G - Toggle Run in debugger");
+	PrintAt(0x0F,0xFF,85,1,"T - Step Instruction");
+	PrintAt(0x0F,0xFF,85,2,"H - Step hardware cycle");
+	PrintAt(0x0F,0xFF,85,3,"G - Toggle Run in debugger");
+	PrintAt(0x0F,0xFF,85,4,"<space> - Toggle Breakpoint");
+	PrintAt(0x0F,0xFF,85,5,"<up/dn> - Move cursor");
+	PrintAt(0x0F,0xFF,85,6,"M - Switch to cpu debug");
+	PrintAt(0x0F,0xFF,85,7,"C - Show active copper");
+	PrintAt(0x0F,0xFF,85,8,"P - Show cpu history");
 }
 
 void DisplayCustomRegs()
@@ -202,10 +231,106 @@ void DisplayCustomRegs()
 		for (x=0;x<8;x++)
 		{
 			MEM_GetHardwareDebug(y*8+x,buffer);
-			PrintAt(x*14+1, y+32, buffer);
+			PrintAt(0x0F,0xFF,x*14+1, y+32, buffer);
 		}
 	}
 }
+
+int dbMode=0;
+
+void DecodeCopper(int cpReg,int offs)
+{
+	u_int32_t copperAddress = CST_GETLNGU(CST_COP1LCH,0x0007FFFE);
+	int a;
+
+	DisplayWindow(0,0,14*8+1,31+34);
+
+	copperAddress+=4*offs;
+
+	for (a=0;a<32+31;a++)
+	{
+		u_int16_t ins1 = MEM_getWord(copperAddress);
+		u_int16_t ins2 = MEM_getWord(copperAddress+2);
+
+		if (ins1&0x0001)
+		{
+			if (ins2&0x0001)
+			{
+				// Skip
+				PrintAt(0x0F,0xFF,1, a+1, "%08X    Skip : %04X:%04X\n",copperAddress,ins1,ins2);
+			}
+			else
+			{
+				// Wait
+
+				u_int8_t maskv=0x80|((ins2>>8)&0x7F);
+				u_int8_t maskh=(ins2&0xFE);
+				u_int8_t vpos=ins1>>8;
+				u_int8_t hpos=ins1&0xFE;
+					
+				PrintAt(0x0F,0xFF,1, a+1, "%08X    Wait : %04X:%04X\n -- VPOS&%02X >= %02X  -- HPOS&%02X >= %02X",copperAddress,ins1,ins2,maskv,vpos,maskh,hpos);
+			}
+		}
+		else
+		{
+			// Move
+			PrintAt(0x0F,0xFF,1, a+1, "%08X    Move : %04X:%04X  = %04X -> %08X (%s)\n",copperAddress,ins1,ins2,ins2,0xDFF000 + (ins1&0x01FE),MEM_GetHardwareName((ins1&0x01FE)/2));
+		}
+
+		copperAddress+=4;
+	}
+}
+
+u_int32_t lastPC;
+#define PCCACHESIZE	1000
+
+u_int32_t	pcCache[PCCACHESIZE];
+u_int32_t	cachePos=0;
+
+void DecodePCHistory(int offs)
+{
+	int a;
+	DisplayWindow(0,0,14*8+1,31+34);
+
+	for (a=0;a<32+31;a++)
+	{
+		if (a+offs < PCCACHESIZE)
+		{
+			PrintAt(0x0F,0xFF,1,1+a,"%d : PC History : %08X\n",a+offs,pcCache[a+offs]);
+		}
+	}
+}
+
+int cpOffs = 0;
+int cpuOffs = 0;
+int hisOffs = 0;
+			
+int bpAt=0xFFFFFFFF;
+
+void BreakpointModify(u_int32_t address)
+{
+	int a;
+	int b;
+
+	for (a=0;a<numBps;a++)
+	{
+		if (address==bpAddresses[a])
+		{
+			// Remove breakpoint
+			numBps--;
+
+			for (b=a;b<numBps;b++)
+			{
+				bpAddresses[b]=bpAddresses[b+1];
+			}
+			return;
+		}
+	}
+
+	bpAddresses[numBps]=address;
+	numBps++;
+}
+
 
 void DisplayDebugger()
 {
@@ -217,35 +342,76 @@ void DisplayDebugger()
 		if (cpu_regs.stage==0)
 			address=cpu_regs.PC;
 
-		ShowCPUState();
-		
-		DisplayHelp();
-		
-		DisplayCustomRegs();
-		
-		DisplayWindow(0,19,90,12);
-		for (a=0;a<10;a++)
+		if (dbMode==0)
 		{
-			address+=DissasembleAddress(1,20+a,address);
+			ShowCPUState();
+		
+			DisplayHelp();
+		
+			DisplayCustomRegs();
+		
+			DisplayWindow(0,19,90,12);
+			for (a=0;a<10;a++)
+			{
+				if (bpAt==a)
+				{
+					BreakpointModify(address);
+					bpAt=0xFFFFFFFF;
+				}
+
+				address+=DissasembleAddress(1,20+a,address,cpuOffs==a);
+			}
+		}
+		if (dbMode==1)
+		{
+			DecodeCopper(0,cpOffs);
+		}
+		if (dbMode==2)
+		{
+			DecodePCHistory(hisOffs);
 		}
 		
 		g_newScreenNotify=1;
 	}
 }
 
-u_int32_t bpAddress=0x00fc14e0;
-
 int UpdateDebugger()
 {
+	int a;
+
+	if (cpu_regs.stage==0)
+	{
+		lastPC=cpu_regs.PC;
+
+		if (cachePos<PCCACHESIZE)
+		{
+			if (pcCache[cachePos]!=lastPC)
+			{
+				pcCache[cachePos++]=lastPC;
+			}
+		}
+		else
+		{
+			if (pcCache[PCCACHESIZE-1]!=lastPC)
+			{
+				memmove(pcCache,pcCache+1,(PCCACHESIZE-1)*sizeof(u_int32_t));
+			
+				pcCache[PCCACHESIZE-1]=lastPC;
+			}
+		}
+		
+		for (a=0;a<numBps;a++)
+		{
+			if ((bpAddresses[a]==cpu_regs.PC))
+			{
+				g_pause=1;
+			}
+		}
+	}
+	
 	if (CheckKey(GLFW_KEY_PAGEUP))
 		g_pause=!g_pause;
 
-	if ((bpAddress==cpu_regs.PC) && (cpu_regs.stage==0))
-	{
-		g_pause=1;
-		bpAddress=0xFFFFFFFF;
-	}
-	
 	if (stageCheck)
 	{
 		if (stageCheck==1)
@@ -265,6 +431,43 @@ int UpdateDebugger()
 
 	if (g_pause || (stageCheck==3))
 	{
+		if (CheckKey('P'))
+			dbMode=2;
+		if (dbMode==2)
+		{
+		if (CheckKey(GLFW_KEY_UP))
+		{
+			hisOffs-=32;
+			if (hisOffs<0)
+				hisOffs=0;
+		}
+		if (CheckKey(GLFW_KEY_DOWN))
+		{
+			hisOffs+=32;
+			if (hisOffs>=PCCACHESIZE)
+				hisOffs=PCCACHESIZE-1;
+		}
+		}
+		if (CheckKey('C'))
+			dbMode=1;
+		if (dbMode==1)
+		{
+		if (CheckKey(GLFW_KEY_UP) && cpOffs>0)
+			cpOffs--;
+		if (CheckKey(GLFW_KEY_DOWN))
+			cpOffs++;
+		}
+		if (CheckKey('M'))
+			dbMode=0;
+		if (dbMode==0)
+		{
+		if (CheckKey(GLFW_KEY_UP) && cpuOffs>0)
+			cpuOffs--;
+		if (CheckKey(GLFW_KEY_DOWN) && cpuOffs<9)
+			cpuOffs++;
+		if (CheckKey(' '))
+			bpAt=cpuOffs;
+		}
 		// While paused - enable debugger keys
 		if (CheckKey('T'))
 		{
@@ -291,6 +494,12 @@ int UpdateDebugger()
 				g_pause=0;
 			}
 		}
+		ClearKey(' ');
+		ClearKey(GLFW_KEY_UP);
+		ClearKey(GLFW_KEY_DOWN);
+		ClearKey('P');
+		ClearKey('C');
+		ClearKey('M');
 		ClearKey('T');
 		ClearKey('H');
 		ClearKey('G');
@@ -299,3 +508,10 @@ int UpdateDebugger()
 	
 	return g_pause;
 }
+
+void DEB_PauseEmulation(char *reason)
+{
+	g_pause=1;
+	printf("Invoking debugger due to %s\n",reason);
+}
+

@@ -91,7 +91,7 @@ u_int16_t MEM_getWord(u_int32_t address)
 	u_int16_t retVal;
 	if (address&1)
 	{
-		SOFT_BREAK;
+		DEB_PauseEmulation("Mem Get Word (Unaligned Read)");
 	}
 	retVal = MEM_getByte(address)<<8;
 	retVal|= MEM_getByte(address+1);
@@ -104,7 +104,7 @@ u_int32_t MEM_getLong(u_int32_t address)
 	u_int32_t retVal;
 	if (address&1)
 	{
-		SOFT_BREAK;
+		DEB_PauseEmulation("Mem Get Long (Unaligned Read)");
 	}
 	retVal = MEM_getWord(address)<<16;
 	retVal|= MEM_getWord(address+2);
@@ -147,7 +147,7 @@ void MEM_setWord(u_int32_t address, u_int16_t word)
 {
 	if (address&1)
 	{
-		SOFT_BREAK;
+		DEB_PauseEmulation("Mem Set Word (Unaligned Write)");
 	}
 	MEM_setByte(address,word>>8);
 	MEM_setByte(address+1,word&0xFF);
@@ -159,7 +159,7 @@ void MEM_setLong(u_int32_t address, u_int32_t dword)
 {
 	if (address&1)
 	{
-		SOFT_BREAK;
+		DEB_PauseEmulation("Mem Set Long (Unaligned Write)");
 	}
 
 	MEM_setWord(address,dword>>16);

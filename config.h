@@ -27,6 +27,8 @@ THE SOFTWARE.
 #ifndef __AMI_CONFIG
 #define __AMI_CONFIG
 
+#define ENABLE_DEBUGGER			1
+
 #define ENABLE_DISK_WARNINGS	1
 #define ENABLE_CHIP_WARNINGS	0
 #define ENABLE_CIA_WARNINGS		0
@@ -35,6 +37,8 @@ THE SOFTWARE.
 
 #define ENABLE_SPRITES		1
 #define ENABLE_AUDIO_OUT	0			// Disabled because framerate is not good enough for this just yet
+
+#include "debugger.h"
 
 #endif//__AMI_CONFIG
 

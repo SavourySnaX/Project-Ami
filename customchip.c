@@ -738,7 +738,7 @@ void MEM_setByteCustom(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
 
 void MEM_GetHardwareDebug(u_int16_t regNum, char *buffer)
 {
-	int a;
+	u_int32_t a;
 	static char spaces[8];
 
 	strcpy(spaces," ");
@@ -746,4 +746,9 @@ void MEM_GetHardwareDebug(u_int16_t regNum, char *buffer)
 		strcat(spaces," ");
 		
 	sprintf(buffer,"%s%s%04X",customChipRegisters[regNum].name,spaces, CST_GETWRDU(regNum*2,0xFFFF));
+}
+
+const char *MEM_GetHardwareName(u_int16_t regNum)
+{
+	return customChipRegisters[regNum].name;
 }

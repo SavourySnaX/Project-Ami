@@ -26,5 +26,18 @@ THE SOFTWARE.
 
 #include "mytypes.h"
 
+#if ENABLE_DEBUGGER
+
 void DisplayDebugger();
 int UpdateDebugger();
+
+void DEB_PauseEmulation(char *reason);
+
+#else
+
+#define DisplayDebugger()
+#define UpdateDebugger()	0
+
+#define DEB_PauseEmulation(x)
+
+#endif
