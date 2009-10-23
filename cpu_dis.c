@@ -1534,3 +1534,15 @@ u_int16_t CPU_DIS_ORICCR(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3
 
 	return length;
 }
+
+u_int16_t CPU_DIS_NEGX(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	int length=0;
+    int len=decodeLength(op1);
+	
+	decodeInstruction("NEGX",len);
+	
+    length+=decodeEffectiveAddress(adr,op2,len);
+	
+	return length;
+}

@@ -100,6 +100,7 @@ CPU_Ins cpu_instructions[] =
 {"0100001011aaaaaa","MOVEfromCCR",CPU_ILLEGAL,CPU_DIS_ILLEGAL,1,{0x003F},{0},{8},{{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},	// ODYSSEY demo uses this
 {"0100111001111011","ILLEGAL",CPU_ILLEGAL,CPU_DIS_ILLEGAL,0},		// KS does this one
 // User instructions
+{"01000000zzaaaaaa","NEGX",CPU_NEGX,CPU_DIS_NEGX,2,{0x00C0,0x003F},{6,0},{3,8},{{"00","01","10"},{"000rrr","010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
 {"0000000000111100","ORCCR",CPU_ORICCR,CPU_DIS_ORICCR,0},
 {"0000001000111100","ANDCCR",CPU_ANDICCR,CPU_DIS_ANDICCR,0},
 {"1110000011aaaaaa","ASR",CPU_ASRm,CPU_DIS_ASRm,1,{0x003F},{0},{7},{{"010rrr","011rrr","100rrr","101rrr","110rrr","111000","111001"}}},
@@ -193,7 +194,6 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100101011111100  4AFC -> 4AFC	ILLEGAL
 /// 0000dddmmm001aaa  0008 -> 0FCF	MOVEP + 2 byte disp
 /// 0100100000aaaaaa  4800 -> 483F	NBCD
-/// 01000000ssaaaaaa  4000 -> 40FF	NEGX
 /// 0100111001110111  4E77 -> 4E77	RTR
 /// 1000yyy10000rxxx  8100 -> 8F0F	SBCD
 /// 0100101011aaaaaa  4AC0 -> 4AFF	TAS

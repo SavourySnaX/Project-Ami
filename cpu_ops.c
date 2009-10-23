@@ -5226,3 +5226,87 @@ u_int32_t CPU_ORICCR(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u
 	
 	return 0;
 }
+
+u_int32_t CPU_NEGX(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+    int len;
+    u_int32_t nMask,zMask;
+    u_int32_t ead,eas,ear;
+	
+    switch(op1)
+    {
+		case 0x00:
+			len=1;
+			nMask=0x80;
+			zMask=0xFF;
+			break;
+		case 0x01:
+			len=2;
+			nMask=0x8000;
+			zMask=0xFFFF;
+			break;
+		case 0x02:
+			len=4;
+			nMask=0x80000000;
+			zMask=0xFFFFFFFF;
+			break;
+    }
+	
+    if ((op2 & 0x38)==0)	// destination is D register
+    {
+		ead=cpu_regs.D[op2]&zMask;
+		ear=(0 - ead)&zMask;
+	  if (cpu_regs.SR & CPU_STATUS_X)
+		 ear=(ear-1)&zMask;
+		cpu_regs.D[op2]&=~zMask;
+		cpu_regs.D[op2]|=ear;
+    }
+    else
+    {
+		eas=getEffectiveAddress(op2,len);
+		switch (len)
+		{
+			case 1:
+				ead=MEM_getByte(eas);
+				ear=(0-ead)&zMask;
+	      if (cpu_regs.SR & CPU_STATUS_X)
+				  ear=(ear-1)&zMask;
+				MEM_setByte(eas,ear);
+				break;
+			case 2:
+				ead=MEM_getWord(eas);
+				ear=(0-ead)&zMask;
+	      if (cpu_regs.SR & CPU_STATUS_X)
+				  ear=(ear-1)&zMask;
+				MEM_setWord(eas,ear);
+				break;
+			case 4:
+				ead=MEM_getLong(eas);
+				ear=(0-ead)&zMask;
+	      if (cpu_regs.SR & CPU_STATUS_X)
+				  ear=(ear-1)&zMask;
+				MEM_setLong(eas,ear);
+				break;
+		}
+    }
+
+    if (ear)
+		 cpu_regs.SR&=~CPU_STATUS_Z;
+	
+    if (ear)
+		cpu_regs.SR|=CPU_STATUS_N;
+    else
+		cpu_regs.SR&=~CPU_STATUS_N;
+	
+	if (ear & ead)
+		cpu_regs.SR|=CPU_STATUS_V;
+	else
+		cpu_regs.SR&=~CPU_STATUS_V;
+
+	if (ear | ead)
+		cpu_regs.SR|=(CPU_STATUS_C|CPU_STATUS_X);
+	else
+		cpu_regs.SR&=~(CPU_STATUS_C|CPU_STATUS_X);
+		
+	return 0;
+}
