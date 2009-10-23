@@ -88,7 +88,7 @@ void BLT_ReadNextBltSource(u_int16_t useMask,u_int8_t bltPtrStart,u_int8_t bltDa
 {
 	if (CST_GETWRDU(CST_BLTCON0,useMask) && CST_GETWRDU(CST_DMACONR,0x0240)==0x0240)		// SRC is enabled
 	{
-		u_int32_t	bltAAddress = CST_GETLNGU(bltPtrStart,0x0007FFFE);
+		u_int32_t	bltAAddress = CST_GETLNGU(bltPtrStart,CUSTOM_CHIP_RAM_MASK);
 		u_int16_t	bltADat = MEM_getWord(bltAAddress);
 
 		CST_SETWRD(bltDataStart,bltADat,0xFFFF);
@@ -99,7 +99,7 @@ void BLT_ReadNextBltSource(u_int16_t useMask,u_int8_t bltPtrStart,u_int8_t bltDa
 			bltAAddress+=bltDelta*CST_GETWRDS(bltModStart,0xFFFE);
 		}
 		
-		CST_SETLNG(bltPtrStart,bltAAddress,0x0007FFFE);
+		CST_SETLNG(bltPtrStart,bltAAddress,CUSTOM_CHIP_RAM_MASK);
 	}
 }
 
@@ -140,7 +140,7 @@ void BLT_UpdateDst()
 {
 	if (CST_GETWRDU(CST_BLTCON0,0x0100) && CST_GETWRDU(CST_DMACONR,0x0240)==0x0240)		// DST is enabled
 	{
-		u_int32_t	bltDAddress = CST_GETLNGU(CST_BLTDPTH,0x0007FFFE);
+		u_int32_t	bltDAddress = CST_GETLNGU(CST_BLTDPTH,CUSTOM_CHIP_RAM_MASK);
 		
 		MEM_setWord(bltDAddress,CST_GETWRDU(CST_BLTDDAT,0xFFFF));
 		bltDAddress+=bltDelta * 2;
@@ -150,7 +150,7 @@ void BLT_UpdateDst()
 			bltDAddress+=bltDelta * CST_GETWRDS(CST_BLTDMOD,0xFFFE);
 		}
 		
-		CST_SETLNG(CST_BLTDPTH,bltDAddress,0x0007FFFE);
+		CST_SETLNG(CST_BLTDPTH,bltDAddress,CUSTOM_CHIP_RAM_MASK);
 	}
 	
 	// Check End Condition
@@ -300,7 +300,7 @@ void BLT_Update()
 
 			if (CST_GETWRDU(CST_BLTCON0,0x0200) && CST_GETWRDU(CST_DMACONR,0x0240)==0x0240)		// SRC is enabled
 			{
-				CST_SETWRD(CST_BLTCDAT,MEM_getWord(CST_GETLNGU(CST_BLTCPTH,0X0007FFFE)),0xFFFF);
+				CST_SETWRD(CST_BLTCDAT,MEM_getWord(CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK)),0xFFFF);
 			}
 
 			BLT_UpdateClc();
@@ -309,25 +309,25 @@ void BLT_Update()
 			{
 				if (CST_GETWRDU(CST_BLTCON0,0x0800))
 				{
-					addr = CST_GETLNGU(CST_BLTAPTH,0x0007FFFE);
+					addr = CST_GETLNGU(CST_BLTAPTH,CUSTOM_CHIP_RAM_MASK);
 					addr+=CST_GETWRDS(CST_BLTAMOD,0xFFFE);
-					CST_SETLNG(CST_BLTAPTH,addr,0x0007FFFE);
+					CST_SETLNG(CST_BLTAPTH,addr,CUSTOM_CHIP_RAM_MASK);
 				}
 				if (CST_GETWRDU(CST_BLTCON1,0x0010))
 				{
 					if (CST_GETWRDU(CST_BLTCON1,0x0008))
 					{
 						//decy
-						addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+						addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 						addr-=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
-						CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+						CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 					}
 					else
 					{
 						//incy
-						addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+						addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 						addr+=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
-						CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+						CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 					}
 				}
 				else
@@ -341,9 +341,9 @@ void BLT_Update()
 						CST_ORWRD(CST_BLTCON0,(oldShift&0xF)<<12);
 						if (oldShift==0xFFFF)
 						{
-							addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+							addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 							addr-=2;
-							CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+							CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 						}
 					}
 					else
@@ -355,9 +355,9 @@ void BLT_Update()
 						CST_ORWRD(CST_BLTCON0,(oldShift&0xF)<<12);
 						if (oldShift==0x0010)
 						{
-							addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+							addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 							addr+=2;
-							CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+							CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 						}
 					}
 				}
@@ -366,9 +366,9 @@ void BLT_Update()
 			{
 				if (CST_GETWRDU(CST_BLTCON0,0x0800))
 				{
-					addr = CST_GETLNGU(CST_BLTAPTH,0x0007FFFE);
+					addr = CST_GETLNGU(CST_BLTAPTH,CUSTOM_CHIP_RAM_MASK);
 					addr+=CST_GETWRDS(CST_BLTBMOD,0xFFFE);
-					CST_SETLNG(CST_BLTAPTH,addr,0x0007FFFE);
+					CST_SETLNG(CST_BLTAPTH,addr,CUSTOM_CHIP_RAM_MASK);
 				}
 			
 			}
@@ -383,9 +383,9 @@ void BLT_Update()
 					CST_ORWRD(CST_BLTCON0,(oldShift&0xF)<<12);
 					if (oldShift==0xFFFF)
 					{
-						addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+						addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 						addr-=2;
-						CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+						CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 					}
 				}
 				else
@@ -397,9 +397,9 @@ void BLT_Update()
 					CST_ORWRD(CST_BLTCON0,(oldShift&0xF)<<12);
 					if (oldShift==0x0010)
 					{
-						addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+						addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 						addr+=2;
-						CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+						CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 					}
 				}
 			}
@@ -408,16 +408,16 @@ void BLT_Update()
 				if (CST_GETWRDU(CST_BLTCON1,0x0004))
 				{
 					//decy
-					addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+					addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 					addr-=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
-					CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+					CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 				}
 				else
 				{
 					//incy
-					addr = CST_GETLNGU(CST_BLTCPTH,0x0007FFFE);
+					addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 					addr+=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
-					CST_SETLNG(CST_BLTCPTH,addr,0x0007FFFE);
+					CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
 				}
 			}
 						
@@ -432,10 +432,10 @@ void BLT_Update()
 				
 			if (CST_GETWRDU(CST_BLTCON0,0x0100) && CST_GETWRDU(CST_DMACONR,0x0240)==0x0240)		// DST is enabled
 			{
-				MEM_setWord(CST_GETLNGU(CST_BLTDPTH,0x0007FFFE), CST_GETWRDU(CST_BLTDDAT,0xFFFF));
+				MEM_setWord(CST_GETLNGU(CST_BLTDPTH,CUSTOM_CHIP_RAM_MASK), CST_GETWRDU(CST_BLTDDAT,0xFFFF));
 			}
 
-			CST_SETLNG(CST_BLTDPTH,CST_GETLNGU(CST_BLTCPTH,0x0007FFFE),0x0007FFFE);
+			CST_SETLNG(CST_BLTDPTH,CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK),CUSTOM_CHIP_RAM_MASK);
 
 			bltHeight--;
 			if (bltHeight==0)

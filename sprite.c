@@ -77,7 +77,7 @@ int SPR_GetColourNum(int spNum,u_int16_t sprPtr,u_int16_t sprCtl,u_int16_t sprPo
 
 void SPR_Process(int spNum,u_int16_t sprPtr,u_int16_t sprCtl,u_int16_t sprPos,u_int16_t sprDatA,u_int16_t sprDatB, u_int16_t vpos)
 {
-	u_int32_t sprAddr=CST_GETLNGU(sprPtr,0x0007FFFE);
+	u_int32_t sprAddr=CST_GETLNGU(sprPtr,CUSTOM_CHIP_RAM_MASK);
 	
 	if (vpos==0)
 	{
@@ -115,7 +115,7 @@ void SPR_Process(int spNum,u_int16_t sprPtr,u_int16_t sprCtl,u_int16_t sprPos,u_
 		}
 	}
 	
-	CST_SETLNG(sprPtr,sprAddr,0x0007FFFE);
+	CST_SETLNG(sprPtr,sprAddr,CUSTOM_CHIP_RAM_MASK);
 }
 
 void SPR_Update()

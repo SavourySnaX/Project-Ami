@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 #include "config.h"
 
+#include "memory.h"
 #include "copper.h"
 #include "customchip.h"
 #include "ciachip.h"
@@ -101,7 +102,7 @@ void CST_Update()
 			cLineLength=LINE_LENGTH-1;
  
 			// reload copper on vbl
-			CPR_SetPC(CST_GETLNGU(CST_COP1LCH,0x0007FFFE));
+			CPR_SetPC(CST_GETLNGU(CST_COP1LCH,CUSTOM_CHIP_RAM_MASK));
 
 			g_newScreenNotify=1;
 
@@ -113,12 +114,12 @@ void CST_Update()
 
 void CST_setByteCOPJMP1(u_int16_t reg,u_int8_t dontcarestrobe)
 {
-	CPR_SetPC(CST_GETLNGU(CST_COP1LCH,0x0007FFFE));
+	CPR_SetPC(CST_GETLNGU(CST_COP1LCH,CUSTOM_CHIP_RAM_MASK));
 }
 
 void CST_setByteCOPJMP2(u_int16_t reg,u_int8_t dontcarestrobe)
 {
-	CPR_SetPC(CST_GETLNGU(CST_COP2LCH,0x0007FFFE));
+	CPR_SetPC(CST_GETLNGU(CST_COP2LCH,CUSTOM_CHIP_RAM_MASK));
 }
 
 void CST_setByteINTENA(u_int16_t reg,u_int8_t byte)

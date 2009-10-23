@@ -37,7 +37,7 @@ THE SOFTWARE.
 #define TRACKGAP_SIZEWRD	(350)			// FIXME _ I really need to alloc this based on disk format (350+250) works for long tracks
 #define TRACKGAP_SIZE		(TRACKGAP_SIZEWRD*2)
 #define TRACKBUFFER_SIZE	(TRACKGAP_SIZE + (4 + 2 + 2 + 4 + 4 + 16 + 16 + 4 + 4 + 4 + 4 + 512 + 512)*11)
-//12668
+
 typedef struct
 {
 	u_int8_t	mfmDiscBuffer[TRACKBUFFER_SIZE * 80 * 2];			// Represents complete disc image in MFM encoding
@@ -100,7 +100,7 @@ void DSK_Status()
 {
 #if ENABLE_DISK_WARNINGS
 	printf("Current Drive : %d\n",curDiskDrive);
-	printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,0x0007FFFE));
+	printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK));
 	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",0,diskDrive[0].dskMotorOn ? "on" : "off",diskDrive[0].dskTrack,diskDrive[0].dskSide ? "lower" : "upper");
 	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",1,diskDrive[1].dskMotorOn ? "on" : "off",diskDrive[1].dskTrack,diskDrive[1].dskSide ? "lower" : "upper");
 	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",2,diskDrive[2].dskMotorOn ? "on" : "off",diskDrive[2].dskTrack,diskDrive[2].dskSide ? "lower" : "upper");
@@ -389,7 +389,7 @@ void DSK_Update()
 		{
 			if (CST_GETWRDU(CST_DSKLEN,0x4000))
 			{
-				u_int32_t srcAddress = CST_GETLNGU(CST_DSKPTH,0x0007FFFE);
+				u_int32_t srcAddress = CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK);
 				u_int16_t word;
 				
 				word=MEM_getWord(srcAddress);
@@ -399,11 +399,11 @@ void DSK_Update()
 
 				srcAddress+=2;
 
-				CST_SETLNG(CST_DSKPTH,srcAddress,0x0007FFFE);
+				CST_SETLNG(CST_DSKPTH,srcAddress,CUSTOM_CHIP_RAM_MASK);
 			}
 			else
 			{
-				u_int32_t destAddress = CST_GETLNGU(CST_DSKPTH,0x0007FFFE);
+				u_int32_t destAddress = CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK);
 				u_int16_t word;
 				
 				word = trackBuffer[tbBufferPos]<<8;
@@ -412,7 +412,7 @@ void DSK_Update()
 				MEM_setWord(destAddress,word);
 				destAddress+=2;
 				
-				CST_SETLNG(CST_DSKPTH,destAddress,0x0007FFFE);
+				CST_SETLNG(CST_DSKPTH,destAddress,CUSTOM_CHIP_RAM_MASK);
 			}
 				
 			sizeLeft--;
@@ -432,7 +432,7 @@ void DSK_Update()
 		if (slow==0)
 		{
 			slow=50;
-			printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,0x0007FFFE));
+			printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK));
 			printf("Motor %s : Disk Track %d : Disk Side %s\n",dskMotorOn ? "on" : "off",dskTrack,dskSide ? "lower" : "upper");
 			printf("Disk Sync : %04X\n", CST_GETWRDU(CST_DSKSYNC,0xFFFF));
 		}

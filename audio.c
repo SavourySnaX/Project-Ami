@@ -66,7 +66,7 @@ void AUD_UpdateAudioChannel(int chn,u_int16_t imask,u_int16_t datBase,u_int16_t 
 	if (!audio_len[chn])
 	{
 		// Channel reset (reload length and ptr values)
-		audio_ptr[chn]=CST_GETLNGU(pthBase,0x0007FFFE);
+		audio_ptr[chn]=CST_GETLNGU(pthBase,CUSTOM_CHIP_RAM_MASK);
 		audio_len[chn]=CST_GETWRDU(lenBase,0xFFFF);
 		audio_per[chn]=CST_GETWRDU(perBase,0xFFFF);
 		audio_percnt[chn]=0;

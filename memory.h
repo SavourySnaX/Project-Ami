@@ -26,6 +26,9 @@ THE SOFTWARE.
 
 #include "mytypes.h"
 
+#define CHIP_MEM_SIZE						(512*1024*2)
+#define CUSTOM_CHIP_RAM_MASK		(CHIP_MEM_SIZE-2)
+
 void MEM_Initialise(unsigned char *_romPtr);
 
 void MEM_MapKickstartLow(int yes);

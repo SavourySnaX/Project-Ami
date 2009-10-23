@@ -240,7 +240,7 @@ int dbMode=0;
 
 void DecodeCopper(int cpReg,int offs)
 {
-	u_int32_t copperAddress = CST_GETLNGU(CST_COP1LCH,0x0007FFFE);
+	u_int32_t copperAddress = CST_GETLNGU(CST_COP1LCH,CUSTOM_CHIP_RAM_MASK);
 	int a;
 
 	DisplayWindow(0,0,14*8+1,31+34);
