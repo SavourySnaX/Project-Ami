@@ -26,6 +26,7 @@
 		38ACFDBC104C0EDB00E67BAC /* cpu_ops.c in Sources */ = {isa = PBXBuildFile; fileRef = 38ACFDBB104C0EDB00E67BAC /* cpu_ops.c */; };
 		38BA4BE81031C4A80039A042 /* keyboard.c in Sources */ = {isa = PBXBuildFile; fileRef = 38BA4BE71031C4A80039A042 /* keyboard.c */; };
 		38BF71E11087DE8B001A3EE2 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 38BF71E01087DE8B001A3EE2 /* AudioUnit.framework */; };
+		38C166B71098BE0B009FDBC8 /* autoconf.c in Sources */ = {isa = PBXBuildFile; fileRef = 38C166B51098BE0B009FDBC8 /* autoconf.c */; };
 		38D5910D1027430B00752082 /* disk.c in Sources */ = {isa = PBXBuildFile; fileRef = 38D5910C1027430B00752082 /* disk.c */; };
 		8DD76FB00486AB0100D96B5E /* ami.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* ami.1 */; };
 /* End PBXBuildFile section */
@@ -80,6 +81,8 @@
 		38BA4BE61031C4A80039A042 /* keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = keyboard.h; sourceTree = "<group>"; };
 		38BA4BE71031C4A80039A042 /* keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = keyboard.c; sourceTree = "<group>"; };
 		38BF71E01087DE8B001A3EE2 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = /System/Library/Frameworks/AudioUnit.framework; sourceTree = "<absolute>"; };
+		38C166B51098BE0B009FDBC8 /* autoconf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = autoconf.c; sourceTree = "<group>"; };
+		38C166B61098BE0B009FDBC8 /* autoconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = autoconf.h; sourceTree = "<group>"; };
 		38D5910B1027430B00752082 /* disk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = disk.h; sourceTree = "<group>"; };
 		38D5910C1027430B00752082 /* disk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = disk.c; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* ami */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ami; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -119,6 +122,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				38C166B51098BE0B009FDBC8 /* autoconf.c */,
+				38C166B61098BE0B009FDBC8 /* autoconf.h */,
 				388BE89D106541E800B017CF /* gui */,
 				389C06A910249B600006CF6E /* blitter.c */,
 				389C06AA10249B600006CF6E /* blitter.h */,
@@ -250,6 +255,7 @@
 				38ACFDBC104C0EDB00E67BAC /* cpu_ops.c in Sources */,
 				388BE8A5106638C600B017CF /* debugger.c in Sources */,
 				388554621084EC51004513E4 /* audio.c in Sources */,
+				38C166B71098BE0B009FDBC8 /* autoconf.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,6 +311,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_PKGINFO_FILE = NO;
@@ -312,6 +319,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-lglfw";
 				PREBINDING = NO;
+				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = macosx10.5;
 			};
 			name = Release;

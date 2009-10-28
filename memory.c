@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "config.h"
 
 #include "memory.h"
+#include "autoconf.h"
 #include "customchip.h"
 #include "ciachip.h"
 
@@ -223,6 +224,8 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_read[0xFA] = MEM_getByteKick;
 	mem_read[0xFB] = MEM_getByteKick;
 */
+	mem_read[0xE8] = MEM_getByteAutoConf;
+
 	mem_read[0xFC] = MEM_getByteKick;
 	mem_read[0xFD] = MEM_getByteKick;
 	mem_read[0xFE] = MEM_getByteKick;
@@ -263,6 +266,8 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_write[0xFA] = MEM_setByteKick;
 	mem_write[0xFB] = MEM_setByteKick;
 */
+	mem_write[0xE8] = MEM_setByteAutoConf;
+
 	mem_write[0xFC] = MEM_setByteKick;
 	mem_write[0xFD] = MEM_setByteKick;
 	mem_write[0xFE] = MEM_setByteKick;
