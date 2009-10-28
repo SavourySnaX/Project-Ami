@@ -766,8 +766,8 @@ int main(int argc,char **argv)
 
 #include <AudioUnit/AudioUnit.h>
 
-#define AUDIO_BUFFER_SIZE		 0x8000
-#define AUDIO_BUFFER_LENGTH_MASK 0x7FFF
+#define AUDIO_BUFFER_SIZE		 0x400
+#define AUDIO_BUFFER_LENGTH_MASK (AUDIO_BUFFER_SIZE-1)
 
 int shunted=0;
 int16_t	test[4][AUDIO_BUFFER_SIZE];
