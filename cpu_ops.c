@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 #include <stdio.h>
 
+#include "config.h"
+
 #include "cpu_ops.h"
 
 #include "cpu.h"
@@ -4181,6 +4183,7 @@ u_int32_t CPU_DIVU(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 	if (!eas)
 	{
 		DEB_PauseEmulation("Divide by Zero - Exception not implemented");
+		return 0;
 	}
 	
 	eaq=ead / eas;
@@ -5013,6 +5016,7 @@ u_int32_t CPU_DIVS(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 	if (!eas)
 	{
 		DEB_PauseEmulation("Divide by Zero - Exception not implemented");
+		return 0;
 	}
 	
 	eaq=ead / eas;

@@ -1546,3 +1546,10 @@ u_int16_t CPU_DIS_NEGX(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u
 	
 	return length;
 }
+
+u_int16_t CPU_DIS_UNKNOWN(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
+{
+	strcpy(mnemonicData,"Unknown Instruction");
+	
+	return 0;
+}

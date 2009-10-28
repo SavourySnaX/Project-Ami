@@ -31,6 +31,8 @@ THE SOFTWARE.
 
 #include "config.h"
 
+#if ENABLE_DEBUGGER
+
 #include <OpenGL/OpenGL.h>
 
 #include "/usr/local/include/GL/glfw.h"
@@ -49,6 +51,8 @@ THE SOFTWARE.
 #define MAX_BPS	20
 u_int32_t bpAddresses[MAX_BPS]={0x3CFA};//0xFFFFFFFF;//0x00087dc8;
 int numBps=0;
+
+int copNum=0;
 
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo);
 
@@ -240,8 +244,13 @@ int dbMode=0;
 
 void DecodeCopper(int cpReg,int offs)
 {
-	u_int32_t copperAddress = CST_GETLNGU(CST_COP1LCH,CUSTOM_CHIP_RAM_MASK);
+	u_int32_t copperAddress;
 	int a;
+
+	if (cpReg==0)
+		copperAddress = CST_GETLNGU(CST_COP1LCH,CUSTOM_CHIP_RAM_MASK);
+	else
+		copperAddress = CST_GETLNGU(CST_COP2LCH,CUSTOM_CHIP_RAM_MASK);
 
 	DisplayWindow(0,0,14*8+1,31+34);
 
@@ -364,7 +373,7 @@ void DisplayDebugger()
 		}
 		if (dbMode==1)
 		{
-			DecodeCopper(0,cpOffs);
+			DecodeCopper(copNum,cpOffs);
 		}
 		if (dbMode==2)
 		{
@@ -456,6 +465,11 @@ int UpdateDebugger()
 			cpOffs--;
 		if (CheckKey(GLFW_KEY_DOWN))
 			cpOffs++;
+		if (CheckKey(GLFW_KEY_LEFT))
+		{
+			copNum++;
+			copNum&=1;
+		}
 		}
 		if (CheckKey('M'))
 			dbMode=0;
@@ -495,6 +509,7 @@ int UpdateDebugger()
 			}
 		}
 		ClearKey(' ');
+		ClearKey(GLFW_KEY_LEFT);
 		ClearKey(GLFW_KEY_UP);
 		ClearKey(GLFW_KEY_DOWN);
 		ClearKey('P');
@@ -515,3 +530,4 @@ void DEB_PauseEmulation(char *reason)
 	printf("Invoking debugger due to %s\n",reason);
 }
 
+#endif

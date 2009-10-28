@@ -199,16 +199,11 @@ CPU_Ins		*CPU_Information[65536];
 /// 0100101011aaaaaa  4AC0 -> 4AFF	TAS
 /// 0100111001110110  4E76 -> 4E76	TRAPV
 
-u_int16_t CPU_DIS_UNKNOWN(u_int32_t adr,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
-{
-	printf("UNKNOWN INSTRUCTION\n");
-	return 0;
-}
-
 u_int32_t CPU_UNKNOWN(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_int16_t op4,u_int16_t op5,u_int16_t op6,u_int16_t op7,u_int16_t op8)
 {
+	cpu_regs.PC-=2;	// account for prefetch
 	printf("ILLEGAL INSTRUCTION %08x\n",cpu_regs.PC);
-	startDebug=1;
+	DEB_PauseEmulation("ILLEGAL INSTRUCTION");
 	return 0;
 }
 
