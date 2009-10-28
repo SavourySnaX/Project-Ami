@@ -34,8 +34,11 @@ THE SOFTWARE.
 #include "customchip.h"
 #include "ciachip.h"
 
+#define SLOW_MEM_SIZE		(512*1024)
+
 unsigned char *romPtr;
 unsigned char *chpPtr;
+unsigned char *slowPtr;
 
 typedef u_int8_t (*MEM_ReadMap)(u_int32_t upper24,u_int32_t lower16);
 typedef void (*MEM_WriteMap)(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);
@@ -46,6 +49,11 @@ MEM_WriteMap	mem_write[256];
 u_int8_t MEM_getByteChip(u_int32_t upper24,u_int32_t lower16)
 {
 	return chpPtr[ ((upper24 - 0x00)<<16) | lower16];
+}
+
+u_int8_t MEM_getByteSlow(u_int32_t upper24,u_int32_t lower16)
+{
+	return slowPtr[ ((upper24 - 0xC0)<<16) | lower16];
 }
 
 u_int8_t MEM_getByteChipMirror(u_int32_t upper24,u_int32_t lower16)
@@ -69,6 +77,7 @@ u_int8_t MEM_getByteUnmapped(u_int32_t upper24,u_int32_t lower16)
 {
 	if (upper24 >= 0xF0)
 	{
+//		DEB_PauseEmulation("F0 area read");
 		return 0;			// avoid a mass of warnings as the rom boots up
 	}
 	printf("[WRN] : Unmapped Read From Address %08X\n",(upper24<<16)|lower16);
@@ -115,6 +124,11 @@ extern int startDebug;
 void MEM_setByteChip(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
 {
 	chpPtr[ ((upper24 - 0x00)<<16) | lower16]=byte;
+}
+
+void MEM_setByteSlow(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
+{
+	slowPtr[ ((upper24 - 0xC0)<<16) | lower16]=byte;
 }
 
 void MEM_setByteChipMirror(u_int32_t upper24,u_int32_t lower16,u_int8_t byte)
@@ -170,9 +184,13 @@ void MEM_Initialise(unsigned char *_romPtr)
 	
 	romPtr = _romPtr;
 	chpPtr = malloc(CHIP_MEM_SIZE);
+	slowPtr = malloc(SLOW_MEM_SIZE);
 
 	for (a=0;a<CHIP_MEM_SIZE;a++)
 		chpPtr[a]=0;
+
+	for (a=0;a<SLOW_MEM_SIZE;a++)
+		slowPtr[a]=0;
 
 	for (a=0;a<256;a++)
 	{
@@ -190,33 +208,20 @@ void MEM_Initialise(unsigned char *_romPtr)
 		mem_read[a] = MEM_getByteChipMirror;
 		mem_write[a]= MEM_setByteChipMirror;
 	}
+	
+	for (a=0;a<SLOW_MEM_SIZE / 65536;a++)
+	{
+		mem_read[a+0xC0] = MEM_getByteSlow;
+		mem_write[a+0xC0]= MEM_setByteSlow;
+	}
+	for (a=(SLOW_MEM_SIZE/65536);a<0x18;a++)
+	{
+		mem_read[a+0xC0] = MEM_getByteCustom;
+		mem_write[a+0xC0]= MEM_setByteCustom;
+	}
 
 	mem_read[0xBF] = MEM_getByteCia;
 
-	mem_read[0xC0] = MEM_getByteCustom;
-	mem_read[0xC1] = MEM_getByteCustom;
-	mem_read[0xC2] = MEM_getByteCustom;
-	mem_read[0xC3] = MEM_getByteCustom;
-	mem_read[0xC4] = MEM_getByteCustom;
-	mem_read[0xC5] = MEM_getByteCustom;
-	mem_read[0xC6] = MEM_getByteCustom;
-	mem_read[0xC7] = MEM_getByteCustom;
-	mem_read[0xC8] = MEM_getByteCustom;
-	mem_read[0xC9] = MEM_getByteCustom;
-	mem_read[0xCA] = MEM_getByteCustom;
-	mem_read[0xCB] = MEM_getByteCustom;
-	mem_read[0xCC] = MEM_getByteCustom;
-	mem_read[0xCD] = MEM_getByteCustom;
-	mem_read[0xCE] = MEM_getByteCustom;
-	mem_read[0xCF] = MEM_getByteCustom;
-	mem_read[0xD0] = MEM_getByteCustom;
-	mem_read[0xD1] = MEM_getByteCustom;
-	mem_read[0xD2] = MEM_getByteCustom;
-	mem_read[0xD3] = MEM_getByteCustom;
-	mem_read[0xD4] = MEM_getByteCustom;
-	mem_read[0xD5] = MEM_getByteCustom;
-	mem_read[0xD6] = MEM_getByteCustom;
-	mem_read[0xD7] = MEM_getByteCustom;
 	mem_read[0xDF] = MEM_getByteCustom;
 /*
 	mem_read[0xF8] = MEM_getByteKick;
@@ -235,30 +240,6 @@ void MEM_Initialise(unsigned char *_romPtr)
 
 	mem_write[0xBF] = MEM_setByteCia;
 
-	mem_write[0xC0] = MEM_setByteCustom;
-	mem_write[0xC1] = MEM_setByteCustom;
-	mem_write[0xC2] = MEM_setByteCustom;
-	mem_write[0xC3] = MEM_setByteCustom;
-	mem_write[0xC4] = MEM_setByteCustom;
-	mem_write[0xC5] = MEM_setByteCustom;
-	mem_write[0xC6] = MEM_setByteCustom;
-	mem_write[0xC7] = MEM_setByteCustom;
-	mem_write[0xC8] = MEM_setByteCustom;
-	mem_write[0xC9] = MEM_setByteCustom;
-	mem_write[0xCA] = MEM_setByteCustom;
-	mem_write[0xCB] = MEM_setByteCustom;
-	mem_write[0xCC] = MEM_setByteCustom;
-	mem_write[0xCD] = MEM_setByteCustom;
-	mem_write[0xCE] = MEM_setByteCustom;
-	mem_write[0xCF] = MEM_setByteCustom;
-	mem_write[0xD0] = MEM_setByteCustom;
-	mem_write[0xD1] = MEM_setByteCustom;
-	mem_write[0xD2] = MEM_setByteCustom;
-	mem_write[0xD3] = MEM_setByteCustom;
-	mem_write[0xD4] = MEM_setByteCustom;
-	mem_write[0xD5] = MEM_setByteCustom;
-	mem_write[0xD6] = MEM_setByteCustom;
-	mem_write[0xD7] = MEM_setByteCustom;
 	mem_write[0xDF] = MEM_setByteCustom;
 /*
 	mem_write[0xF8] = MEM_setByteKick;
@@ -272,7 +253,8 @@ void MEM_Initialise(unsigned char *_romPtr)
 	mem_write[0xFD] = MEM_setByteKick;
 	mem_write[0xFE] = MEM_setByteKick;
 	mem_write[0xFF] = MEM_setByteKick;
-	
+
+
 	MEM_MapKickstartLow(1);	// on boot OVL flag is set so kickstart rom should be mirrored into low addresses
 }
 
