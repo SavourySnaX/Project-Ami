@@ -270,7 +270,9 @@ u_int8_t CIA_getBytePRA(u_int16_t reg)
 	}
 	else
 	{
-		u_int8_t byte=ciaMemory[reg]&0x83;		// FIR1 | FIR0 | ---- | LED | OVL
+		u_int8_t byte=ciaMemory[reg]&0x03;		// FIR1 | FIR0 | ---- | LED | OVL
+
+		byte|=0x80;				// second fire button released.	
 		if (leftMouseUp)
 			byte|=0x40;
 		
