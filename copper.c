@@ -152,9 +152,16 @@ void CPR_Update()
 					copperDanger=0x40;
 				}
 				
-				if (destination>=copperDanger) // need to check copper danger bit and allow 0x10 and above addresses
+				if (destination>=copperDanger) 
 				{
 					MEM_setWord(0xdff000+destination,wrd);
+				}
+				else
+				{
+					// It looks like writes to illegal registers actually stall the copper (well its worth a try - need to confirm on
+					//real amiga) - stall handled by re attempting execution of bad move - probably should go into a wait cycle though.
+
+					copperPC-=4;
 				}
 			}
 		}
