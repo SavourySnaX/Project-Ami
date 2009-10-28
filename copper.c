@@ -61,7 +61,7 @@ void CPR_Update()
 {
 	u_int16_t wrd;
 
-	if (CST_GETWRDU(CST_DMACONR,0x0280))
+	if (CST_GETWRDU(CST_DMACONR,0x0280)==0x0280)
 	{
 		// copper is enabled
 		
