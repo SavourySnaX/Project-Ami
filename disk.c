@@ -34,7 +34,7 @@ THE SOFTWARE.
 #include "customchip.h"
 #include "disk.h"
 
-#define TRACKGAP_SIZEWRD	(350)			// FIXME _ I really need to alloc this based on disk format (350+250) works for long tracks
+#define TRACKGAP_SIZEWRD	(348)			// FIXME _ I really need to alloc this based on disk format (350+250) works for long tracks
 #define TRACKGAP_SIZE		(TRACKGAP_SIZEWRD*2)
 #define TRACKBUFFER_SIZE	(TRACKGAP_SIZE + (4 + 2 + 2 + 4 + 4 + 16 + 16 + 4 + 4 + 4 + 4 + 512 + 512)*11)
 

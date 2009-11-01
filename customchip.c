@@ -91,7 +91,7 @@ void CST_Update()
 		if (todBStart)
 			todBCnt++;
 		verticalClock++;
-		if (verticalClock>=313)
+		if (verticalClock>=262)
 		{
 			verticalClock=0;
 
