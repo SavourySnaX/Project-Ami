@@ -226,14 +226,11 @@ void BLT_UpdateClc()
 	bltA=CST_GETWRDU(CST_BLTADAT,0xFFFF);
 	bltB=CST_GETWRDU(CST_BLTBDAT,0xFFFF);
 
-//	if (!CST_GETWRDU(CST_BLTCON1,0x0001))
-	{
-		bltA=BLT_Mask(bltA);
+	bltA=BLT_Mask(bltA);
 		
-		bltA=BLT_Shift(bltA,CST_GETWRDU(CST_BLTCON0,0xF000)>>12,&bltAOldDat);	
+	bltA=BLT_Shift(bltA,CST_GETWRDU(CST_BLTCON0,0xF000)>>12,&bltAOldDat);	
 
-		bltB=BLT_Shift(bltB,CST_GETWRDU(CST_BLTCON1,0xF000)>>12,&bltBOldDat);
-	}
+	bltB=BLT_Shift(bltB,CST_GETWRDU(CST_BLTCON1,0xF000)>>12,&bltBOldDat);
 	
 	bltC=CST_GETWRDU(CST_BLTCDAT,0xFFFF);
 
@@ -480,6 +477,7 @@ void BLT_StartBlit()
 
 		if (CST_GETWRDU(CST_BLTCON1,0x0001))
 		{
+			bltBOldDat=CST_GETWRDU(CST_BLTBDAT,0xFFFF);		// fixes line drawing problems
 			if (CST_GETWRDU(CST_BLTCON1,0x0002))
 			{
 				printf("Warning.. single dot mode not supported\n");
