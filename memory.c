@@ -34,17 +34,31 @@ THE SOFTWARE.
 #include "customchip.h"
 #include "ciachip.h"
 
+typedef u_int8_t (*MEM_ReadMap)(u_int32_t upper24,u_int32_t lower16);
+typedef void (*MEM_WriteMap)(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);
+
 #define SLOW_MEM_SIZE		(512*1024)
 
 unsigned char *romPtr;
 unsigned char *chpPtr;
 unsigned char *slowPtr;
 
-typedef u_int8_t (*MEM_ReadMap)(u_int32_t upper24,u_int32_t lower16);
-typedef void (*MEM_WriteMap)(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);
-
 MEM_ReadMap		mem_read[256];
 MEM_WriteMap	mem_write[256];
+
+void MEM_SaveState(FILE *outStream)
+{
+	fwrite(chpPtr,1,CHIP_MEM_SIZE,outStream);
+	fwrite(slowPtr,1,SLOW_MEM_SIZE,outStream);
+}
+
+void MEM_LoadState(FILE *inStream)
+{
+	fread(chpPtr,1,CHIP_MEM_SIZE,inStream);
+	fread(slowPtr,1,SLOW_MEM_SIZE,inStream);
+
+	MEM_MapKickstartLow(0);	// assume we are past point of overlay
+}
 
 u_int8_t MEM_getByteChip(u_int32_t upper24,u_int32_t lower16)
 {

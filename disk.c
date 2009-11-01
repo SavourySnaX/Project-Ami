@@ -51,19 +51,33 @@ typedef struct
 	u_int32_t	dskIdCode;
 } DiskDrive;
 
-DiskDrive diskDrive[4];
+typedef struct
+{
+	DiskDrive diskDrive[4];
+	int			dskSync;
+	int			dskSyncDma;
+	int			tbLastSide;
+	int			tbLastTrack;
+	int			tbBufferPos;
+	int			curDiskDrive;
+	u_int16_t	prevDskLen;
+	int			doDiskDMA;
+	u_int8_t	*trackBuffer;										// Current track pointer
+} DSK_data;
 
-int			dskSync;
-int			dskSyncDma;
-int			tbLastSide;
-int			tbLastTrack;
-int			tbBufferPos;
-int			curDiskDrive;
+DSK_data dsk_Data;
 
-u_int16_t	prevDskLen;
-int			doDiskDMA;
+void DSK_SaveState(FILE *outStream)
+{
+	fwrite(&dsk_Data,1,sizeof(DSK_data),outStream);
+}
 
-u_int8_t	*trackBuffer;										// Current track pointer
+void DSK_LoadState(FILE *inStream)
+{
+	fread(&dsk_Data,1,sizeof(DSK_data),inStream);
+
+	dsk_Data.trackBuffer=&dsk_Data.diskDrive[dsk_Data.curDiskDrive].mfmDiscBuffer[dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack * TRACKBUFFER_SIZE * 2 + (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskSide?0:1) * TRACKBUFFER_SIZE];
+}
 
 void DSK_MFM_Chk(u_int8_t *chk,u_int8_t *data,u_int32_t length)
 {
@@ -99,12 +113,16 @@ void DSK_MFM_Enc(u_int8_t *even,u_int8_t *odd,u_int8_t *data,u_int32_t length)
 void DSK_Status()
 {
 #if ENABLE_DISK_WARNINGS
-	printf("Current Drive : %d\n",curDiskDrive);
+	printf("Current Drive : %d\n",dsk_Data.curDiskDrive);
 	printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK));
-	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",0,diskDrive[0].dskMotorOn ? "on" : "off",diskDrive[0].dskTrack,diskDrive[0].dskSide ? "lower" : "upper");
-	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",1,diskDrive[1].dskMotorOn ? "on" : "off",diskDrive[1].dskTrack,diskDrive[1].dskSide ? "lower" : "upper");
-	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",2,diskDrive[2].dskMotorOn ? "on" : "off",diskDrive[2].dskTrack,diskDrive[2].dskSide ? "lower" : "upper");
-	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",3,diskDrive[3].dskMotorOn ? "on" : "off",diskDrive[3].dskTrack,diskDrive[3].dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",0,dsk_Data.diskDrive[0].dskMotorOn ? "on" : "off",
+		dsk_Data.diskDrive[0].dskTrack,dsk_Data.diskDrive[0].dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",1,dsk_Data.diskDrive[1].dskMotorOn ? "on" : "off",
+		dsk_Data.diskDrive[1].dskTrack,dsk_Data.diskDrive[1].dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",2,dsk_Data.diskDrive[2].dskMotorOn ? "on" : "off",
+		dsk_Data.diskDrive[2].dskTrack,dsk_Data.diskDrive[2].dskSide ? "lower" : "upper");
+	printf("Drive %d : Motor %s : Disk Track %d : Disk Side %s\n",3,dsk_Data.diskDrive[3].dskMotorOn ? "on" : "off",
+		dsk_Data.diskDrive[3].dskTrack,dsk_Data.diskDrive[3].dskSide ? "lower" : "upper");
 	printf("Disk Sync : %04X\n", CST_GETWRDU(CST_DSKSYNC,0xFFFF));
 #endif
 }
@@ -114,7 +132,7 @@ void ConvertDiskTrackExtended(int side, int track,u_int8_t *firstBlock,int drive
 	int s=0;
 	u_int8_t *writeTrack;
 	
-	writeTrack=&diskDrive[drive].mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
+	writeTrack=&dsk_Data.diskDrive[drive].mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
 	
 	for (s=0;s<TRACKGAP_SIZEWRD;s++)
 	{
@@ -166,7 +184,7 @@ void CopyDiskTrack(int side, int track,u_int8_t *firstBlock,int drive,u_int16_t 
 {
 	u_int8_t *writeTrack;
 	
-	writeTrack=&diskDrive[drive].mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
+	writeTrack=&dsk_Data.diskDrive[drive].mfmDiscBuffer[track * TRACKBUFFER_SIZE * 2 + side * TRACKBUFFER_SIZE];
 	
 	memcpy(writeTrack,firstBlock,length);
 }
@@ -180,7 +198,7 @@ void ConvertDiskTrack(int side, int track,u_int8_t *dskData,int drive)
 	ConvertDiskTrackExtended(side,track,firstBlock,drive);
 }
 
-void ConvertExtendedADF2(dskData,drive)
+void ConvertExtendedADF2(u_int8_t *dskData,int drive)
 {
 	// Version 2 of extended adf format
 	
@@ -224,9 +242,6 @@ void ConvertExtendedADF(u_int8_t *dskData,int drive)
 			}
 		}
 	}
-	
-//	exit(-1);
-
 }
 
 void ConvertDiscImageToMFM(u_int8_t *dskData,int drive)
@@ -250,7 +265,7 @@ void LoadDisk(char *disk,int drive)
     inDisk = fopen(disk,"rb");
     if (!inDisk)
     {
-		diskDrive[drive].diskInDrive=0;
+		dsk_Data.diskDrive[drive].diskInDrive=0;
 		return;
     }
     fseek(inDisk,0,SEEK_END);
@@ -260,7 +275,7 @@ void LoadDisk(char *disk,int drive)
     if (dskSize != fread(dskData,1,dskSize,inDisk))
 	{
 		fclose(inDisk);
-		diskDrive[drive].diskInDrive=0;
+		dsk_Data.diskDrive[drive].diskInDrive=0;
 		return;
 	}
     fclose(inDisk);
@@ -281,51 +296,51 @@ void LoadDisk(char *disk,int drive)
 
 	free(dskData);
 
-	diskDrive[drive].diskInDrive=1;
-	diskDrive[drive].dskIdCode=0xFFFFFFFF;			// Amiga standard
+	dsk_Data.diskDrive[drive].diskInDrive=1;
+	dsk_Data.diskDrive[drive].dskIdCode=0xFFFFFFFF;			// Amiga standard
 }
 
 void DSK_InitialiseDisk()
 {
 	int a;
 
-	curDiskDrive=0;
+	dsk_Data.curDiskDrive=0;
 	for (a=0;a<4;a++)
 	{
-		diskDrive[a].diskInDrive=0;
-		diskDrive[a].dskMotorOn=0;
-		diskDrive[a].dskStepDir=0;
-		diskDrive[a].dskSide=0;
-		diskDrive[a].dskTrack=10;				// Not on track 0 - mostly for testing
-		diskDrive[a].dskIdCode=0x00000000;		// no drive present
+		dsk_Data.diskDrive[a].diskInDrive=0;
+		dsk_Data.diskDrive[a].dskMotorOn=0;
+		dsk_Data.diskDrive[a].dskStepDir=0;
+		dsk_Data.diskDrive[a].dskSide=0;
+		dsk_Data.diskDrive[a].dskTrack=10;				// Not on track 0 - mostly for testing
+		dsk_Data.diskDrive[a].dskIdCode=0x00000000;		// no drive present
 	}
 
 	LoadDisk("wb.adf",0);
-	if (!diskDrive[0].diskInDrive)
+	if (!dsk_Data.diskDrive[0].diskInDrive)
 	{
 		LoadDisk("../../wb.adf",0);
-		LoadDisk("../../wbe.adf",1);
+//		LoadDisk("../../afd.adf",1);
 	}
 
 //	diskDrive[1].diskInDrive=1;		// Adds a completely unformatted disk to drive 1
 //	diskDrive[1].dskIdCode=0xFFFFFFFF;
 
-	dskSync=0;
-	dskSyncDma=0;
+	dsk_Data.dskSync=0;
+	dsk_Data.dskSyncDma=0;
 
-	trackBuffer=&diskDrive[0].mfmDiscBuffer[diskDrive[0].dskTrack * TRACKBUFFER_SIZE * 2 + (diskDrive[0].dskSide?0:1) * TRACKBUFFER_SIZE];
+	dsk_Data.trackBuffer=&dsk_Data.diskDrive[0].mfmDiscBuffer[dsk_Data.diskDrive[0].dskTrack * TRACKBUFFER_SIZE * 2 + (dsk_Data.diskDrive[0].dskSide?0:1) * TRACKBUFFER_SIZE];
 	
-	tbLastSide=-1;
-	tbLastTrack=-1;
-	tbBufferPos=0;
+	dsk_Data.tbLastSide=-1;
+	dsk_Data.tbLastTrack=-1;
+	dsk_Data.tbBufferPos=0;
 
-	prevDskLen=0;
-	doDiskDMA=0;
+	dsk_Data.prevDskLen=0;
+	dsk_Data.doDiskDMA=0;
 }
 
 void DSK_NotifyDSKLEN(u_int16_t dskLen)
 {
-	if ((dskLen&0x8000) && (prevDskLen&0x8000))
+	if ((dskLen&0x8000) && (dsk_Data.prevDskLen&0x8000))
 	{
 #if ENABLE_DISK_WARNINGS
 		if (dskLen&0x4000)
@@ -340,18 +355,18 @@ void DSK_NotifyDSKLEN(u_int16_t dskLen)
 #endif
 		if (CST_GETWRDU(CST_ADKCONR,0x0400))
 		{
-			dskSyncDma=1;
+			dsk_Data.dskSyncDma=1;
 		}
-		doDiskDMA=1;
+		dsk_Data.doDiskDMA=1;
 	}
-	prevDskLen=dskLen;
-	if (!(prevDskLen&0x8000))
-		doDiskDMA=0;
+	dsk_Data.prevDskLen=dskLen;
+	if (!(dsk_Data.prevDskLen&0x8000))
+		dsk_Data.doDiskDMA=0;
 }
 
 int	DSK_OnSyncWord()
 {
-	return dskSync;
+	return dsk_Data.dskSync;
 }
 
 void DSK_Update()
@@ -363,85 +378,74 @@ void DSK_Update()
 	
 	if (horizontalClock == 0x07)
 	{
-	
-	syncWord = CST_GETWRDU(CST_DSKSYNC,0xFFFF);
-	if ((trackBuffer[tbBufferPos]==(syncWord>>8)) && (trackBuffer[tbBufferPos+1]==(syncWord&0xFF)))
-	{
-		dskSync=1;
-		CST_ORWRD(CST_INTREQR,0x1000);		// signal interrupt request
-	}
-	else
-	{
-		dskSync=0;
-	}
-
-	tbBufferPos+=2;							// Disk is always spinning - NB because the speed of disk is not emulated, DMA could fail in future
-	tbBufferPos%=TRACKBUFFER_SIZE;			//once BUS arbitration comes in.
-	
-	if (CST_GETWRDU(CST_DMACONR,0x0210)==0x0210 && CST_GETWRDU(CST_DSKLEN,0x8000) && doDiskDMA && ((dskSyncDma && dskSync)||!dskSyncDma))
-	{
-		// Dma running. 
-		u_int16_t sizeLeft = CST_GETWRDU(CST_DSKLEN,0x3FFF);
-
-		dskSyncDma=0;
-
-		if (sizeLeft)
+		syncWord = CST_GETWRDU(CST_DSKSYNC,0xFFFF);
+		if ((dsk_Data.trackBuffer[dsk_Data.tbBufferPos]==(syncWord>>8)) && (dsk_Data.trackBuffer[dsk_Data.tbBufferPos+1]==(syncWord&0xFF)))
 		{
-			if (CST_GETWRDU(CST_DSKLEN,0x4000))
+			dsk_Data.dskSync=1;
+			CST_ORWRD(CST_INTREQR,0x1000);		// signal interrupt request
+		}
+		else
+		{
+			dsk_Data.dskSync=0;
+		}
+		
+		dsk_Data.tbBufferPos+=2;							// Disk is always spinning - NB because the speed of disk is not emulated, DMA could fail in future
+		dsk_Data.tbBufferPos%=TRACKBUFFER_SIZE;			//once BUS arbitration comes in.
+		
+		if (CST_GETWRDU(CST_DMACONR,0x0210)==0x0210 && CST_GETWRDU(CST_DSKLEN,0x8000) && 
+			dsk_Data.doDiskDMA && ((dsk_Data.dskSyncDma && dsk_Data.dskSync)||!dsk_Data.dskSyncDma))
+		{
+			// Dma running. 
+			u_int16_t sizeLeft = CST_GETWRDU(CST_DSKLEN,0x3FFF);
+			
+			dsk_Data.dskSyncDma=0;
+			
+			if (sizeLeft)
 			{
-				u_int32_t srcAddress = CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK);
-				u_int16_t word;
+				if (CST_GETWRDU(CST_DSKLEN,0x4000))
+				{
+					u_int32_t srcAddress = CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK);
+					u_int16_t word;
+					
+					word=MEM_getWord(srcAddress);
+					
+					dsk_Data.trackBuffer[dsk_Data.tbBufferPos] = word>>8;
+					dsk_Data.trackBuffer[dsk_Data.tbBufferPos+1]=word&0xFF;
+					
+					srcAddress+=2;
+					
+					CST_SETLNG(CST_DSKPTH,srcAddress,CUSTOM_CHIP_RAM_MASK);
+				}
+				else
+				{
+					u_int32_t destAddress = CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK);
+					u_int16_t word;
+					
+					word = dsk_Data.trackBuffer[dsk_Data.tbBufferPos]<<8;
+					word|= dsk_Data.trackBuffer[dsk_Data.tbBufferPos+1];
+					
+					MEM_setWord(destAddress,word);
+					destAddress+=2;
+					
+					CST_SETLNG(CST_DSKPTH,destAddress,CUSTOM_CHIP_RAM_MASK);
+				}
 				
-				word=MEM_getWord(srcAddress);
-				
-				trackBuffer[tbBufferPos] = word>>8;
-				trackBuffer[tbBufferPos+1]=word&0xFF;
-
-				srcAddress+=2;
-
-				CST_SETLNG(CST_DSKPTH,srcAddress,CUSTOM_CHIP_RAM_MASK);
-			}
-			else
-			{
-				u_int32_t destAddress = CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK);
-				u_int16_t word;
-				
-				word = trackBuffer[tbBufferPos]<<8;
-				word|= trackBuffer[tbBufferPos+1];
-				
-				MEM_setWord(destAddress,word);
-				destAddress+=2;
-				
-				CST_SETLNG(CST_DSKPTH,destAddress,CUSTOM_CHIP_RAM_MASK);
-			}
-				
-			sizeLeft--;
-			CST_ANDWRD(CST_DSKLEN,0xC000);
-			CST_ORWRD(CST_DSKLEN,sizeLeft);
-			if (!sizeLeft)
-			{
-				doDiskDMA=0;
-				CST_ORWRD(CST_INTREQR,0x0002);				
+				sizeLeft--;
+				CST_ANDWRD(CST_DSKLEN,0xC000);
+				CST_ORWRD(CST_DSKLEN,sizeLeft);
+				if (!sizeLeft)
+				{
+					dsk_Data.doDiskDMA=0;
+					CST_ORWRD(CST_INTREQR,0x0002);				
+				}
 			}
 		}
 	}
-	}
-/*	if (CST_GETWRDU(CST_DMACONR,0x0210)==0x0210 && dskMotorOn)
-	{
-		slow--;
-		if (slow==0)
-		{
-			slow=50;
-			printf("DISK DMA ENABLED %04X %08X\n",CST_GETWRDU(CST_DSKLEN,0xFFFF),CST_GETLNGU(CST_DSKPTH,CUSTOM_CHIP_RAM_MASK));
-			printf("Motor %s : Disk Track %d : Disk Side %s\n",dskMotorOn ? "on" : "off",dskTrack,dskSide ? "lower" : "upper");
-			printf("Disk Sync : %04X\n", CST_GETWRDU(CST_DSKSYNC,0xFFFF));
-		}
-	}*/
 }
 
 int DSK_Removed()
 {
-	return !diskDrive[curDiskDrive].diskInDrive;
+	return !dsk_Data.diskDrive[dsk_Data.curDiskDrive].diskInDrive;
 }
 
 int DSK_Writeable()
@@ -451,72 +455,72 @@ int DSK_Writeable()
 
 int DSK_OnTrack(u_int8_t track)
 {
-	return diskDrive[curDiskDrive].dskTrack==track;
+	return dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack==track;
 }
 
 int DSK_Ready()
 {
 	int curCodeBit;
 	
-	if (!diskDrive[curDiskDrive].dskMotorOn && diskDrive[curDiskDrive].dskIdBit!=0)
+	if (!dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskMotorOn && dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskIdBit!=0)
 	{
 		// potentially running the disk drive identification loop
-		curCodeBit = (diskDrive[curDiskDrive].dskIdCode & diskDrive[curDiskDrive].dskIdBit);
+		curCodeBit = (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskIdCode & dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskIdBit);
 		
-		diskDrive[curDiskDrive].dskIdBit>>=1;
+		dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskIdBit>>=1;
 		
 		return curCodeBit;
 	}
-	return diskDrive[curDiskDrive].dskMotorOn;
+	return dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskMotorOn;
 }
 
 void DSK_Step()
 {
-	if (!diskDrive[curDiskDrive].dskMotorOn)
+	if (!dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskMotorOn)
 		return;
 		
-	if (diskDrive[curDiskDrive].dskStepDir)
-		diskDrive[curDiskDrive].dskTrack--;
+	if (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskStepDir)
+		dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack--;
 	else
-		diskDrive[curDiskDrive].dskTrack++;
+		dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack++;
 		
-	if (diskDrive[curDiskDrive].dskTrack<0)
-		diskDrive[curDiskDrive].dskTrack=0;
-	if (diskDrive[curDiskDrive].dskTrack>79)
-		diskDrive[curDiskDrive].dskTrack=79;
+	if (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack<0)
+		dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack=0;
+	if (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack>79)
+		dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack=79;
 
 	DSK_Status();
 	
-	trackBuffer=&diskDrive[curDiskDrive].mfmDiscBuffer[diskDrive[curDiskDrive].dskTrack * TRACKBUFFER_SIZE * 2 + (diskDrive[curDiskDrive].dskSide?0:1) * TRACKBUFFER_SIZE];
+	dsk_Data.trackBuffer=&dsk_Data.diskDrive[dsk_Data.curDiskDrive].mfmDiscBuffer[dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack * TRACKBUFFER_SIZE * 2 + (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskSide?0:1) * TRACKBUFFER_SIZE];
 }
 
 void DSK_SetMotor(int onOff)
 {
-	if (diskDrive[curDiskDrive].dskMotorOn && onOff)
+	if (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskMotorOn && onOff)
 	{
 		// Reset disk identification shift register
-		diskDrive[curDiskDrive].dskIdBit=0x80000000;
+		dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskIdBit=0x80000000;
 	}
-	diskDrive[curDiskDrive].dskMotorOn = !onOff;
+	dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskMotorOn = !onOff;
 	DSK_Status();
 }
 
 void DSK_SetSide(int lower)
 {
-	diskDrive[curDiskDrive].dskSide=lower;
+	dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskSide=lower;
 	DSK_Status();
 
-	trackBuffer=&diskDrive[curDiskDrive].mfmDiscBuffer[diskDrive[curDiskDrive].dskTrack * TRACKBUFFER_SIZE * 2 + (diskDrive[curDiskDrive].dskSide?0:1) * TRACKBUFFER_SIZE];
+	dsk_Data.trackBuffer=&dsk_Data.diskDrive[dsk_Data.curDiskDrive].mfmDiscBuffer[dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskTrack * TRACKBUFFER_SIZE * 2 + (dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskSide?0:1) * TRACKBUFFER_SIZE];
 }
 
 void DSK_SetDir(int toZero)
 {
-	diskDrive[curDiskDrive].dskStepDir=toZero;
+	dsk_Data.diskDrive[dsk_Data.curDiskDrive].dskStepDir=toZero;
 	DSK_Status();
 }
 
 void DSK_SelectDrive(int drive,int motor)
 {
-	curDiskDrive=drive;
+	dsk_Data.curDiskDrive=drive;
 	DSK_SetMotor(motor);
 }

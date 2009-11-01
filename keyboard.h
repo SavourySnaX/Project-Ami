@@ -29,5 +29,8 @@ THE SOFTWARE.
 void KBD_InitialiseKeyboard();
 void KBD_Update();
 
+void KBD_SaveState(FILE *outStream);
+void KBD_LoadState(FILE *inStream);
+
 void KBD_AddKeyEvent(u_int8_t keycode);
 void KBD_Acknowledge();

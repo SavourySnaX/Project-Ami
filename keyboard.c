@@ -36,54 +36,57 @@ THE SOFTWARE.
 
 #define MAX_KB_SIZE	(256)
 
-u_int8_t kbBuffer[MAX_KB_SIZE];
+typedef struct
+{
+	u_int8_t kbBuffer[MAX_KB_SIZE];
+	int kbBufferPos;
+	int acknowledged;
+} KBD_data;
 
-int kbBufferPos;
-int acknowledged;
-int kbErrorCnt=0;
+KBD_data kbd_Data;
+
+void KBD_SaveState(FILE *outStream)
+{
+	fwrite(&kbd_Data,1,sizeof(KBD_data),outStream);
+}
+
+void KBD_LoadState(FILE *inStream)
+{
+	fread(&kbd_Data,1,sizeof(KBD_data),inStream);
+}
 
 void KBD_AddKeyEvent(u_int8_t keycode)
 {
-	if (kbBufferPos<MAX_KB_SIZE)
+	if (kbd_Data.kbBufferPos<MAX_KB_SIZE)
 	{
-		kbBuffer[kbBufferPos++]=keycode;
+		kbd_Data.kbBuffer[kbd_Data.kbBufferPos++]=keycode;
 	}
 }
 
 void KBD_InitialiseKeyboard()
 {
-	kbBufferPos=0;
-	acknowledged=1;
+	kbd_Data.kbBufferPos=0;
+	kbd_Data.acknowledged=1;
 	
-	kbBuffer[kbBufferPos++]=0xFF;		// Start of missing keys
-	kbBuffer[kbBufferPos++]=0xFB;		// Start of missing keys
-	kbBuffer[kbBufferPos++]=0xFD;		// End of missing keys
+	kbd_Data.kbBuffer[kbd_Data.kbBufferPos++]=0xFF;		// Start of missing keys
+	kbd_Data.kbBuffer[kbd_Data.kbBufferPos++]=0xFB;		// Start of missing keys
+	kbd_Data.kbBuffer[kbd_Data.kbBufferPos++]=0xFD;		// End of missing keys
 }
 
 u_int8_t KBD_GetNextKey()
 {
-	u_int8_t nextKey = kbBuffer[0];
+	u_int8_t nextKey = kbd_Data.kbBuffer[0];
 	
-	kbBufferPos--;
-	memcpy(&kbBuffer[0],&kbBuffer[1],kbBufferPos);
+	kbd_Data.kbBufferPos--;
+	memcpy(&kbd_Data.kbBuffer[0],&kbd_Data.kbBuffer[1],kbd_Data.kbBufferPos);
 	return nextKey;
 }
 
 void KBD_Update()
 {
-/*	if (!acknowledged)
+	if ((horizontalClock==0) && kbd_Data.acknowledged)		// Make sure we don't have a pending interrupt before we do reload serial buffer and serial buffer is in input mode (this may not be correct!)
 	{
-		kbErrorCnt++;
-		if (kbErrorCnt>10*2000)
-		{
-			// Attempt at fixing a sync problem between emulator and the keyboard
-			acknowledged=1;
-			kbErrorCnt=0;
-		}
-	}*/
-	if (/*(!(ciaMemory[0x0D]&0x80)) &&*/(horizontalClock==0) && acknowledged)		// Make sure we don't have a pending interrupt before we do reload serial buffer and serial buffer is in input mode (this may not be correct!)
-	{
-		if (kbBufferPos)				// if zero keybuffer is empty
+		if (kbd_Data.kbBufferPos)				// if zero keybuffer is empty
 		{
 			u_int8_t keycode;
 			
@@ -93,7 +96,7 @@ void KBD_Update()
 			ciaMemory[0x0C]=~keycode;
 			
 			ciaMemory[0x0D]|=0x08;			// signal interrupt request (won't actually interrupt unless mask set however)
-			acknowledged=0;
+			kbd_Data.acknowledged=0;
 			if (ciaa_icr&0x08)
 			{
 				ciaMemory[0x0D]|=0x80;		// set IR bit
@@ -106,5 +109,5 @@ void KBD_Update()
 
 void KBD_Acknowledge()
 {
-	acknowledged=1;
+	kbd_Data.acknowledged=1;
 }

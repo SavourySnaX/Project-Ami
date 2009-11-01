@@ -29,6 +29,9 @@ THE SOFTWARE.
 void CIA_InitialiseCustom();
 void CIA_Update();
 
+void CIA_SaveState(FILE *outStream);
+void CIA_LoadState(FILE *inStream);
+
 extern u_int8_t	*ciaMemory;
 
 u_int8_t MEM_getByteCia(u_int32_t upper24,u_int32_t lower16);

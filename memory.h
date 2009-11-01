@@ -29,6 +29,9 @@ THE SOFTWARE.
 #define CHIP_MEM_SIZE						(512*1024)
 #define CUSTOM_CHIP_RAM_MASK		(CHIP_MEM_SIZE-2)
 
+void MEM_SaveState(FILE *outStream);
+void MEM_LoadState(FILE *inStream);
+
 void MEM_Initialise(unsigned char *_romPtr);
 
 void MEM_MapKickstartLow(int yes);

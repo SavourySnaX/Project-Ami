@@ -29,4 +29,7 @@ THE SOFTWARE.
 void CPR_InitialiseCopper();
 void CPR_Update();
 
+void CPR_SaveState(FILE *outStream);
+void CPR_LoadState(FILE *inStream);
+
 void CPR_SetPC(u_int32_t pc);

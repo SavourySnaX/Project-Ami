@@ -37,13 +37,28 @@ THE SOFTWARE.
 extern u_int8_t		horizontalClock;
 extern u_int16_t	verticalClock;
 
-u_int32_t	copperPC;
-int		copperCycle;
+typedef struct
+{
+	u_int32_t	copperPC;
+	int			copperCycle;
+} CPR_data;
+
+CPR_data cpr_Data;
+
+void CPR_SaveState(FILE *outStream)
+{
+	fwrite(&cpr_Data,1,sizeof(CPR_data),outStream);
+}
+
+void CPR_LoadState(FILE *inStream)
+{
+	fread(&cpr_Data,1,sizeof(CPR_data),inStream);
+}
 
 void CPR_SetPC(u_int32_t pc)
 {
-	copperCycle=0;
-	copperPC = pc;
+	cpr_Data.copperCycle=0;
+	cpr_Data.copperPC = pc;
 
 #if ENABLE_COPPER_WARNINGS
 	printf("COPPER JUMPED %08X\n",pc);
@@ -52,9 +67,9 @@ void CPR_SetPC(u_int32_t pc)
 
 void CPR_InitialiseCopper()
 {
-	copperPC=0;		// copper dma defaults to off so doesn't
-				//really matter
-	copperCycle=0;
+	cpr_Data.copperPC=0;		// copper dma defaults to off so doesn't
+								//really matter
+	cpr_Data.copperCycle=0;
 }
 
 void CPR_Update()
@@ -65,20 +80,20 @@ void CPR_Update()
 	{
 		// copper is enabled
 		
-		if (copperCycle==0)
+		if (cpr_Data.copperCycle==0)
 		{
-			wrd = MEM_getWord(copperPC);
-			copperPC+=2;
+			wrd = MEM_getWord(cpr_Data.copperPC);
+			cpr_Data.copperPC+=2;
 			CST_SETWRD(CST_COPINS,wrd,0xFFFF);
-			copperCycle=1;
+			cpr_Data.copperCycle=1;
 		}
 		else
 		{
-			copperCycle=0;
+			cpr_Data.copperCycle=0;
 			if (CST_GETWRDU(CST_COPINS,0x0001))
 			{
 				// doing a skip or wait
-				wrd = MEM_getWord(copperPC);
+				wrd = MEM_getWord(cpr_Data.copperPC);
 
 				if (!(wrd&0x01))
 				{
@@ -99,11 +114,11 @@ void CPR_Update()
 					
 					if (bltFinished && ((verticalClock&maskv)>vpos || ((verticalClock&maskv)==vpos && (horizontalClock&maskh)>=hpos)))
 					{
-						copperPC+=2;
+						cpr_Data.copperPC+=2;
 					}
 					else
 					{
-						copperCycle=1;		//wait
+						cpr_Data.copperCycle=1;		//wait
 					}
 				}
 				else
@@ -126,11 +141,11 @@ void CPR_Update()
 					
 					if (bltFinished && ((verticalClock&maskv)>vpos || ((verticalClock&maskv)==vpos && (horizontalClock&maskh)>=hpos)))
 					{
-						copperPC+=6;		// skip next instruction
+						cpr_Data.copperPC+=6;		// skip next instruction
 					}
 					else
 					{
-						copperPC+=2;
+						cpr_Data.copperPC+=2;
 					}
 				}
 			}
@@ -140,8 +155,8 @@ void CPR_Update()
 				u_int16_t destination;
 				u_int8_t  copperDanger=0x80;
 			       
-				wrd = MEM_getWord(copperPC);
-				copperPC+=2;
+				wrd = MEM_getWord(cpr_Data.copperPC);
+				cpr_Data.copperPC+=2;
 
 				destination = CST_GETWRDU(CST_COPINS,0x01FE);
 
@@ -161,7 +176,7 @@ void CPR_Update()
 					// It looks like writes to illegal registers actually stall the copper (well its worth a try - need to confirm on
 					//real amiga) - stall handled by re attempting execution of bad move - probably should go into a wait cycle though.
 
-					copperPC-=4;
+					cpr_Data.copperPC-=4;
 				}
 			}
 		}

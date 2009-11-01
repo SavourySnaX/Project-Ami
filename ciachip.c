@@ -56,10 +56,10 @@ typedef struct
 
 #define CIACHIPMEMORY (0x10 * 2)		// 2 lots of 16 registers ciaa and  ciab
 
-u_int8_t	*ciaMemory = 0;
-
 CIA_ReadMap		cia_read[CIACHIPMEMORY];
 CIA_WriteMap	cia_write[CIACHIPMEMORY];
+
+u_int8_t	*ciaMemory = 0;
 
 u_int8_t		ciaa_icr=0;			// write copies of the register - since register is cleared on read
 u_int8_t		ciab_icr=0;
@@ -86,6 +86,58 @@ u_int16_t		bTALatch=0xFFFF;
 u_int16_t		bTACnt=0;
 
 u_int16_t		timerSlow=0;
+
+void CIA_SaveState(FILE *outStream)
+{
+	fwrite(ciaMemory,1,CIACHIPMEMORY,outStream);
+	fwrite(&ciaa_icr,1,sizeof(u_int8_t),outStream);
+	fwrite(&ciab_icr,1,sizeof(u_int8_t),outStream);
+	fwrite(&todAAlarm,1,sizeof(u_int32_t),outStream);
+	fwrite(&todBAlarm,1,sizeof(u_int32_t),outStream);
+	fwrite(&todACntLatchR,1,sizeof(u_int32_t),outStream);
+	fwrite(&todBCntLatchR,1,sizeof(u_int32_t),outStream);
+	fwrite(&todAReadLatched,1,sizeof(u_int32_t),outStream);
+	fwrite(&todBReadLatched,1,sizeof(u_int32_t),outStream);
+	fwrite(&todAStart,1,sizeof(u_int32_t),outStream);
+	fwrite(&todBStart,1,sizeof(u_int32_t),outStream);
+	fwrite(&todACnt,1,sizeof(u_int32_t),outStream);
+	fwrite(&todBCnt,1,sizeof(u_int32_t),outStream);
+	fwrite(&aTBLatch,1,sizeof(u_int16_t),outStream);
+	fwrite(&aTBCnt,1,sizeof(u_int16_t),outStream);
+	fwrite(&bTBLatch,1,sizeof(u_int16_t),outStream);
+	fwrite(&bTBCnt,1,sizeof(u_int16_t),outStream);
+	fwrite(&aTALatch,1,sizeof(u_int16_t),outStream);
+	fwrite(&aTACnt,1,sizeof(u_int16_t),outStream);
+	fwrite(&bTALatch,1,sizeof(u_int16_t),outStream);
+	fwrite(&bTACnt,1,sizeof(u_int16_t),outStream);
+	fwrite(&timerSlow,1,sizeof(u_int16_t),outStream);
+}
+
+void CIA_LoadState(FILE *inStream)
+{
+	fread(ciaMemory,1,CIACHIPMEMORY,inStream);
+	fread(&ciaa_icr,1,sizeof(u_int8_t),inStream);
+	fread(&ciab_icr,1,sizeof(u_int8_t),inStream);
+	fread(&todAAlarm,1,sizeof(u_int32_t),inStream);
+	fread(&todBAlarm,1,sizeof(u_int32_t),inStream);
+	fread(&todACntLatchR,1,sizeof(u_int32_t),inStream);
+	fread(&todBCntLatchR,1,sizeof(u_int32_t),inStream);
+	fread(&todAReadLatched,1,sizeof(u_int32_t),inStream);
+	fread(&todBReadLatched,1,sizeof(u_int32_t),inStream);
+	fread(&todAStart,1,sizeof(u_int32_t),inStream);
+	fread(&todBStart,1,sizeof(u_int32_t),inStream);
+	fread(&todACnt,1,sizeof(u_int32_t),inStream);
+	fread(&todBCnt,1,sizeof(u_int32_t),inStream);
+	fread(&aTBLatch,1,sizeof(u_int16_t),inStream);
+	fread(&aTBCnt,1,sizeof(u_int16_t),inStream);
+	fread(&bTBLatch,1,sizeof(u_int16_t),inStream);
+	fread(&bTBCnt,1,sizeof(u_int16_t),inStream);
+	fread(&aTALatch,1,sizeof(u_int16_t),inStream);
+	fread(&aTACnt,1,sizeof(u_int16_t),inStream);
+	fread(&bTALatch,1,sizeof(u_int16_t),inStream);
+	fread(&bTACnt,1,sizeof(u_int16_t),inStream);
+	fread(&timerSlow,1,sizeof(u_int16_t),inStream);
+}
 
 void CIA_Update()
 {

@@ -35,14 +35,30 @@ THE SOFTWARE.
 #include "customchip.h"
 #include "sprite.h"
 
-int pixelMask;
+typedef struct
+{
+	int pixelMask;
+	int fetchSize;
+	int lFetchSize;
+} DSP_data;
 
-int fetchSize=0;
-int lFetchSize=0;
+DSP_data dsp_Data;
+
+void DSP_SaveState(FILE *outStream)
+{
+	fwrite(&dsp_Data,1,sizeof(DSP_data),outStream);
+}
+
+void DSP_LoadState(FILE *inStream)
+{
+	fread(&dsp_Data,1,sizeof(DSP_data),inStream);
+}
 
 void DSP_InitialiseDisplay()
 {
-	pixelMask=0x8000;
+	dsp_Data.pixelMask=0x8000;
+	dsp_Data.fetchSize=0;
+	dsp_Data.lFetchSize=0;
 }
 
 void doPixel(int x,int y,u_int8_t colHi,u_int8_t colLo);
@@ -51,7 +67,7 @@ void DSP_NotifyLineEnd(int ver)
 {
 	u_int32_t test;
 	
-	pixelMask=0x8000;
+	dsp_Data.pixelMask=0x8000;
 
 	test=CST_GETLNGU(CST_BPL1PTH,CUSTOM_CHIP_RAM_MASK);
 	test+=CST_GETWRDS(CST_BPL1MOD,0xFFFF);
@@ -70,14 +86,14 @@ void DSP_NotifyLineEnd(int ver)
 	CST_SETLNG(CST_BPL5PTH,test,CUSTOM_CHIP_RAM_MASK);
 	
 #if ENABLE_DISPLAY_WARNINGS
-	if (fetchSize!=lFetchSize)
+	if (dsp_Data.fetchSize!=dsp_Data.lFetchSize)
 	{
-		printf("fetch size %d\n",fetchSize);
-		lFetchSize=fetchSize;
+		printf("fetch size %d\n",dsp_Data.fetchSize);
+		dsp_Data.lFetchSize=dsp_Data.fetchSize;
 	}
 	
 #endif
-	fetchSize=0;
+	dsp_Data.fetchSize=0;
 }
 
 u_int32_t GetPixelAddress(u_int16_t bplBase,u_int16_t bplMod,u_int32_t hor,u_int32_t ver)
@@ -96,19 +112,19 @@ int DecodePixel(u_int32_t hor,u_int32_t ver,u_int16_t bplPth,u_int16_t bplMod,u_
 {
     u_int32_t	bpl;
 	
-	if (pixelMask==0x8000)
+	if (dsp_Data.pixelMask==0x8000)
 	{			
 		bpl = CST_GETLNGU(bplPth,CUSTOM_CHIP_RAM_MASK);
 
 		CST_SETWRD(bplDat,MEM_getWord(bpl),0xFFFF);
 		
 		bpl+=2;
-		fetchSize+=2;
+		dsp_Data.fetchSize+=2;
 		
 		CST_SETLNG(bplPth,bpl,CUSTOM_CHIP_RAM_MASK);
 	}
 	
-	if (CST_GETWRDU(bplDat,pixelMask))
+	if (CST_GETWRDU(bplDat,dsp_Data.pixelMask))
 	{
 		return 1;
 	}
@@ -185,9 +201,9 @@ void DSP_HiRes()
 				case 0:
 					break;
 			}
-			pixelMask>>=1;
-			if (!pixelMask)
-				pixelMask=0x8000;
+			dsp_Data.pixelMask>>=1;
+			if (!dsp_Data.pixelMask)
+				dsp_Data.pixelMask=0x8000;
 			
 			switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
 			{
@@ -207,9 +223,9 @@ void DSP_HiRes()
 				case 0:
 					break;
 			}
-			pixelMask>>=1;
-			if (!pixelMask)
-				pixelMask=0x8000;
+			dsp_Data.pixelMask>>=1;
+			if (!dsp_Data.pixelMask)
+				dsp_Data.pixelMask=0x8000;
 			
 			switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
 			{
@@ -229,9 +245,9 @@ void DSP_HiRes()
 				case 0:
 					break;
 			}
-			pixelMask>>=1;
-			if (!pixelMask)
-				pixelMask=0x8000;
+			dsp_Data.pixelMask>>=1;
+			if (!dsp_Data.pixelMask)
+				dsp_Data.pixelMask=0x8000;
 			
 			switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
 			{
@@ -251,9 +267,9 @@ void DSP_HiRes()
 				case 0:
 					break;
 			}
-			pixelMask>>=1;
-			if (!pixelMask)
-				pixelMask=0x8000;
+			dsp_Data.pixelMask>>=1;
+			if (!dsp_Data.pixelMask)
+				dsp_Data.pixelMask=0x8000;
 			
 		}
 	}
@@ -338,9 +354,9 @@ void DSP_LoRes()
 				case 0:
 					break;
 			}
-			pixelMask>>=1;
-			if (!pixelMask)
-				pixelMask=0x8000;
+			dsp_Data.pixelMask>>=1;
+			if (!dsp_Data.pixelMask)
+				dsp_Data.pixelMask=0x8000;
 			
 			switch (CST_GETWRDU(CST_BPLCON0,0x7000)>>12)
 			{
@@ -360,9 +376,9 @@ void DSP_LoRes()
 				case 0:
 					break;
 			}
-			pixelMask>>=1;
-			if (!pixelMask)
-				pixelMask=0x8000;
+			dsp_Data.pixelMask>>=1;
+			if (!dsp_Data.pixelMask)
+				dsp_Data.pixelMask=0x8000;
 			
 		}
 	}

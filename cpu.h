@@ -100,3 +100,6 @@ void CPU_BuildTable();
 void CPU_Reset();
 
 void CPU_Step();
+
+void CPU_SaveState(FILE *outStream);
+void CPU_LoadState(FILE *inStream);

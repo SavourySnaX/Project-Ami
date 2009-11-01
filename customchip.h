@@ -31,6 +31,9 @@ THE SOFTWARE.
 void CST_InitialiseCustom();
 void CST_Update();
 
+void CST_SaveState(FILE *outStream);
+void CST_LoadState(FILE *inStream);
+
 u_int8_t MEM_getByteCustom(u_int32_t upper24,u_int32_t lower16);
 void MEM_setByteCustom(u_int32_t upper24,u_int32_t lower16,u_int8_t byte);
 

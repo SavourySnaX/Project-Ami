@@ -29,3 +29,6 @@ THE SOFTWARE.
 
 void AUD_InitialiseAudio();
 void AUD_Update();
+
+void AUD_SaveState(FILE *outStream);
+void AUD_LoadState(FILE *inStream);

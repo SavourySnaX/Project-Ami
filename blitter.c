@@ -34,15 +34,6 @@ THE SOFTWARE.
 #include "copper.h"
 #include "customchip.h"
 
-int bltZero=0;
-int bltSrcDone=0;
-
-u_int16_t	bltWidth;
-u_int16_t	bltHeight;
-u_int16_t	bltSX,bltSY,bltDX,bltDY;
-u_int16_t	bltAOldDat,bltBOldDat;		// Stores last shifted out data
-int32_t		bltDelta;
-
 typedef enum
 {
 	BLT_Stopped = 0,
@@ -50,8 +41,6 @@ typedef enum
 	BLT_Read2,		// Blitter will read A&|B&|C data into BLTxDAT registers
 	BLT_Line
 } BLT_Ops;
-
-BLT_Ops bltStart;
 
 typedef struct
 {
@@ -62,11 +51,37 @@ MTerms	mTermA[65536];
 MTerms	mTermB[65536];
 MTerms	mTermC[65536];
 
+typedef struct
+{
+	int			bltZero;
+	int			bltSrcDone;
+	u_int16_t	bltWidth;
+	u_int16_t	bltHeight;
+	u_int16_t	bltSX,bltSY,bltDX,bltDY;
+	u_int16_t	bltAOldDat,bltBOldDat;		// Stores last shifted out data
+	int32_t		bltDelta;
+	BLT_Ops		bltStart;
+} BLT_data;
+
+BLT_data blt_Data;
+
+void BLT_SaveState(FILE *outStream)
+{
+	fwrite(&blt_Data,1,sizeof(BLT_data),outStream);
+}
+
+void BLT_LoadState(FILE *inStream)
+{
+	fread(&blt_Data,1,sizeof(BLT_data),inStream);
+}
+
 void BLT_InitialiseBlitter()
 {
 	int a,b;
 	
-	bltStart=BLT_Stopped;
+	blt_Data.bltZero=0;
+	blt_Data.bltSrcDone=0;
+	blt_Data.bltStart=BLT_Stopped;
 
 	for (a=0;a<65536;a++)
 	{
@@ -92,11 +107,11 @@ void BLT_ReadNextBltSource(u_int16_t useMask,u_int8_t bltPtrStart,u_int8_t bltDa
 		u_int16_t	bltADat = MEM_getWord(bltAAddress);
 
 		CST_SETWRD(bltDataStart,bltADat,0xFFFF);
-		bltAAddress+=bltDelta*2;
+		bltAAddress+=blt_Data.bltDelta*2;
 		
 		if (lastWrd)
 		{
-			bltAAddress+=bltDelta*CST_GETWRDS(bltModStart,0xFFFE);
+			bltAAddress+=blt_Data.bltDelta*CST_GETWRDS(bltModStart,0xFFFE);
 		}
 		
 		CST_SETLNG(bltPtrStart,bltAAddress,CUSTOM_CHIP_RAM_MASK);
@@ -116,21 +131,21 @@ u_int16_t BLT_CalculateD(u_int16_t bltA,u_int16_t bltB,u_int16_t bltC)
 			bltD|=(1<<(15-a));
 	}
 
-	bltZero = bltZero && (bltD==0);
+	blt_Data.bltZero = blt_Data.bltZero && (bltD==0);
 	
 	return bltD;
 }
 
 void BLT_UpdateSrc()
 {
-	if (!bltSrcDone)
+	if (!blt_Data.bltSrcDone)
 	{
 		// The first/last word masks and shifters are applied before the register is held - so they are done in the read portion
-		BLT_ReadNextBltSource(0x0800,CST_BLTAPTH,CST_BLTADAT,CST_BLTAMOD,bltSX==0,bltSX==(bltWidth-1),
-							  CST_GETWRDU(CST_BLTAFWM,0xFFFF),CST_GETWRDU(CST_BLTALWM,0xFFFF),CST_GETWRDU(CST_BLTCON0,0xF000)>>12,&bltAOldDat);
-		BLT_ReadNextBltSource(0x0400,CST_BLTBPTH,CST_BLTBDAT,CST_BLTBMOD,bltSX==0,bltSX==(bltWidth-1),
-							  0xFFFF,0xFFFF,CST_GETWRDU(CST_BLTCON1,0xF000)>>12,&bltBOldDat);
-		BLT_ReadNextBltSource(0x0200,CST_BLTCPTH,CST_BLTCDAT,CST_BLTCMOD,bltSX==0,bltSX==(bltWidth-1),
+		BLT_ReadNextBltSource(0x0800,CST_BLTAPTH,CST_BLTADAT,CST_BLTAMOD,blt_Data.bltSX==0,blt_Data.bltSX==(blt_Data.bltWidth-1),
+							  CST_GETWRDU(CST_BLTAFWM,0xFFFF),CST_GETWRDU(CST_BLTALWM,0xFFFF),CST_GETWRDU(CST_BLTCON0,0xF000)>>12,&blt_Data.bltAOldDat);
+		BLT_ReadNextBltSource(0x0400,CST_BLTBPTH,CST_BLTBDAT,CST_BLTBMOD,blt_Data.bltSX==0,blt_Data.bltSX==(blt_Data.bltWidth-1),
+							  0xFFFF,0xFFFF,CST_GETWRDU(CST_BLTCON1,0xF000)>>12,&blt_Data.bltBOldDat);
+		BLT_ReadNextBltSource(0x0200,CST_BLTCPTH,CST_BLTCDAT,CST_BLTCMOD,blt_Data.bltSX==0,blt_Data.bltSX==(blt_Data.bltWidth-1),
 							  0xFFFF,0xFFFF,0,0);
 		
 	}	
@@ -143,31 +158,31 @@ void BLT_UpdateDst()
 		u_int32_t	bltDAddress = CST_GETLNGU(CST_BLTDPTH,CUSTOM_CHIP_RAM_MASK);
 		
 		MEM_setWord(bltDAddress,CST_GETWRDU(CST_BLTDDAT,0xFFFF));
-		bltDAddress+=bltDelta * 2;
+		bltDAddress+=blt_Data.bltDelta * 2;
 		
-		if (bltDX==(bltWidth-1))
+		if (blt_Data.bltDX==(blt_Data.bltWidth-1))
 		{
-			bltDAddress+=bltDelta * CST_GETWRDS(CST_BLTDMOD,0xFFFE);
+			bltDAddress+=blt_Data.bltDelta * CST_GETWRDS(CST_BLTDMOD,0xFFFE);
 		}
 		
 		CST_SETLNG(CST_BLTDPTH,bltDAddress,CUSTOM_CHIP_RAM_MASK);
 	}
 	
 	// Check End Condition
-	bltDX++;
-	if (bltDX == bltWidth)
+	blt_Data.bltDX++;
+	if (blt_Data.bltDX == blt_Data.bltWidth)
 	{
-		bltDX = 0;
-		bltDY++;
-		if (bltDY>=bltHeight)
+		blt_Data.bltDX = 0;
+		blt_Data.bltDY++;
+		if (blt_Data.bltDY>=blt_Data.bltHeight)
 		{
 			// blitter finished, clear BLTBUSY and set BLTComplete
-			bltStart=BLT_Stopped;
+			blt_Data.bltStart=BLT_Stopped;
 			
 			CST_ORWRD(CST_INTREQR,0x0040);			// set interrupt blitter finished
 			CST_ANDWRD(CST_DMACONR,~0x4000);
 			
-			if (bltZero)
+			if (blt_Data.bltZero)
 			{
 				CST_ORWRD(CST_DMACONR,0x2000);		// BLT  all zeros
 			}
@@ -178,11 +193,11 @@ void BLT_UpdateDst()
 
 u_int16_t BLT_Mask(u_int16_t bltA)
 {
-		if (bltSX==0)
+		if (blt_Data.bltSX==0)
 		{
 			bltA&=CST_GETWRDU(CST_BLTAFWM,0xFFFF);
 		}
-		if (bltSX==(bltWidth-1))
+		if (blt_Data.bltSX==(blt_Data.bltWidth-1))
 		{
 			bltA&=CST_GETWRDU(CST_BLTALWM,0xFFFF);
 		}
@@ -228,25 +243,25 @@ void BLT_UpdateClc()
 
 	bltA=BLT_Mask(bltA);
 		
-	bltA=BLT_Shift(bltA,CST_GETWRDU(CST_BLTCON0,0xF000)>>12,&bltAOldDat);	
+	bltA=BLT_Shift(bltA,CST_GETWRDU(CST_BLTCON0,0xF000)>>12,&blt_Data.bltAOldDat);	
 
-	bltB=BLT_Shift(bltB,CST_GETWRDU(CST_BLTCON1,0xF000)>>12,&bltBOldDat);
+	bltB=BLT_Shift(bltB,CST_GETWRDU(CST_BLTCON1,0xF000)>>12,&blt_Data.bltBOldDat);
 	
 	bltC=CST_GETWRDU(CST_BLTCDAT,0xFFFF);
 
 	if (!CST_GETWRDU(CST_BLTCON1,0x0001))
 	{
 		// Check End Src Read Condition
-		bltSX++;
-		if (bltSX == bltWidth)
+		blt_Data.bltSX++;
+		if (blt_Data.bltSX == blt_Data.bltWidth)
 		{
-			bltSX = 0;
-			bltAOldDat=0;
-			bltBOldDat=0;
-			bltSY++;
-			if (bltSY>=bltHeight)
+			blt_Data.bltSX = 0;
+			blt_Data.bltAOldDat=0;
+			blt_Data.bltBOldDat=0;
+			blt_Data.bltSY++;
+			if (blt_Data.bltSY>=blt_Data.bltHeight)
 			{
-				bltSrcDone=1;
+				blt_Data.bltSrcDone=1;
 			}
 		}
 	}
@@ -262,7 +277,7 @@ void BLT_Update()
 {
 	u_int32_t addr;
 	
-	switch (bltStart)
+	switch (blt_Data.bltStart)
 	{
 		case BLT_Stopped:
 			break;
@@ -276,7 +291,7 @@ void BLT_Update()
 
 //			BLT_UpdateDst();				// swap this and next line comment over if trying for Preread
 			
-			bltStart=BLT_Read2;
+			blt_Data.bltStart=BLT_Read2;
 			break;
 			
 		case BLT_Read2:						// Doesn't seem to work quite right yet
@@ -434,16 +449,16 @@ void BLT_Update()
 
 			CST_SETLNG(CST_BLTDPTH,CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK),CUSTOM_CHIP_RAM_MASK);
 
-			bltHeight--;
-			if (bltHeight==0)
+			blt_Data.bltHeight--;
+			if (blt_Data.bltHeight==0)
 			{
 			// blitter finished, clear BLTBUSY and set BLTComplete
-			bltStart=BLT_Stopped;
+			blt_Data.bltStart=BLT_Stopped;
 			
 			CST_ORWRD(CST_INTREQR,0x0040);			// set interrupt blitter finished
 			CST_ANDWRD(CST_DMACONR,~0x4000);
 			
-			if (bltZero)
+			if (blt_Data.bltZero)
 			{
 				CST_ORWRD(CST_DMACONR,0x2000);		// BLT  all zeros
 			}
@@ -460,12 +475,12 @@ void BLT_StartBlit()
 {
 	//startDebug=1;
 	
-		bltDX=0;
-		bltDY=0;
-		bltSX=0;
-		bltSY=0;
-		bltAOldDat=0;
-		bltBOldDat=0;
+		blt_Data.bltDX=0;
+		blt_Data.bltDY=0;
+		blt_Data.bltSX=0;
+		blt_Data.bltSY=0;
+		blt_Data.bltAOldDat=0;
+		blt_Data.bltBOldDat=0;
 		
 //		if (!CST_GETWRDU(CST_BLTCON1,0x0001))
 //			return;
@@ -477,7 +492,7 @@ void BLT_StartBlit()
 
 		if (CST_GETWRDU(CST_BLTCON1,0x0001))
 		{
-			bltBOldDat=CST_GETWRDU(CST_BLTBDAT,0xFFFF);		// fixes line drawing problems
+			blt_Data.bltBOldDat=CST_GETWRDU(CST_BLTBDAT,0xFFFF);		// fixes line drawing problems
 			if (CST_GETWRDU(CST_BLTCON1,0x0002))
 			{
 				printf("Warning.. single dot mode not supported\n");
@@ -499,27 +514,27 @@ void BLT_StartBlit()
 			}
 			if (CST_GETWRDU(CST_BLTCON1,0x0002))
 			{
-				bltDelta=-1;
+				blt_Data.bltDelta=-1;
 			}
 			else
 			{
-				bltDelta=1;
+				blt_Data.bltDelta=1;
 			}
   		}
 		
-		bltWidth=CST_GETWRDU(CST_BLTSIZE,0x003F);
-		if (!bltWidth)
-			bltWidth=64;
-		bltHeight=CST_GETWRDU(CST_BLTSIZE,0xFFC0)>>6;
-		if (!bltHeight)
-			bltHeight=1024;
+		blt_Data.bltWidth=CST_GETWRDU(CST_BLTSIZE,0x003F);
+		if (!blt_Data.bltWidth)
+			blt_Data.bltWidth=64;
+		blt_Data.bltHeight=CST_GETWRDU(CST_BLTSIZE,0xFFC0)>>6;
+		if (!blt_Data.bltHeight)
+			blt_Data.bltHeight=1024;
 			
-		bltZero=1;
-		bltSrcDone=0;
+		blt_Data.bltZero=1;
+		blt_Data.bltSrcDone=0;
 
 		if (!CST_GETWRDU(CST_BLTCON1,0x0001))
 		{
-			bltStart=BLT_Read;
+			blt_Data.bltStart=BLT_Read;
 /*		printf("[WRN] Blitter Is Being Used\n");
 
 		printf("Blitter Registers : BLTAFWM : %04X\n",CST_GETWRDU(CST_BLTAFWM,0xFFFF));
@@ -542,7 +557,7 @@ void BLT_StartBlit()
 */
 		}
 		else
-			bltStart=BLT_Line;
+			blt_Data.bltStart=BLT_Line;
 	
 		
 }

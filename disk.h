@@ -29,6 +29,9 @@ THE SOFTWARE.
 void DSK_InitialiseDisk();
 void DSK_Update();
 
+void DSK_SaveState(FILE *outStream);
+void DSK_LoadState(FILE *inStream);
+
 void DSK_NotifyDSKLEN(u_int16_t dskLen);
 
 int	DSK_OnSyncWord();

@@ -41,6 +41,18 @@ CPU_Regs cpu_regs;
 
 u_int8_t	cpuUsedTable[65536];
 
+int startDebug=0;
+
+void CPU_SaveState(FILE *outStream)
+{
+	fwrite(&cpu_regs,1,sizeof(CPU_Regs),outStream);
+}
+
+void CPU_LoadState(FILE *inStream)
+{
+	fread(&cpu_regs,1,sizeof(CPU_Regs),inStream);
+}
+
 void CPU_Reset()
 {
 	int a;
@@ -81,8 +93,6 @@ const char *decodeLong(u_int32_t address)
 	
 	return buffer;
 }
-
-int startDebug=0;
 
 ////////////////////////////////////////////////////////////////////////
 

@@ -38,6 +38,9 @@ THE SOFTWARE.
 #include "display.h"
 #include "disk.h"
 
+extern int g_newScreenNotify;
+extern int startDebug;
+
 typedef u_int8_t (*CST_ReadMap)(u_int16_t reg);
 typedef void (*CST_WriteMap)(u_int16_t reg,u_int8_t byte);
 
@@ -61,19 +64,34 @@ typedef struct
 
 #define CUSTOMCHIPMEMORY (0x1000)
 
-u_int8_t	*cstMemory = 0;
-
 CST_ReadMap		cst_read[CUSTOMCHIPMEMORY];
 CST_WriteMap	cst_write[CUSTOMCHIPMEMORY];
 
-u_int8_t	horizontalClock=0;
-u_int16_t	verticalClock=0;
+u_int8_t	*cstMemory = 0;					// all these are extern'd access so i`ll leave them out the structure for now
+u_int8_t	horizontalClock;
+u_int16_t	verticalClock;
+u_int8_t	leftMouseUp,rightMouseUp;
+int			cLineLength;	// first line is a short line
 
-u_int8_t		leftMouseUp,rightMouseUp;
+void CST_SaveState(FILE *outStream)
+{
+	fwrite(cstMemory,1,CUSTOMCHIPMEMORY,outStream);
+	fwrite(&horizontalClock,1,sizeof(horizontalClock),outStream);
+	fwrite(&verticalClock,1,sizeof(verticalClock),outStream);
+	fwrite(&leftMouseUp,1,sizeof(leftMouseUp),outStream);
+	fwrite(&rightMouseUp,1,sizeof(rightMouseUp),outStream);
+	fwrite(&cLineLength,1,sizeof(cLineLength),outStream);
+}
 
-extern int g_newScreenNotify;
-
-int cLineLength=LINE_LENGTH - 1;	// first line is a short line
+void CST_LoadState(FILE *inStream)
+{
+	fread(cstMemory,1,CUSTOMCHIPMEMORY,inStream);
+	fread(&horizontalClock,1,sizeof(horizontalClock),inStream);
+	fread(&verticalClock,1,sizeof(verticalClock),inStream);
+	fread(&leftMouseUp,1,sizeof(leftMouseUp),inStream);
+	fread(&rightMouseUp,1,sizeof(rightMouseUp),inStream);
+	fread(&cLineLength,1,sizeof(cLineLength),inStream);
+}
 
 void CST_Update()
 {
@@ -242,8 +260,6 @@ void CST_setByteBLTSIZE(u_int16_t reg,u_int8_t byte)
 		BLT_StartBlit();
 	}
 }
-
-extern int startDebug;
 
 u_int8_t CST_getByteJOY0DAT(u_int16_t reg)
 {

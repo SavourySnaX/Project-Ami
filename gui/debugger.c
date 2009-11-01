@@ -45,6 +45,11 @@ THE SOFTWARE.
 #include "copper.h"
 #include "customchip.h"
 #include "sprite.h"
+#include "audio.h"
+#include "disk.h"
+#include "ciachip.h"
+#include "blitter.h"
+#include "keyboard.h"
 
 #include "font.h"
 
@@ -421,6 +426,46 @@ int UpdateDebugger()
 	if (CheckKey(GLFW_KEY_PAGEUP))
 		g_pause=!g_pause;
 
+	if (CheckKey(GLFW_KEY_KP_0))
+	{
+		// Save state
+		FILE *save=fopen("ami_save.dmp","wb");
+		
+		AUD_SaveState(save);
+		KBD_SaveState(save);
+		SPR_SaveState(save);
+		DSK_SaveState(save);
+		MEM_SaveState(save);
+		DSP_SaveState(save);
+		CST_SaveState(save);
+		CPU_SaveState(save);
+		CPR_SaveState(save);
+		CIA_SaveState(save);
+		BLT_SaveState(save);
+		
+		fclose(save);
+	}
+	if (CheckKey(GLFW_KEY_KP_MULTIPLY))
+	{
+		// Load state
+	
+		FILE *load=fopen("ami_save.dmp","rb");
+		
+		AUD_LoadState(load);
+		KBD_LoadState(load);
+		SPR_LoadState(load);
+		DSK_LoadState(load);
+		MEM_LoadState(load);
+		DSP_LoadState(load);
+		CST_LoadState(load);
+		CPU_LoadState(load);
+		CPR_LoadState(load);
+		CIA_LoadState(load);
+		BLT_LoadState(load);
+		
+		fclose(load);
+	}
+	
 	if (stageCheck)
 	{
 		if (stageCheck==1)
@@ -519,6 +564,8 @@ int UpdateDebugger()
 		ClearKey('H');
 		ClearKey('G');
 	}
+	ClearKey(GLFW_KEY_KP_0);
+	ClearKey(GLFW_KEY_KP_MULTIPLY);
 	ClearKey(GLFW_KEY_PAGEUP);
 	
 	return g_pause;

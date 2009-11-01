@@ -30,4 +30,7 @@ THE SOFTWARE.
 void BLT_InitialiseBlitter();
 void BLT_Update();
 
+void BLT_SaveState(FILE *outStream);
+void BLT_LoadState(FILE *inStream);
+
 void BLT_StartBlit();

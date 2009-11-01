@@ -35,13 +35,28 @@ THE SOFTWARE.
 #include "customchip.h"
 #include "sprite.h"
 
-u_int32_t	audio_ptr[4];
-u_int16_t	audio_len[4];
-u_int16_t	audio_per[4];
-u_int16_t	audio_percnt[4];
-u_int16_t	audio_samples[4];
-u_int16_t	outAudioCnt;
-int16_t		outAudioSample[4];
+typedef struct
+{
+	u_int32_t	audio_ptr[4];
+	u_int16_t	audio_len[4];
+	u_int16_t	audio_per[4];
+	u_int16_t	audio_percnt[4];
+	u_int16_t	audio_samples[4];
+	u_int16_t	outAudioCnt;
+	int16_t		outAudioSample[4];
+} AUD_data;
+
+AUD_data aud_Data;
+
+void AUD_SaveState(FILE *outStream)
+{
+	fwrite(&aud_Data,1,sizeof(AUD_data),outStream);
+}
+
+void AUD_LoadState(FILE *inStream)
+{
+	fread(&aud_Data,1,sizeof(AUD_data),inStream);
+}
 
 void AUD_InitialiseAudio()
 {
@@ -49,13 +64,13 @@ void AUD_InitialiseAudio()
 	
 	for (a=0;a<4;a++)
 	{
-		audio_ptr[a]=0;				// Track position of waveform internally
-		audio_len[a]=0;
-		audio_percnt[a]=0;
-		audio_per[a]=0;
-		audio_samples[a]=0;
-		outAudioSample[a]=0;
-		outAudioCnt=0;
+		aud_Data.audio_ptr[a]=0;				// Track position of waveform internally
+		aud_Data.audio_len[a]=0;
+		aud_Data.audio_percnt[a]=0;
+		aud_Data.audio_per[a]=0;
+		aud_Data.audio_samples[a]=0;
+		aud_Data.outAudioSample[a]=0;
+		aud_Data.outAudioCnt=0;
 
 	}
 
@@ -63,29 +78,29 @@ void AUD_InitialiseAudio()
 
 void AUD_UpdateAudioChannel(int chn,u_int16_t imask,u_int16_t datBase,u_int16_t pthBase,u_int16_t lenBase,u_int16_t perBase,u_int16_t volBase)
 {
-	if (!audio_len[chn])
+	if (!aud_Data.audio_len[chn])
 	{
 		// Channel reset (reload length and ptr values)
-		audio_ptr[chn]=CST_GETLNGU(pthBase,CUSTOM_CHIP_RAM_MASK);
-		audio_len[chn]=CST_GETWRDU(lenBase,0xFFFF);
-		audio_per[chn]=CST_GETWRDU(perBase,0xFFFF);
-		audio_percnt[chn]=0;
-		audio_samples[chn]=2;
+		aud_Data.audio_ptr[chn]=CST_GETLNGU(pthBase,CUSTOM_CHIP_RAM_MASK);
+		aud_Data.audio_len[chn]=CST_GETWRDU(lenBase,0xFFFF);
+		aud_Data.audio_per[chn]=CST_GETWRDU(perBase,0xFFFF);
+		aud_Data.audio_percnt[chn]=0;
+		aud_Data.audio_samples[chn]=2;
 		
 		// Signal value read interrupt.
 		CST_ORWRD(CST_INTREQR,imask);			// set interrupt audio finished
 	}
 	
 	// Transfer next word (if we have processed at least 2 samples!)
-	if (audio_samples[chn]>=2)
+	if (aud_Data.audio_samples[chn]>=2)
 	{
 		u_int16_t audioData;
 		
-		audioData=MEM_getWord(audio_ptr[chn]);
+		audioData=MEM_getWord(aud_Data.audio_ptr[chn]);
 		CST_SETWRD(datBase,audioData,0xFFFF);
-		audio_len[chn]--;
-		audio_ptr[chn]+=2;
-		audio_samples[chn]=0;
+		aud_Data.audio_len[chn]--;
+		aud_Data.audio_ptr[chn]+=2;
+		aud_Data.audio_samples[chn]=0;
 	}
 }
 
@@ -93,16 +108,16 @@ void AUD_Tick(int chn, u_int16_t datBase, u_int16_t volBase,u_int16_t dmaMask)
 {
 	if (CST_GETWRDU(CST_DMACONR,dmaMask)==dmaMask)
 	{
-		audio_percnt[chn]++;
-		if (audio_per[chn]==audio_percnt[chn])
+		aud_Data.audio_percnt[chn]++;
+		if (aud_Data.audio_per[chn]==aud_Data.audio_percnt[chn])
 		{
-			int16_t sample = cstMemory[datBase+(audio_samples[chn]&1)];		// get sample
-			audio_percnt[chn]=0;
-			audio_samples[chn]++;
+			int16_t sample = cstMemory[datBase+(aud_Data.audio_samples[chn]&1)];		// get sample
+			aud_Data.audio_percnt[chn]=0;
+			aud_Data.audio_samples[chn]++;
 			
 			sample*=CST_GETWRDU(volBase,0x00FF);
 			
-			outAudioSample[chn]=sample;
+			aud_Data.outAudioSample[chn]=sample;
 		}
 	}
 }
@@ -119,12 +134,12 @@ void AUD_Update()
 	AUD_Tick(3,CST_AUD3DAT,CST_AUD3VOL,0x0208);
 
 #if ENABLE_AUDIO_OUT
-	outAudioCnt++;
-	if (outAudioCnt==162)
+	aud_Data.outAudioCnt++;
+	if (aud_Data.outAudioCnt==162)
 	{
-		outAudioCnt=0;
+		aud_Data.outAudioCnt=0;
 		
-		_AudioAddData(outAudioSample[0],outAudioSample[1],outAudioSample[2],outAudioSample[3]);
+		_AudioAddData(aud_Data.outAudioSample[0],aud_Data.outAudioSample[1],aud_Data.outAudioSample[2],aud_Data.outAudioSample[3]);
 	}
 #endif
 		

@@ -36,14 +36,29 @@ THE SOFTWARE.
 #include "copper.h"
 #include "customchip.h"
 
-int spr[8];
+typedef struct
+{
+	int spr[8];
+} SPR_data;
+
+SPR_data spr_Data;
+
+void SPR_SaveState(FILE *outStream)
+{
+	fwrite(&spr_Data,1,sizeof(SPR_data),outStream);
+}
+
+void SPR_LoadState(FILE *inStream)
+{
+	fread(&spr_Data,1,sizeof(SPR_data),inStream);
+}
 
 void SPR_InitialiseSprites()
 {
 	int a;
 	for (a=0;a<8;a++)
 	{
-		spr[a]=0;
+		spr_Data.spr[a]=0;
 	}
 }
 
@@ -81,10 +96,10 @@ void SPR_Process(int spNum,u_int16_t sprPtr,u_int16_t sprCtl,u_int16_t sprPos,u_
 	
 	if (vpos==0)
 	{
-		spr[spNum]=0;				// Reset first word fetch on sprite (hack)
+		spr_Data.spr[spNum]=0;				// Reset first word fetch on sprite (hack)
 	}
 	
-	if (spr[spNum])
+	if (spr_Data.spr[spNum])
 	{
 		u_int16_t vStart = (CST_GETWRDU(sprCtl,0x0004) << 6) | (CST_GETWRDU(sprPos,0xFF00) >> 8);
 		u_int16_t vStop = (CST_GETWRDU(sprCtl,0x0002) << 7) | (CST_GETWRDU(sprCtl,0xFF00) >> 8);
@@ -93,7 +108,7 @@ void SPR_Process(int spNum,u_int16_t sprPtr,u_int16_t sprCtl,u_int16_t sprPos,u_
 		{
 			if (vpos>vStop)
 			{
-				spr[spNum]=0;
+				spr_Data.spr[spNum]=0;
 			}
 			else
 			{
@@ -110,7 +125,7 @@ void SPR_Process(int spNum,u_int16_t sprPtr,u_int16_t sprCtl,u_int16_t sprPos,u_
 		CST_SETWRD(sprCtl,MEM_getWord(sprAddr+2),0xFFFF);
 		if (CST_GETWRDU(sprPos,0xFFFF) && CST_GETWRDU(sprCtl,0xFFFF))
 		{
-			spr[spNum]=1;
+			spr_Data.spr[spNum]=1;
 			sprAddr+=4;
 		}
 	}

@@ -29,4 +29,7 @@ THE SOFTWARE.
 void DSP_InitialiseDisplay();
 void DSP_Update();
 
+void DSP_SaveState(FILE *outStream);
+void DSP_LoadState(FILE *inStream);
+
 void DSP_NotifyLineEnd();
