@@ -53,8 +53,10 @@ MTerms	mTermC[65536];
 
 typedef struct
 {
-	int			bltZero;
-	int			bltSrcDone;
+	u_int16_t	bltZero;
+	u_int16_t	bltSingle;
+	u_int16_t	bltFillOn;
+	u_int16_t	bltSrcDone;
 	u_int16_t	bltWidth;
 	u_int16_t	bltHeight;
 	u_int16_t	bltSX,bltSY,bltDX,bltDY;
@@ -124,11 +126,42 @@ u_int16_t BLT_CalculateD(u_int16_t bltA,u_int16_t bltB,u_int16_t bltC)
 {
 	u_int16_t	bltD=0;
 	int a;
-
-	for (a=0;a<16;a++)
+	
+	if (CST_GETWRDU(CST_BLTCON1,0x0018) && !CST_GETWRDU(CST_BLTCON1,0x0001))
 	{
-		if (CST_GETWRDU(CST_BLTCON0,1<<(mTermA[bltA].bits[a]+mTermB[bltB].bits[a]+mTermC[bltC].bits[a])))
-			bltD|=(1<<(15-a));
+		// Using fill mode
+		
+		for (a=0;a<16;a++)
+		{
+			if (CST_GETWRDU(CST_BLTCON0,1<<(mTermA[bltA].bits[15-a]+mTermB[bltB].bits[15-a]+mTermC[bltC].bits[15-a])))
+			{
+				if (blt_Data.bltFillOn)
+				{
+					if (CST_GETWRDU(CST_BLTCON1,0x0008))	// Inclusive fill (because we are transition to off re-set the bit)
+					{
+						bltD|=(1<<a);
+					}
+					blt_Data.bltFillOn=0;
+				}
+				else
+				{
+					blt_Data.bltFillOn=1;
+				}
+			}
+				
+			if (blt_Data.bltFillOn)
+			{
+				bltD|=(1<<a);
+			}
+		}
+	}
+	else
+	{
+		for (a=0;a<16;a++)
+		{
+			if (CST_GETWRDU(CST_BLTCON0,1<<(mTermA[bltA].bits[a]+mTermB[bltB].bits[a]+mTermC[bltC].bits[a])))
+				bltD|=(1<<(15-a));
+		}
 	}
 
 	blt_Data.bltZero = blt_Data.bltZero && (bltD==0);
@@ -172,6 +205,7 @@ void BLT_UpdateDst()
 	blt_Data.bltDX++;
 	if (blt_Data.bltDX == blt_Data.bltWidth)
 	{
+		blt_Data.bltFillOn=CST_GETWRDU(CST_BLTCON1,0x0004);
 		blt_Data.bltDX = 0;
 		blt_Data.bltDY++;
 		if (blt_Data.bltDY>=blt_Data.bltHeight)
@@ -265,6 +299,21 @@ void BLT_UpdateClc()
 			}
 		}
 	}
+	else 
+	{
+		if (CST_GETWRDU(CST_BLTCON1,0x0002))
+		{
+			// single dot mode, if bltSingle set we have done one dot this line
+			if (blt_Data.bltSingle)
+				bltA=0;
+			else 
+			{
+				if (bltA)
+					blt_Data.bltSingle=1;
+			}
+		}
+	}
+
 
 	bltD=BLT_CalculateD(bltA,bltB,bltC);
 	
@@ -289,12 +338,10 @@ void BLT_Update()
 			
 			BLT_UpdateClc();
 
-//			BLT_UpdateDst();				// swap this and next line comment over if trying for Preread
-			
 			blt_Data.bltStart=BLT_Read2;
 			break;
 			
-		case BLT_Read2:						// Doesn't seem to work quite right yet
+		case BLT_Read2:
 
 			CST_ORWRD(CST_DMACONR,0x4000);
 
@@ -330,6 +377,7 @@ void BLT_Update()
 					if (CST_GETWRDU(CST_BLTCON1,0x0008))
 					{
 						//decy
+						blt_Data.bltSingle=0;
 						addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 						addr-=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
 						CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
@@ -337,6 +385,7 @@ void BLT_Update()
 					else
 					{
 						//incy
+						blt_Data.bltSingle=0;
 						addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 						addr+=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
 						CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
@@ -420,6 +469,7 @@ void BLT_Update()
 				if (CST_GETWRDU(CST_BLTCON1,0x0004))
 				{
 					//decy
+					blt_Data.bltSingle=0;
 					addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 					addr-=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
 					CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
@@ -427,6 +477,7 @@ void BLT_Update()
 				else
 				{
 					//incy
+					blt_Data.bltSingle=0;
 					addr = CST_GETLNGU(CST_BLTCPTH,CUSTOM_CHIP_RAM_MASK);
 					addr+=CST_GETWRDS(CST_BLTCMOD,0xFFFE);
 					CST_SETLNG(CST_BLTCPTH,addr,CUSTOM_CHIP_RAM_MASK);
@@ -452,113 +503,75 @@ void BLT_Update()
 			blt_Data.bltHeight--;
 			if (blt_Data.bltHeight==0)
 			{
-			// blitter finished, clear BLTBUSY and set BLTComplete
-			blt_Data.bltStart=BLT_Stopped;
-			
-			CST_ORWRD(CST_INTREQR,0x0040);			// set interrupt blitter finished
-			CST_ANDWRD(CST_DMACONR,~0x4000);
-			
-			if (blt_Data.bltZero)
-			{
-				CST_ORWRD(CST_DMACONR,0x2000);		// BLT  all zeros
-			}
+				// blitter finished, clear BLTBUSY and set BLTComplete
+				blt_Data.bltStart=BLT_Stopped;
 				
+				CST_ORWRD(CST_INTREQR,0x0040);			// set interrupt blitter finished
+				CST_ANDWRD(CST_DMACONR,~0x4000);
+				
+				if (blt_Data.bltZero)
+				{
+					CST_ORWRD(CST_DMACONR,0x2000);		// BLT  all zeros
+				}
 			}
 
 			break;
 	}
 }
 
-extern int startDebug;
-
 void BLT_StartBlit()
 {
-	//startDebug=1;
+	blt_Data.bltDX=0;
+	blt_Data.bltDY=0;
+	blt_Data.bltSX=0;
+	blt_Data.bltSY=0;
+	blt_Data.bltAOldDat=0;
+	blt_Data.bltBOldDat=0;
+	blt_Data.bltSingle=0;
 	
-		blt_Data.bltDX=0;
-		blt_Data.bltDY=0;
-		blt_Data.bltSX=0;
-		blt_Data.bltSY=0;
-		blt_Data.bltAOldDat=0;
-		blt_Data.bltBOldDat=0;
-		
-//		if (!CST_GETWRDU(CST_BLTCON1,0x0001))
-//			return;
-		
-//		lCount++;
-//		if (lCount<151 || lCount>151)
-//			return;
-//		printf("lCount : %d\n",lCount);
-
-		if (CST_GETWRDU(CST_BLTCON1,0x0001))
+	if (CST_GETWRDU(CST_BLTCON1,0x0001))
+	{
+		blt_Data.bltBOldDat=CST_GETWRDU(CST_BLTBDAT,0xFFFF);		// fixes line drawing problems
+		if (CST_GETWRDU(CST_BLTBDAT,0xFFFF)!=0xFFFF)
 		{
-			blt_Data.bltBOldDat=CST_GETWRDU(CST_BLTBDAT,0xFFFF);		// fixes line drawing problems
-			if (CST_GETWRDU(CST_BLTCON1,0x0002))
-			{
-				printf("Warning.. single dot mode not supported\n");
-				return;
-			}
-			
-			if (CST_GETWRDU(CST_BLTBDAT,0xFFFF)!=0xFFFF)
-			{
-				printf("Warning.. textured line not supported\n");
-				return;
-			}
+			printf("Warning.. textured line not supported\n");
+			return;
+		}
+	}
+	else
+	{
+		blt_Data.bltFillOn=CST_GETWRDU(CST_BLTCON1,0x0004);
+		if (CST_GETWRDU(CST_BLTCON1,0x0002))
+		{
+			blt_Data.bltDelta=-1;
 		}
 		else
 		{
-			if (CST_GETWRDU(CST_BLTCON1,0x0018))
-			{
-				printf("Warning.. blitter fill unsupported\n");
-				return;
-			}
-			if (CST_GETWRDU(CST_BLTCON1,0x0002))
-			{
-				blt_Data.bltDelta=-1;
-			}
-			else
-			{
-				blt_Data.bltDelta=1;
-			}
-  		}
-		
-		blt_Data.bltWidth=CST_GETWRDU(CST_BLTSIZE,0x003F);
-		if (!blt_Data.bltWidth)
-			blt_Data.bltWidth=64;
-		blt_Data.bltHeight=CST_GETWRDU(CST_BLTSIZE,0xFFC0)>>6;
-		if (!blt_Data.bltHeight)
-			blt_Data.bltHeight=1024;
-			
-		blt_Data.bltZero=1;
-		blt_Data.bltSrcDone=0;
-
-		if (!CST_GETWRDU(CST_BLTCON1,0x0001))
-		{
-			blt_Data.bltStart=BLT_Read;
-/*		printf("[WRN] Blitter Is Being Used\n");
-
-		printf("Blitter Registers : BLTAFWM : %04X\n",CST_GETWRDU(CST_BLTAFWM,0xFFFF));
-		printf("Blitter Registers : BLTALWM : %04X\n",CST_GETWRDU(CST_BLTALWM,0xFFFF));
-		printf("Blitter Registers : BLTCON0 : %04X\n",CST_GETWRDU(CST_BLTCON0,0xFFFF));
-		printf("Blitter Registers : BLTCON1 : %04X\n",CST_GETWRDU(CST_BLTCON1,0xFFFF));
-		printf("Blitter Registers : BLTSIZE : %04X\n",CST_GETWRDU(CST_BLTSIZE,0xFFFF));
-		printf("Blitter Registers : BLTADAT : %04X\n",CST_GETWRDU(CST_BLTADAT,0xFFFF));
-		printf("Blitter Registers : BLTBDAT : %04X\n",CST_GETWRDU(CST_BLTBDAT,0xFFFF));
-		printf("Blitter Registers : BLTCDAT : %04X\n",CST_GETWRDU(CST_BLTCDAT,0xFFFF));
-		printf("Blitter Registers : BLTDDAT : %04X\n",CST_GETWRDU(CST_BLTDDAT,0xFFFF));
-		printf("Blitter Registers : BLTAMOD : %04X\n",CST_GETWRDU(CST_BLTAMOD,0xFFFF));
-		printf("Blitter Registers : BLTBMOD : %04X\n",CST_GETWRDU(CST_BLTBMOD,0xFFFF));
-		printf("Blitter Registers : BLTCMOD : %04X\n",CST_GETWRDU(CST_BLTCMOD,0xFFFF));
-		printf("Blitter Registers : BLTDMOD : %04X\n",CST_GETWRDU(CST_BLTDMOD,0xFFFF));
-		printf("Blitter Registers : BLTAPTH : %08X\n",CST_GETLNGU(CST_BLTAPTH,0xFFFFFFFF));
-		printf("Blitter Registers : BLTBPTH : %08X\n",CST_GETLNGU(CST_BLTBPTH,0xFFFFFFFF));
-		printf("Blitter Registers : BLTCPTH : %08X\n",CST_GETLNGU(CST_BLTCPTH,0xFFFFFFFF));
-		printf("Blitter Registers : BLTDPTH : %08X\n",CST_GETLNGU(CST_BLTDPTH,0xFFFFFFFF));
-*/
+			blt_Data.bltDelta=1;
 		}
-		else
-			blt_Data.bltStart=BLT_Line;
+	}
 	
-		
+	blt_Data.bltWidth=CST_GETWRDU(CST_BLTSIZE,0x003F);
+	if (!blt_Data.bltWidth)
+	{
+		blt_Data.bltWidth=64;
+	}
+	blt_Data.bltHeight=CST_GETWRDU(CST_BLTSIZE,0xFFC0)>>6;
+	if (!blt_Data.bltHeight)
+	{
+		blt_Data.bltHeight=1024;
+	}
+	
+	blt_Data.bltZero=1;
+	blt_Data.bltSrcDone=0;
+	
+	if (!CST_GETWRDU(CST_BLTCON1,0x0001))
+	{
+		blt_Data.bltStart=BLT_Read;
+	}
+	else
+	{
+		blt_Data.bltStart=BLT_Line;
+	}		
 }
 
