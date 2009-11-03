@@ -4180,16 +4180,17 @@ u_int32_t CPU_DIVU(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 	ead=cpu_regs.D[op1];
 	eas=getSourceEffectiveAddress(op2,len)&0xFFFF;
 	
+	cpu_regs.SR&=~CPU_STATUS_C;			// Carry is always cleared
+
 	if (!eas)
 	{
-		DEB_PauseEmulation("Divide by Zero - Exception not implemented");
+		CPU_GENERATE_EXCEPTION(0x14);
 		return 0;
 	}
 	
 	eaq=ead / eas;
 	ear=ead % eas;
 	
-	cpu_regs.SR&=~CPU_STATUS_C;
 	if (eaq>65535)
 	{
 		cpu_regs.SR|=CPU_STATUS_V|CPU_STATUS_N;		// MC68000 docs claim N and Z are undefined. however real amiga seems to set N if V happens, Z is cleared
@@ -5012,17 +5013,18 @@ u_int32_t CPU_DIVS(u_int32_t stage,u_int16_t op1,u_int16_t op2,u_int16_t op3,u_i
 	
 	ead=(int32_t)cpu_regs.D[op1];
 	eas=(int16_t)(getSourceEffectiveAddress(op2,len)&0xFFFF);
+
+	cpu_regs.SR&=~CPU_STATUS_C;			// carry is always cleared even if divide by zero
 	
 	if (!eas)
 	{
-		DEB_PauseEmulation("Divide by Zero - Exception not implemented");
+		CPU_GENERATE_EXCEPTION(0x14);
 		return 0;
 	}
 	
 	eaq=ead / eas;
 	ear=ead % eas;
 	
-	cpu_regs.SR&=~CPU_STATUS_C;
 	if ((eaq<-32768) || (eaq>32767))
 	{
 		cpu_regs.SR|=CPU_STATUS_V|CPU_STATUS_N;		// MC68000 docs claim N and Z are undefined. however real amiga seems to set N if V happens, Z is cleared
